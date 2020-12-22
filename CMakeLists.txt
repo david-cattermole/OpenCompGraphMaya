@@ -29,10 +29,8 @@ set(PROJECT_DESCRIPTION "Compositing Graph nodes inside Autodesk Maya.")
 set(PROJECT_AUTHOR "David Cattermole and others (see AUTHORS.txt file)")
 set(PROJECT_COPYRIGHT "2020, David Cattermole.")
 
-
 # Add custom modules to the module path
 set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} ${CMAKE_CURRENT_SOURCE_DIR}/cmake/modules)
-
 
 # Maya SDK
 set(MAYA_VERSION "2018" CACHE STRING "Maya version number")
@@ -41,21 +39,15 @@ set(DEVKIT_LOCATION "/usr/autodesk/maya${MAYA_VERSION}/" CACHE PATH "Maya develo
 set(MAYA_INCLUDE_PATH "/usr/autodesk/maya${MAYA_VERSION}/include" CACHE PATH "Maya include directory")
 set(MAYA_LIB_PATH "/usr/autodesk/maya${MAYA_VERSION}/lib" CACHE PATH "Maya library directory")
 
-
-# Build features
 add_subdirectory(modules)
-
 add_subdirectory(include)
 add_subdirectory(src)
 
 # Install misc files
-#
-# NOTE: ${MODULE_FULL_NAME} comes from module sub-directory.
 install(FILES
   ${CMAKE_CURRENT_SOURCE_DIR}/LICENSE
   ${CMAKE_CURRENT_SOURCE_DIR}/README.md
   DESTINATION "${MODULE_FULL_NAME}/")
-
 
 # Package Configuration.
 set(CPACK_PACKAGE_NAME "${PROJECT_NAME}")

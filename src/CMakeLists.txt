@@ -19,6 +19,8 @@
 # Building the C++ code for OpenCompGraphMaya.
 #
 
+add_subdirectory(OpenCompGraph)
+
 # Source
 set(SOURCE_FILES
   imagePlane/shader.cpp
@@ -122,6 +124,7 @@ target_link_libraries(OpenCompGraphMaya
   ${MAYA_OpenMayaUI_LIBRARY}
   ${MAYA_OpenMayaRender_LIBRARY}
   ${MAYA_Foundation_LIBRARY}
+  opencompgraph  # Target the OpenCompGraph git submodule.
   )
 
 # On Linux the 'm' library is required.

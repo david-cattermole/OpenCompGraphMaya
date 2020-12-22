@@ -44,7 +44,6 @@ SET FRESH_BUILD=1
 :: The "$HOME/maya/2018/modules" directory is automatically searched
 :: for Maya module (.mod) files. Therefore we can install directly.
 ::
-:: SET INSTALL_MODULE_DIR="%PROJECT_ROOT%\modules"
 SET INSTALL_MODULE_DIR="%USERPROFILE%\My Documents\maya\%MAYA_VERSION%\modules"
 
 :: Build ZIP Package.
@@ -63,7 +62,33 @@ SET GENERATE_SOLUTION=0
 
 :: The root of this project.
 SET PROJECT_ROOT=%CD%
-ECHO Project Root: %PROJECT_ROOT%
+ECHO OpenCompGraphMaya Root: %PROJECT_ROOT%
+
+
+:: The root of the OpenCompGraph project.
+SET OCG_ROOT=%PROJECT_ROOT%\src\OpenCompGraph\
+ECHO OpenCompGroup Root: %OCG_ROOT%
+CHDIR %OCG_ROOT%
+
+:: Install directory
+SET INSTALL_DIR="%OCG_ROOT%\install"
+
+:: Where to find the Rust libraries and headers.
+SET RUST_BUILD_DIR="%OCG_ROOT%\target\release"
+SET RUST_INCLUDE_DIR="%OCG_ROOT%\include"
+
+:: Build Rust
+::
+:: Assumes 'cxxbridge-cmd' and 'cbindgen' is installed.
+cxxbridge --header --output "%OCG_ROOT%\include\rust\cxx.h"
+cbindgen --config cbindgen.toml ^
+         --crate opencompgraph ^
+         --output "%OCG_ROOT%\include\opencompgraph\_cbindgen.h"
+cargo build --release
+
+:: Return back project root directory.
+CHDIR %PROJECT_ROOT%
+
 
 :: Build plugin
 MKDIR build_windows64_maya%MAYA_VERSION%_%BUILD_TYPE%
@@ -77,6 +102,8 @@ IF "%GENERATE_SOLUTION%"=="1" (
 
 REM To Generate a Visual Studio 'Solution' file
     cmake -G "Visual Studio 14 2015 Win64" -T "v140" ^
+        -DRUST_BUILD_DIR=%RUST_BUILD_DIR% ^
+        -DRUST_INCLUDE_DIR=%RUST_INCLUDE_DIR% ^
         -DMAYA_VERSION=%MAYA_VERSION% ^
         -DMAYA_LOCATION=%MAYA_LOCATION% ^
         -DMAYA_VERSION=%MAYA_VERSION% ^
@@ -87,6 +114,8 @@ REM To Generate a Visual Studio 'Solution' file
     cmake -G "NMake Makefiles" ^
         -DCMAKE_BUILD_TYPE=%BUILD_TYPE% ^
         -DCMAKE_INSTALL_PREFIX=%INSTALL_MODULE_DIR% ^
+        -DRUST_BUILD_DIR=%RUST_BUILD_DIR% ^
+        -DRUST_INCLUDE_DIR=%RUST_INCLUDE_DIR% ^
         -DMAYA_LOCATION=%MAYA_LOCATION% ^
         -DMAYA_VERSION=%MAYA_VERSION% ^
         ..
