@@ -16,7 +16,6 @@
 #include <unordered_map>
 
 // OCG Maya
-#include "utils/unused.h"
 #include "shader.h"
 #include "subSceneOverride.h"
 #include "shape.h"
@@ -25,9 +24,13 @@ namespace open_comp_graph_maya {
 
 ImagePlaneSubSceneOverride::ImagePlaneSubSceneOverride(const MObject &obj)
         : MHWRender::MPxSubSceneOverride(obj), fLocatorNode(obj),
-          fMultiplier(0.0f), fIsInstanceMode(false), fAreUIDrawablesDirty(true),
-          fPositionBuffer(NULL), fWireIndexBuffer(NULL),
-          fShadedIndexBuffer(NULL), fInstanceAddedCbId(0),
+          fMultiplier(0.0f),
+          fIsInstanceMode(false),
+          fAreUIDrawablesDirty(true),
+          fPositionBuffer(NULL),
+          fWireIndexBuffer(NULL),
+          fShadedIndexBuffer(NULL),
+          fInstanceAddedCbId(0),
           fInstanceRemovedCbId(0) {
     MDagPath dagPath;
     if (MDagPath::getAPathTo(obj, dagPath)) {
@@ -55,11 +58,9 @@ ImagePlaneSubSceneOverride::~ImagePlaneSubSceneOverride() {
 
 /* static */
 void ImagePlaneSubSceneOverride::InstanceChangedCallback(
-        MDagPath &child,
-        MDagPath &parent,
+    MDagPath &/*child*/,
+        MDagPath &/*parent*/,
         void *clientData) {
-    UNUSED(child);
-    UNUSED(parent);
     ImagePlaneSubSceneOverride *ovr = static_cast<ImagePlaneSubSceneOverride *>(clientData);
     if (ovr) {
         ovr->fInstanceDagPaths.clear();
@@ -68,8 +69,7 @@ void ImagePlaneSubSceneOverride::InstanceChangedCallback(
 
 void ImagePlaneSubSceneOverride::update(
         MHWRender::MSubSceneContainer &container,
-        const MHWRender::MFrameContext &frameContext) {
-    UNUSED(frameContext);
+        const MHWRender::MFrameContext &/*frameContext*/) {
     std::uint32_t numInstances = fInstanceDagPaths.length();
     if (numInstances == 0) {
         if (!MDagPath::getAllPathsTo(fLocatorNode, fInstanceDagPaths)) {
@@ -273,8 +273,7 @@ void ImagePlaneSubSceneOverride::update(
 
 void ImagePlaneSubSceneOverride::addUIDrawables(
         MHWRender::MUIDrawManager &drawManager,
-        const MHWRender::MFrameContext &frameContext) {
-    UNUSED(frameContext);
+        const MHWRender::MFrameContext &/*frameContext*/) {
     MPoint pos(0.0, 0.0, 0.0);
     MColor textColor(0.1f, 0.8f, 0.8f, 1.0f);
     MString text("Open Comp Graph Maya");
@@ -303,9 +302,8 @@ void ImagePlaneSubSceneOverride::addUIDrawables(
 
 // NOTE: This will be unneeded in Maya 2019+.
 bool ImagePlaneSubSceneOverride::getSelectionPath(
-        const MHWRender::MRenderItem &renderItem,
-        MDagPath &dagPath) const {
-    UNUSED(renderItem);
+    const MHWRender::MRenderItem &/*renderItem*/,
+    MDagPath &dagPath) const {
     if (fInstanceDagPaths.length() == 0) return false;
 
     // Return the first DAG path because there is no instancing in this case.
@@ -313,10 +311,9 @@ bool ImagePlaneSubSceneOverride::getSelectionPath(
 }
 
 bool ImagePlaneSubSceneOverride::getInstancedSelectionPath(
-        const MHWRender::MRenderItem &renderItem,
-        const MHWRender::MIntersection &intersection,
-        MDagPath &dagPath) const {
-    UNUSED(renderItem);
+    const MHWRender::MRenderItem &/*renderItem*/,
+    const MHWRender::MIntersection &intersection,
+    MDagPath &dagPath) const {
     unsigned int numInstances = fInstanceDagPaths.length();
     if (numInstances == 0) return false;
 

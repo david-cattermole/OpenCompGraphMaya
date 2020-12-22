@@ -18,7 +18,6 @@
 
 // OCG Maya
 #include <OpenCompGraphMaya/nodeTypeIds.h>
-#include <utils/unused.h>
 #include "shape.h"
 
 namespace open_comp_graph_maya {
