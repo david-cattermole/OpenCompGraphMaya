@@ -35,10 +35,10 @@ ImagePlaneSubSceneOverride::ImagePlaneSubSceneOverride(const MObject &obj)
     MDagPath dagPath;
     if (MDagPath::getAPathTo(obj, dagPath)) {
         fInstanceAddedCbId = MDagMessage::addInstanceAddedDagPathCallback(
-                dagPath, InstanceChangedCallback, this);
+            dagPath, InstanceChangedCallback, this);
 
         fInstanceRemovedCbId = MDagMessage::addInstanceRemovedDagPathCallback(
-                dagPath, InstanceChangedCallback, this);
+            dagPath, InstanceChangedCallback, this);
     }
 }
 
@@ -59,8 +59,8 @@ ImagePlaneSubSceneOverride::~ImagePlaneSubSceneOverride() {
 /* static */
 void ImagePlaneSubSceneOverride::InstanceChangedCallback(
     MDagPath &/*child*/,
-        MDagPath &/*parent*/,
-        void *clientData) {
+    MDagPath &/*parent*/,
+    void *clientData) {
     ImagePlaneSubSceneOverride *ovr = static_cast<ImagePlaneSubSceneOverride *>(clientData);
     if (ovr) {
         ovr->fInstanceDagPaths.clear();
@@ -68,8 +68,8 @@ void ImagePlaneSubSceneOverride::InstanceChangedCallback(
 }
 
 void ImagePlaneSubSceneOverride::update(
-        MHWRender::MSubSceneContainer &container,
-        const MHWRender::MFrameContext &/*frameContext*/) {
+    MHWRender::MSubSceneContainer &container,
+    const MHWRender::MFrameContext &/*frameContext*/) {
     std::uint32_t numInstances = fInstanceDagPaths.length();
     if (numInstances == 0) {
         if (!MDagPath::getAllPathsTo(fLocatorNode, fInstanceDagPaths)) {
@@ -84,8 +84,8 @@ void ImagePlaneSubSceneOverride::update(
     if (numInstances == 0) return;
 
     MHWRender::MShaderInstance *shader = get3dSolidShader(
-            MHWRender::MGeometryUtilities::wireframeColor(
-                    fInstanceDagPaths[0]));
+        MHWRender::MGeometryUtilities::wireframeColor(
+            fInstanceDagPaths[0]));
     if (!shader) {
         fprintf(stderr,
                 "ImagePlaneSubSceneOverride: Failed to get a 3d solid shader.\n");
@@ -119,7 +119,7 @@ void ImagePlaneSubSceneOverride::update(
 
     MMatrixArray instanceMatrixArray(numInstances);
     MFloatArray instanceColorArray(
-            static_cast<std::uint32_t>(numInstances * componentsPerColor));
+        static_cast<std::uint32_t>(numInstances * componentsPerColor));
 
     // If expecting large numbers of instances, walking through all the instances
     // every frame to look for changes is not efficient enough. Monitoring change
@@ -129,7 +129,7 @@ void ImagePlaneSubSceneOverride::update(
         if (instance.isValid() && instance.isVisible()) {
             InstanceInfo instanceInfo(instance.inclusiveMatrix(),
                                       MHWRender::MGeometryUtilities::wireframeColor(
-                                              instance));
+                                          instance));
 
             InstanceInfoMap::iterator iter = fInstanceInfoCache.find(i);
             if (iter == fInstanceInfoCache.end() ||
@@ -138,7 +138,7 @@ void ImagePlaneSubSceneOverride::update(
                 if (!fAreUIDrawablesDirty &&
                     (iter == fInstanceInfoCache.end() ||
                      !iter->second.fMatrix.isEquivalent(
-                             instanceInfo.fMatrix))) {
+                         instanceInfo.fMatrix))) {
                     fAreUIDrawablesDirty = true;
                 }
 
@@ -203,8 +203,8 @@ void ImagePlaneSubSceneOverride::update(
                                                     MHWRender::MRenderItem::DecorationItem,
                                                     MHWRender::MGeometry::kTriangles);
         shadedItem->setDrawMode((MHWRender::MGeometry::DrawMode)
-                                        (MHWRender::MGeometry::kShaded |
-                                         MHWRender::MGeometry::kTextured));
+                                (MHWRender::MGeometry::kShaded |
+                                 MHWRender::MGeometry::kTextured));
         container.add(shadedItem);
 
         itemsChanged = true;
@@ -220,7 +220,7 @@ void ImagePlaneSubSceneOverride::update(
         MFnDagNode node(fLocatorNode, &status);
 
         ImagePlaneShape *fp = status ? dynamic_cast<ImagePlaneShape *>(node.userNode())
-                                     : NULL;
+            : NULL;
         MBoundingBox *bounds = fp ? new MBoundingBox(fp->boundingBox()) : NULL;
 
         MHWRender::MVertexBufferArray vertexBuffers;
@@ -272,8 +272,8 @@ void ImagePlaneSubSceneOverride::update(
 }
 
 void ImagePlaneSubSceneOverride::addUIDrawables(
-        MHWRender::MUIDrawManager &drawManager,
-        const MHWRender::MFrameContext &/*frameContext*/) {
+    MHWRender::MUIDrawManager &drawManager,
+    const MHWRender::MFrameContext &/*frameContext*/) {
     MPoint pos(0.0, 0.0, 0.0);
     MColor textColor(0.1f, 0.8f, 0.8f, 1.0f);
     MString text("Open Comp Graph Maya");
@@ -332,7 +332,7 @@ bool ImagePlaneSubSceneOverride::getInstancedSelectionPath(
 }
 
 void ImagePlaneSubSceneOverride::rebuildGeometryBuffers() {
-    deleteGeometryBuffers();
+    ImagePlaneSubSceneOverride::deleteGeometryBuffers();
 
     // VertexBuffer for positions. We concatenate the shapeB and shapeA positions into a single vertex buffer.
     // The index buffers will decide which positions will be selected for each render items.
@@ -350,20 +350,20 @@ void ImagePlaneSubSceneOverride::rebuildGeometryBuffers() {
                  currentVertex < shapeCountA + shapeCountB; ++currentVertex) {
                 if (currentVertex < shapeCountB) {
                     int shapeBVtx = currentVertex;
-                    positions[verticesPointerOffset++] =
-                            shapeB[shapeBVtx][0] * fMultiplier;
-                    positions[verticesPointerOffset++] =
-                            shapeB[shapeBVtx][1] * fMultiplier;
-                    positions[verticesPointerOffset++] =
-                            shapeB[shapeBVtx][2] * fMultiplier;
+                    float x = shapeB[shapeBVtx][0] * fMultiplier;
+                    float y = shapeB[shapeBVtx][1] * fMultiplier;
+                    float z = shapeB[shapeBVtx][2] * fMultiplier;
+                    positions[verticesPointerOffset++] = x;
+                    positions[verticesPointerOffset++] = y;
+                    positions[verticesPointerOffset++] = z;
                 } else {
                     int shapeAVtx = currentVertex - shapeCountB;
-                    positions[verticesPointerOffset++] =
-                            shapeA[shapeAVtx][0] * fMultiplier;
-                    positions[verticesPointerOffset++] =
-                            shapeA[shapeAVtx][1] * fMultiplier;
-                    positions[verticesPointerOffset++] =
-                            shapeA[shapeAVtx][2] * fMultiplier;
+                    float x = shapeA[shapeAVtx][0] * fMultiplier;
+                    float y = shapeA[shapeAVtx][1] * fMultiplier;
+                    float z = shapeA[shapeAVtx][2] * fMultiplier;
+                    positions[verticesPointerOffset++] = x;
+                    positions[verticesPointerOffset++] = y;
+                    positions[verticesPointerOffset++] = z;
                 }
             }
 
@@ -373,7 +373,7 @@ void ImagePlaneSubSceneOverride::rebuildGeometryBuffers() {
 
     // IndexBuffer for the wireframe item
     fWireIndexBuffer = new MHWRender::MIndexBuffer(
-            MHWRender::MGeometry::kUnsignedInt32);
+        MHWRender::MGeometry::kUnsignedInt32);
     if (fWireIndexBuffer) {
         int primitiveIndex = 0;
         int startIndex = 0;
@@ -381,7 +381,7 @@ void ImagePlaneSubSceneOverride::rebuildGeometryBuffers() {
         int numIndex = numPrimitive * 2;
 
         unsigned int *indices = (unsigned int *) fWireIndexBuffer->acquire(
-                numIndex, true);
+            numIndex, true);
         if (indices) {
             for (int i = 0; i < numIndex;) {
                 if (i < (shapeCountB - 1) * 2) {
@@ -401,7 +401,7 @@ void ImagePlaneSubSceneOverride::rebuildGeometryBuffers() {
 
     // IndexBuffer for the shaded item
     fShadedIndexBuffer = new MHWRender::MIndexBuffer(
-            MHWRender::MGeometry::kUnsignedInt32);
+        MHWRender::MGeometry::kUnsignedInt32);
     if (fShadedIndexBuffer) {
         int primitiveIndex = 0;
         int startIndex = 0;
@@ -409,7 +409,7 @@ void ImagePlaneSubSceneOverride::rebuildGeometryBuffers() {
         int numIndex = numPrimitive * 3;
 
         unsigned int *indices = (unsigned int *) fShadedIndexBuffer->acquire(
-                numIndex, true);
+            numIndex, true);
         if (indices) {
             for (int i = 0; i < numIndex;) {
                 if (i < (shapeCountB - 2) * 3) {
