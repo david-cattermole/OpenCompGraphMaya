@@ -29,28 +29,17 @@
 namespace open_comp_graph_maya{
 
 // Shape Data
-static const float shapeA[21][3] = {
-    {0.00f,  0.0f, -0.70f},
-    {0.04f,  0.0f, -0.69f},
-    {0.09f,  0.0f, -0.65f},
-    {0.13f,  0.0f, -0.61f},
-    {0.16f,  0.0f, -0.54f},
-    {0.17f,  0.0f, -0.46f},
-    {0.17f,  0.0f, -0.35f},
-    {0.16f,  0.0f, -0.25f},
-    {0.15f,  0.0f, -0.14f},
-    {0.13f,  0.0f, 0.00f},
-    {0.00f,  0.0f, 0.00f},
-    {-0.13f, 0.0f, 0.00f},
-    {-0.15f, 0.0f, -0.14f},
-    {-0.16f, 0.0f, -0.25f},
-    {-0.17f, 0.0f, -0.35f},
-    {-0.17f, 0.0f, -0.46f},
-    {-0.16f, 0.0f, -0.54f},
-    {-0.13f, 0.0f, -0.61f},
-    {-0.09f, 0.0f, -0.65f},
-    {-0.04f, 0.0f, -0.69f},
-    {-0.00f, 0.0f, -0.70f}};
+static const float shapeA[6][3] = {
+    // First Triangle - counter clockwise direction.
+    {-1.0, -1.0, 0.0}, // Lower left
+    {1.0, 1.0, 0.0},   // Upper right
+    {-1.0, 1.0, 0.0},  // Upper left
+
+    // Second Triangle - counter clockwise direction.
+    {-1.0, -1.0, 0.0}, // Lower left
+    {1.0, -1.0, 0.0},  // Lower Right
+    {1.0, 1.0, 0.0}};  // Upper right
+
 static const float shapeB[17][3] = {
     {0.00f,  0.0f, 0.06f},
     {0.13f,  0.0f, 0.06f},
@@ -69,7 +58,7 @@ static const float shapeB[17][3] = {
     {-0.14f, 0.0f, 0.15f},
     {-0.13f, 0.0f, 0.06f},
     {-0.00f, 0.0f, 0.06f}};
-static const int shapeCountA = 21;
+static const int shapeCountA = 6;
 static const int shapeCountB = 17;
 
 class ImagePlaneShape : public MPxLocatorNode {
