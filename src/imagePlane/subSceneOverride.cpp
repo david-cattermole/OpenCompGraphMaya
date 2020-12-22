@@ -121,9 +121,10 @@ void ImagePlaneSubSceneOverride::update(
     MFloatArray instanceColorArray(
         static_cast<std::uint32_t>(numInstances * componentsPerColor));
 
-    // If expecting large numbers of instances, walking through all the instances
-    // every frame to look for changes is not efficient enough. Monitoring change
-    // events and changing only the required instances should be done instead.
+    // If expecting large numbers of instances, walking through all
+    // the instances every frame to look for changes is not efficient
+    // enough. Monitoring change events and changing only the required
+    // instances should be done instead.
     for (unsigned int i = 0; i < numInstances; i++) {
         const MDagPath &instance = fInstanceDagPaths[i];
         if (instance.isValid() && instance.isVisible()) {
@@ -235,27 +236,31 @@ void ImagePlaneSubSceneOverride::update(
 
     if (itemsChanged || anyInstanceChanged) {
         if (!fIsInstanceMode && numInstances == 1) {
-            // For multiple copies (not multiple instances), subscene consolidation is
-            // enabled for static scenario, mainly to improve tumbling performance.
+            // For multiple copies (not multiple instances), subscene
+            // consolidation is enabled for static scenario, mainly to
+            // improve tumbling performance.
             wireItem->setWantSubSceneConsolidation(true);
             shadedItem->setWantSubSceneConsolidation(true);
 
-            // When not dealing with multiple instances, don't convert the render items into instanced
-            // mode.  Set the matrices on them directly.
+            // When not dealing with multiple instances, don't convert
+            // the render items into instanced mode.  Set the matrices
+            // on them directly.
             MMatrix &objToWorld = instanceMatrixArray[0];
             wireItem->setMatrix(&objToWorld);
             shadedItem->setMatrix(&objToWorld);
         } else {
-            // For multiple instances, subscene conslidation should be turned off
-            // so that the GPU instancing can kick in.
+            // For multiple instances, subscene conslidation should be
+            // turned off so that the GPU instancing can kick in.
             wireItem->setWantSubSceneConsolidation(false);
             shadedItem->setWantSubSceneConsolidation(false);
 
-            // If we have DAG instances of this shape then use the MPxSubSceneOverride instance
-            // transform API to set up instance copies of the render items.  This will be faster
-            // to render than creating render items for each instance, especially for large numbers
-            // of instances.
-            // Note this has to happen after the geometry and shaders are set, otherwise it will fail.
+            // If we have DAG instances of this shape then use the
+            // MPxSubSceneOverride instance transform API to set up
+            // instance copies of the render items.  This will be
+            // faster to render than creating render items for each
+            // instance, especially for large numbers of instances.
+            // Note this has to happen after the geometry and shaders
+            // are set, otherwise it will fail.
             setInstanceTransformArray(*wireItem, instanceMatrixArray);
             setInstanceTransformArray(*shadedItem, instanceMatrixArray);
             setExtraInstanceData(*wireItem, colorParameterName_,
@@ -263,9 +268,11 @@ void ImagePlaneSubSceneOverride::update(
             setExtraInstanceData(*shadedItem, colorParameterName_,
                                  instanceColorArray);
 
-            // Once we change the render items into instance rendering they can't be changed back without
-            // being deleted and re-created.  So if instances are deleted to leave only one remaining,
-            // just keep treating them the instance way.
+            // Once we change the render items into instance rendering
+            // they can't be changed back without being deleted and
+            // re-created.  So if instances are deleted to leave only
+            // one remaining, just keep treating them the instance
+            // way.
             fIsInstanceMode = true;
         }
     }
