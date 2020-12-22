@@ -7,6 +7,7 @@
 #include <maya/MFnDagNode.h>
 #include <maya/MDagMessage.h>
 #include <maya/MSelectionContext.h>
+#include <maya/MStreamUtils.h>
 
 // Maya Viewport 2.0
 #include <maya/MPxSubSceneOverride.h>
@@ -73,8 +74,7 @@ void ImagePlaneSubSceneOverride::update(
     std::uint32_t numInstances = fInstanceDagPaths.length();
     if (numInstances == 0) {
         if (!MDagPath::getAllPathsTo(fLocatorNode, fInstanceDagPaths)) {
-            fprintf(stderr,
-                    "ImagePlaneSubSceneOverride: Failed to get all DAG paths.\n");
+            MStreamUtils::stdErrorStream() << "ImagePlaneSubSceneOverride: Failed to get all DAG paths.\n";
             return;
         }
 
@@ -83,12 +83,12 @@ void ImagePlaneSubSceneOverride::update(
 
     if (numInstances == 0) return;
 
-    MHWRender::MShaderInstance *shader = get3dSolidShader(
-        MHWRender::MGeometryUtilities::wireframeColor(
-            fInstanceDagPaths[0]));
+    // MHWRender::MShaderInstance *shader = get3dSolidShader(
+    //     MHWRender::MGeometryUtilities::wireframeColor(
+    //         fInstanceDagPaths[0]));
+    MHWRender::MShaderInstance *shader = getImagePlaneShader();
     if (!shader) {
-        fprintf(stderr,
-                "ImagePlaneSubSceneOverride: Failed to get a 3d solid shader.\n");
+        MStreamUtils::stdErrorStream() << "ImagePlaneSubSceneOverride: Failed to get a shader.\n";
         return;
     }
 

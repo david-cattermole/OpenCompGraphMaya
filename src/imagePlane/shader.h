@@ -31,16 +31,17 @@ const MString colorParameterName_ = "solidColor";
 const MString wireframeItemName_ = "ocgImagePlaneLocatorWires";
 const MString shadedItemName_ = "ocgImagePlaneLocatorTriangles";
 
-struct MColorHash {
-    std::size_t operator()(const MColor &color) const;
-    void CombineHashCode(std::size_t &seed, float v) const;
-};
+// struct MColorHash {
+//     std::size_t operator()(const MColor &color) const;
+//     void CombineHashCode(std::size_t &seed, float v) const;
+// };
+// MHWRender::MShaderInstance *get3dSolidShader(const MColor &color);
+// MStatus releaseShaders();
+// static std::unordered_map<MColor, MHWRender::MShaderInstance *, MColorHash> the3dSolidShaders;
 
-static std::unordered_map<MColor, MHWRender::MShaderInstance *, MColorHash> the3dSolidShaders;
-
-MHWRender::MShaderInstance *get3dSolidShader(const MColor &color);
-
-MStatus releaseShaders();
+static MHWRender::MShaderInstance *imagePlaneShader = nullptr;
+MHWRender::MShaderInstance *getImagePlaneShader();
+MStatus releaseImagePlaneShader();
 
 } // namespace open_comp_graph_maya
 

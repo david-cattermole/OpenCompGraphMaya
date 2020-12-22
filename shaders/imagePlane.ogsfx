@@ -1,0 +1,563 @@
+#version 410
+// ----------------------------------------- Header ------------------------------------------
+#ifndef SFX_OGSFX
+    #define SFX_OGSFX
+#endif
+#ifndef _MAYA_
+    #define _MAYA_
+#endif
+
+
+
+#define float2 vec2
+#define float3 vec3
+#define float4 vec4
+#define float3x3 mat3
+#define float4x4 mat4
+#ifdef COMPILING_VS
+    #define OUTIN out
+#else
+    #define OUTIN in
+#endif
+#ifndef half
+    #define half float
+    #define half2 float2
+    #define half3 float3
+    #define half4 float4
+#endif
+
+
+
+// ----------------------------------- Per Frame --------------------------------------
+uniform float4x4 viewI : ViewInverse < string UIWidget = "None"; >;
+
+uniform     bool MayaHwFogEnabled : HardwareFogEnabled < string UIWidget = "None"; > = false;
+uniform     int MayaHwFogMode : HardwareFogMode < string UIWidget = "None"; > = 0;
+uniform     float MayaHwFogStart : HardwareFogStart < string UIWidget = "None"; > = 0.0;
+uniform     float MayaHwFogEnd : HardwareFogEnd < string UIWidget = "None"; > = 100.0;
+uniform     float MayaHwFogDensity : HardwareFogDensity < string UIWidget = "None"; > = 0.1;
+uniform     float4 MayaHwFogColor : HardwareFogColor < string UIWidget = "None"; > = { 0.5, 0.5, 0.5, 1.0 };
+
+
+uniform float4x4 viewPrj : ViewProjection < string UIWidget = "None"; >;
+
+uniform float4x4 view : View < string UIWidget = "None"; >;
+
+
+// --------------------------------------- Per Object -----------------------------------------
+uniform float4x4 world : World < string UIWidget = "None"; >;
+
+uniform int ClampDynamicLights
+<
+    float UIMin = 0;
+    float UISoftMin = 0;
+    float UIMax = 99;
+    float UISoftMax = 99;
+    float UIStep = 1;
+    string UIName = "ClampDynamicLights";
+    string UIWidget = "Slider";
+> = 99;
+
+uniform float4x4 wvp : WorldViewProjection < string UIWidget = "None"; >;
+
+
+// ---------------------------------------- Textures -----------------------------------------
+uniform texture2D TransDepthTexture : transpdepthtexture
+<
+    string ResourceName = "";
+    string UIName = "TransDepthTexture";
+    string ResourceType = "2D";
+    string UIWidget = "None";
+>;
+
+uniform texture2D OpaqueDepthTexture : opaquedepthtexture
+<
+    string ResourceName = "";
+    string UIName = "OpaqueDepthTexture";
+    string ResourceType = "2D";
+    string UIWidget = "None";
+>;
+
+uniform sampler2D TransDepthTextureSampler = sampler_state
+{
+    Texture = <TransDepthTexture>;
+    TEXTURE_MIN_FILTER = NEAREST;
+    TEXTURE_MAG_FILTER = NEAREST;
+    TEXTURE_WRAP_S = REPEAT;
+    TEXTURE_WRAP_T = REPEAT;
+    TEXTURE_WRAP_R = REPEAT;
+};
+
+uniform sampler2D OpaqueDepthTextureSampler = sampler_state
+{
+    Texture = <OpaqueDepthTexture>;
+    TEXTURE_MIN_FILTER = NEAREST;
+    TEXTURE_MAG_FILTER = NEAREST;
+    TEXTURE_WRAP_S = REPEAT;
+    TEXTURE_WRAP_T = REPEAT;
+    TEXTURE_WRAP_R = REPEAT;
+};
+
+
+GLSLShader Common_Funcs
+{
+}
+
+GLSLShader VertexShader_Funcs
+{
+}
+
+GLSLShader TessControlShader_Funcs
+{
+}
+
+GLSLShader TessEvaluationShader_Funcs
+{
+}
+
+GLSLShader GeometryShader_Funcs
+{
+}
+
+GLSLShader PixelShader_Funcs
+{
+// Cellular noise ("Worley noise") in 2D in GLSL.
+// Copyright (c) Stefan Gustavson 2011-04-19. All rights reserved.
+// This code is released under the conditions of the MIT license.
+// See LICENSE file for details.
+
+float CellularNoiseMod(float x, float y)
+{
+    return ( x - y * floor(x/y) );
+}
+
+float2 CellularNoiseMod(float2 x, float y)
+{
+    return ( x - y * floor(x/y) );
+}
+
+float3 CellularNoiseMod(float3 x, float y)
+{
+    return ( x - y * floor(x/y) );
+}
+
+#if ( defined(SFX_HLSL_3) || defined(SFX_HLSL_5) || defined(SFX_CGFX_3) )
+   #define fract frac
+   #define mod CellularNoiseMod
+#endif
+
+// Permutation polynomial: (34x^2 + x) mod 289
+float3 permute(float3 x) {
+  return mod((34.0 * x + 1.0) * x, 289.0);
+}
+
+// Cellular noise, returning F1 and F2 in a float2.
+// Standard 3x3 search window for good F1 and F2 values
+float2 CellularNoise(float2 P) {
+#define K 0.142857142857 // 1/7
+#define Ko 0.428571428571 // 3/7
+#define jitter 1.0 // Less gives more regular pattern
+    float2 Pi = mod(floor(P), 280.0);
+    float2 Pf = fract(P);
+    float3 oi = float3(-1.0, 0.0, 1.0);
+    float3 of = float3(-0.5, 0.5, 1.5);
+    float3 px = permute(Pi.x + oi);
+    float3 p = permute(px.x + Pi.y + oi); // p11, p12, p13
+    float3 ox = fract(p*K) - Ko;
+    float3 oy = mod(floor(p*K),7.0)*K - Ko;
+    float3 dx = Pf.x + 0.5 + jitter*ox;
+    float3 dy = Pf.y - of + jitter*oy;
+    float3 d1 = dx * dx + dy * dy; // d11, d12 and d13, squared
+    p = permute(px.y + Pi.y + oi); // p21, p22, p23
+    ox = fract(p*K) - Ko;
+    oy = mod(floor(p*K),7.0)*K - Ko;
+    dx = Pf.x - 0.5 + jitter*ox;
+    dy = Pf.y - of + jitter*oy;
+    float3 d2 = dx * dx + dy * dy; // d21, d22 and d23, squared
+    p = permute(px.z + Pi.y + oi); // p31, p32, p33
+    ox = fract(p*K) - Ko;
+    oy = mod(floor(p*K),7.0)*K - Ko;
+    dx = Pf.x - 1.5 + jitter*ox;
+    dy = Pf.y - of + jitter*oy;
+    float3 d3 = dx * dx + dy * dy; // d31, d32 and d33, squared
+    // Sort out the two smallest distances (F1, F2)
+    float3 d1a = min(d1, d2);
+    d2 = max(d1, d2); // Swap to keep candidates for F2
+    d2 = min(d2, d3); // neither F1 nor F2 are now in d3
+    d1 = min(d1a, d2); // F1 is now in d1
+    d2 = max(d1a, d2); // Swap to keep candidates for F2
+    d1.xy = (d1.x < d1.y) ? d1.xy : d1.yx; // Swap if smaller
+    d1.xz = (d1.x < d1.z) ? d1.xz : d1.zx; // F1 is in d1.x
+    d1.yz = min(d1.yz, d2.yz); // F2 is now not in d2.yz
+    d1.y = min(d1.y, d1.z); // nor in  d1.z
+    d1.y = min(d1.y, d2.x); // F2 is in d1.y, we're done.
+    d1.xy *= 2.0;
+    return sqrt(d1.xy);
+}
+
+struct CellularNoiseOutput
+{
+    float value;
+};
+
+CellularNoiseOutput CellularNoiseFunc( float2 UV, float contrast )
+{
+    float2 position = UV * 10.0;
+    float2 F = CellularNoise(position);
+    float facets = contrast+(F.y-F.x);
+
+    CellularNoiseOutput OUT;
+    OUT.value = facets;
+    return OUT;
+}
+
+
+float4 sampleTransDepthTex(float2 UV)
+{
+    float4 col = float4(0,0,0,0);
+
+    #if defined(SFX_CGFX_3) || defined(SFX_HLSL_3)
+        col = tex2D( TransDepthTextureSampler, UV );
+    #endif
+    #ifdef SFX_HLSL_5
+        #if defined(SFX_SWATCH) || defined(_3DSMAX_)
+            col = TransDepthTexture.Sample( TransDepthTextureSampler, UV );
+        #else
+            col = TransDepthTexture.Sample( TransDepthTextureSampler, UV );
+        #endif
+    #endif
+    #ifdef SFX_GLSL_4
+        col = texture( TransDepthTexture, UV );
+    #endif
+    #ifdef SFX_OGSFX
+        col = texture( TransDepthTextureSampler, UV );
+    #endif
+    #ifdef SFX_GLSL_1_2
+        col = texture2D( TransDepthTexture, UV );
+    #endif
+
+    return col;
+}
+
+float4 sampleOpaqueDepthTex(float2 UV)
+{
+    float4 col = float4(0,0,0,0);
+
+    #if defined(SFX_CGFX_3) || defined(SFX_HLSL_3)
+        col = tex2D( OpaqueDepthTextureSampler, UV );
+    #endif
+    #ifdef SFX_HLSL_5
+        #if defined(SFX_SWATCH) || defined(_3DSMAX_)
+            col = OpaqueDepthTexture.Sample( OpaqueDepthTextureSampler, UV );
+        #else
+            col = OpaqueDepthTexture.Sample( OpaqueDepthTextureSampler, UV );
+        #endif
+    #endif
+    #ifdef SFX_GLSL_4
+        col = texture( OpaqueDepthTexture, UV );
+    #endif
+    #ifdef SFX_OGSFX
+        col = texture( OpaqueDepthTextureSampler, UV );
+    #endif
+    #ifdef SFX_GLSL_1_2
+        col = texture2D( OpaqueDepthTexture, UV );
+    #endif
+
+    return col;
+}
+
+struct DepthPeelOutput
+{
+    float4 LinearDepth;
+    float Peel;
+};
+
+DepthPeelOutput DepthPeelFunc( float3 worldPos, float4x4 view, float4x4 viewPrj )
+{
+    DepthPeelOutput OUT;
+
+    #ifdef SFX_CGFX_3
+        float currZ = abs( mul( view, float4(worldPos, 1.0f) ).z );
+        float4 Pndc  = mul( viewPrj, float4(worldPos, 1.0f) );
+        float2 UV = Pndc.xy / Pndc.w * float2(0.5f, 0.5f) + 0.5f;
+
+        float prevZ = sampleTransDepthTex(UV).r;
+        float opaqZ = sampleOpaqueDepthTex(UV).r;
+        float bias = 0.00002f;
+        if (currZ < prevZ * (1.0f + bias) || currZ > opaqZ * (1.0f - bias))
+        {
+            discard;
+        }
+
+        float ld = abs( mul( view, float4(worldPos, 1.0f) ).z );
+        OUT.LinearDepth = float4(ld, ld, ld, ld);
+    #else
+    #if defined(SFX_GLSL_1_2) || defined(SFX_GLSL_4) || defined(SFX_OGSFX)
+        float currZ = abs( ( view * float4(worldPos, 1.0f) ).z );
+        float4 Pndc  = viewPrj * float4(worldPos, 1.0f);
+        float2 UV = Pndc.xy / Pndc.w * float2(0.5f, 0.5f) + 0.5f;
+
+        float prevZ = sampleTransDepthTex(UV).r;
+        float opaqZ = sampleOpaqueDepthTex(UV).r;
+        float bias = 0.00002f;
+        if (currZ < prevZ * (1.0f + bias) || currZ > opaqZ * (1.0f - bias))
+        {
+            discard;
+        }
+
+        float ld = abs( ( view * float4(worldPos, 1.0f) ).z );
+        OUT.LinearDepth = float4(ld, ld, ld, ld);
+    #else
+        float currZ = abs( mul( float4(worldPos, 1.0f), view ).z );
+        float4 Pndc  = mul( float4(worldPos, 1.0f), viewPrj );
+        float2 UV = Pndc.xy / Pndc.w * float2(0.5f, -0.5f) + 0.5f;
+
+        float prevZ = sampleTransDepthTex(UV).r;
+        float opaqZ = sampleOpaqueDepthTex(UV).r;
+        float bias = 0.00002f;
+        if (currZ < prevZ * (1.0f + bias) || currZ > opaqZ * (1.0f - bias))
+        {
+            discard;
+        }
+
+        float ld = abs( mul( float4(worldPos, 1.0f), view ).z );
+        OUT.LinearDepth = float4(ld, ld, ld, ld);
+#endif
+    #endif
+
+    OUT.Peel = 1.0f;
+
+    return OUT;
+}
+
+
+}
+
+// -------------------------------------- ShaderVertex --------------------------------------
+attribute APPDATA
+{
+    float3 inPosition : POSITION;
+    float2 inmap1 : TEXCOORD0;
+};
+
+attribute SHADERDATA
+{
+    float4 WorldPosition : TEXCOORD0;
+    float4 map1 : TEXCOORD1;
+    half3 FogFactor : TEXCOORD2;
+};
+
+GLSLShader ShaderVertex
+{
+void main(void)
+{
+    gl_Position = float4(inPosition, 1);
+    float4 WorldPos = (world * gl_Position);
+    VS_OUT.WorldPosition = WorldPos;
+    float4 OutUVs = float4(inmap1.x, inmap1.y, 0.000000, 0.000000);
+    VS_OUT.map1 = OutUVs;
+    VS_OUT.WorldPosition = (world * float4(inPosition, 1));
+    float4 _HPosition = mul( viewPrj, float4(VS_OUT.WorldPosition.xyz, 1) );
+    float fogFactor = 0.0;
+    if (MayaHwFogMode == 0) {
+                fogFactor = saturate((MayaHwFogEnd - _HPosition.z) / (MayaHwFogEnd - MayaHwFogStart));
+    }
+    else if (MayaHwFogMode == 1) {
+                fogFactor = 1.0 / (exp(_HPosition.z * MayaHwFogDensity));
+    }
+    else if (MayaHwFogMode == 2) {
+                fogFactor = 1.0 / (exp(pow(_HPosition.z * MayaHwFogDensity, 2)));
+    }
+    VS_OUT.FogFactor = float3(fogFactor, fogFactor, fogFactor);
+
+    float4 WVSpace = (wvp * gl_Position);
+    gl_Position = WVSpace;
+}
+
+}
+
+// -------------------------------------- ShaderPixel --------------------------------------
+attribute PIXELDATA
+{
+    float4 outColor : COLOR0;
+};
+
+GLSLShader ShaderPixel
+{
+void main(void)
+{
+    float3 CameraPosition = viewI[3].xyz;
+    float3 CamVec = (CameraPosition - PS_IN.WorldPosition.xyz);
+    float3 CamVecNorm = normalize(CamVec);
+    float4 LightLoopTotal11 = float4(0,0,0,0);
+    CellularNoiseOutput CellularNoise = CellularNoiseFunc(PS_IN.map1.xy, 0.100000);
+    float4 VectorConstruct = float4(CellularNoise.value, CellularNoise.value, CellularNoise.value, 1.000000);
+    float4 LightLoopAndAfterLoop = (LightLoopTotal11 + VectorConstruct);
+    float SatOp = clamp(LightLoopAndAfterLoop.w, 0.0, 1.0);
+    float4 VectorConstruct31 = float4(LightLoopAndAfterLoop.xyz.x, LightLoopAndAfterLoop.xyz.y, LightLoopAndAfterLoop.xyz.z, SatOp);
+    if (MayaHwFogEnabled) {
+        float fogFactor = (1.0 - PS_IN.FogFactor.x) * MayaHwFogColor.a;
+        VectorConstruct31.rgb	= lerp(VectorConstruct31.rgb, MayaHwFogColor.rgb, fogFactor);
+    }
+
+    outColor = VectorConstruct31;
+}
+
+}
+
+// -------------------------------------- ShaderPixelP1 --------------------------------------
+attribute PIXELDATAP1
+{
+    float4 outColor : COLOR0;
+    float outDepth : DEPTH;
+};
+
+GLSLShader ShaderPixelP1
+{
+void main(void)
+{
+    outColor = float4(0.000000, 0.000000, 0.000000, 0.000000);
+    outDepth = 1.000000;
+}
+
+}
+
+// -------------------------------------- ShaderPixelP2 --------------------------------------
+attribute PIXELDATAP2
+{
+    float4 outColor0 : COLOR0;
+    float4 outColor1 : COLOR1;
+};
+
+GLSLShader ShaderPixelP2
+{
+void main(void)
+{
+    float4 outColor;
+    float3 CameraPosition = viewI[3].xyz;
+    float3 CamVec = (CameraPosition - PS_IN.WorldPosition.xyz);
+    float3 CamVecNorm = normalize(CamVec);
+    float4 LightLoopTotal11 = float4(0,0,0,0);
+    CellularNoiseOutput CellularNoise = CellularNoiseFunc(PS_IN.map1.xy, 0.100000);
+    float4 VectorConstruct = float4(CellularNoise.value, CellularNoise.value, CellularNoise.value, 1.000000);
+    float4 LightLoopAndAfterLoop = (LightLoopTotal11 + VectorConstruct);
+    float SatOp = clamp(LightLoopAndAfterLoop.w, 0.0, 1.0);
+    float4 VectorConstruct31 = float4(LightLoopAndAfterLoop.xyz.x, LightLoopAndAfterLoop.xyz.y, LightLoopAndAfterLoop.xyz.z, SatOp);
+    outColor = VectorConstruct31;
+    DepthPeelOutput DepthPeel = DepthPeelFunc(PS_IN.WorldPosition.xyz, view, viewPrj);
+    outColor0 = outColor;
+    outColor1 = DepthPeel.LinearDepth;
+}
+
+}
+
+// -------------------------------------- ShaderPixelP3 --------------------------------------
+attribute PIXELDATAP3
+{
+    float4 outColor0 : COLOR0;
+    float4 outColor1 : COLOR1;
+};
+
+GLSLShader ShaderPixelP3
+{
+void main(void)
+{
+    float4 outColor;
+    float3 CameraPosition = viewI[3].xyz;
+    float3 CamVec = (CameraPosition - PS_IN.WorldPosition.xyz);
+    float3 CamVecNorm = normalize(CamVec);
+    float4 LightLoopTotal11 = float4(0,0,0,0);
+    CellularNoiseOutput CellularNoise = CellularNoiseFunc(PS_IN.map1.xy, 0.100000);
+    float4 VectorConstruct = float4(CellularNoise.value, CellularNoise.value, CellularNoise.value, 1.000000);
+    float4 LightLoopAndAfterLoop = (LightLoopTotal11 + VectorConstruct);
+    float SatOp = clamp(LightLoopAndAfterLoop.w, 0.0, 1.0);
+    float4 VectorConstruct31 = float4(LightLoopAndAfterLoop.xyz.x, LightLoopAndAfterLoop.xyz.y, LightLoopAndAfterLoop.xyz.z, SatOp);
+    outColor = VectorConstruct31;
+    DepthPeelOutput DepthPeel = DepthPeelFunc(PS_IN.WorldPosition.xyz, view, viewPrj);
+    outColor0 = outColor;
+    outColor1 = ((outColor0.w > 0.001f ? float4(1.0f, 1.0f, 1.0f, 1.0f) : float4(0.0f, 0.0f, 0.0f, 0.0f)) * DepthPeel.Peel);
+}
+
+}
+
+// -------------------------------------- ShaderPixelP4 --------------------------------------
+attribute PIXELDATAP4
+{
+    float4 outColor0 : COLOR0;
+    float4 outColor1 : COLOR1;
+};
+
+GLSLShader ShaderPixelP4
+{
+void main(void)
+{
+    float4 outColor;
+    float3 CameraPosition = viewI[3].xyz;
+    float3 CamVec = (CameraPosition - PS_IN.WorldPosition.xyz);
+    float3 CamVecNorm = normalize(CamVec);
+    float4 LightLoopTotal11 = float4(0,0,0,0);
+    CellularNoiseOutput CellularNoise = CellularNoiseFunc(PS_IN.map1.xy, 0.100000);
+    float4 VectorConstruct = float4(CellularNoise.value, CellularNoise.value, CellularNoise.value, 1.000000);
+    float4 LightLoopAndAfterLoop = (LightLoopTotal11 + VectorConstruct);
+    float SatOp = clamp(LightLoopAndAfterLoop.w, 0.0, 1.0);
+    float4 VectorConstruct31 = float4(LightLoopAndAfterLoop.xyz.x, LightLoopAndAfterLoop.xyz.y, LightLoopAndAfterLoop.xyz.z, SatOp);
+    outColor = VectorConstruct31;
+    outColor0 = outColor;
+    outColor1 = (outColor0.w > 0.001f ? float4(1.0f, 1.0f, 1.0f, 1.0f) : float4(0.0f, 0.0f, 0.0f, 0.0f));
+}
+
+}
+
+// -------------------------------------- technique T0 ---------------------------------------
+technique T0
+<
+    string transparency = "opaque";
+    string supportsAdvancedTransparency = "true";
+>
+{
+    pass P0
+    <
+        string drawContext = "colorPass";
+    >
+    {
+        VertexShader (in APPDATA, out SHADERDATA VS_OUT) = { Common_Funcs, VertexShader_Funcs, ShaderVertex};
+        PixelShader (in SHADERDATA PS_IN, out PIXELDATA) = { Common_Funcs, PixelShader_Funcs, ShaderPixel};
+    }
+
+    pass P1
+    <
+        string drawContext = "normalDepthPass";
+    >
+    {
+        VertexShader (in APPDATA, out SHADERDATA VS_OUT) = { Common_Funcs, VertexShader_Funcs, ShaderVertex};
+        PixelShader (in SHADERDATA PS_IN, out PIXELDATAP1) = { Common_Funcs, PixelShader_Funcs, ShaderPixelP1};
+    }
+
+    pass P2
+    <
+        string drawContext = "transparentPeel";
+    >
+    {
+        VertexShader (in APPDATA, out SHADERDATA VS_OUT) = { Common_Funcs, VertexShader_Funcs, ShaderVertex};
+        PixelShader (in SHADERDATA PS_IN, out PIXELDATAP2) = { Common_Funcs, PixelShader_Funcs, ShaderPixelP2};
+    }
+
+    pass P3
+    <
+        string drawContext = "transparentPeelAndAvg";
+    >
+    {
+        VertexShader (in APPDATA, out SHADERDATA VS_OUT) = { Common_Funcs, VertexShader_Funcs, ShaderVertex};
+        PixelShader (in SHADERDATA PS_IN, out PIXELDATAP3) = { Common_Funcs, PixelShader_Funcs, ShaderPixelP3};
+    }
+
+    pass P4
+    <
+        string drawContext = "transparentWeightedAvg";
+    >
+    {
+        VertexShader (in APPDATA, out SHADERDATA VS_OUT) = { Common_Funcs, VertexShader_Funcs, ShaderVertex};
+        PixelShader (in SHADERDATA PS_IN, out PIXELDATAP4) = { Common_Funcs, PixelShader_Funcs, ShaderPixelP4};
+    }
+
+}

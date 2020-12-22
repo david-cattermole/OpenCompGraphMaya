@@ -89,7 +89,8 @@ MStatus uninitializePlugin(MObject obj) {
         return status;
     }
 
-    status = ocgm::releaseShaders();
+    // status = ocgm::releaseShaders();
+    status = ocgm::releaseImagePlaneShader();
     if (!status) {
         status.perror("releaseShaders");
         return status;
