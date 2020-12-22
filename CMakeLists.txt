@@ -18,14 +18,12 @@
 #
 # OpenCompGraphMaya build script.
 #
-cmake_minimum_required(VERSION 2.8.12)
+cmake_minimum_required(VERSION 3.0.0)
 
 # Project configuration.
-project(OpenCompGraphMaya)
-set(PROJECT_VERSION_MAJOR 0)
-set(PROJECT_VERSION_MINOR 1)
-set(PROJECT_VERSION_PATCH 0)
-set(PROJECT_VERSION "${PROJECT_VERSION_MAJOR}.${PROJECT_VERSION_MINOR}.${PROJECT_VERSION_PATCH}")
+project(OpenCompGraphMaya
+        VERSION 0.1.0)
+
 set(PROJECT_HOMEPAGE_URL "https://github.com/david-cattermole/OpenCompGraphMaya")
 set(PROJECT_DESCRIPTION "Compositing Graph nodes inside Autodesk Maya.")
 set(PROJECT_AUTHOR "David Cattermole and others (see AUTHORS.txt file)")
