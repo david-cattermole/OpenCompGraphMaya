@@ -1,0 +1,64 @@
+// World-view-projection transformation.
+uniform mat4 gWVPXf : WorldViewProjection;
+
+// The vertex shader input - coming from the application
+attribute vs_input
+{
+    vec3 in_position : POSITION;
+};
+
+// The vertex shader ouput and also the pixel shader input
+attribute vs_to_ps
+{
+    // None
+};
+
+// The pixel shader output
+attribute ps_output
+{
+    vec4 out_color : COLOR0;
+}
+
+// All the functions or constants that will be used by the vertex
+// shader
+GLSLShader VS
+{
+    // Only the main function, which is the same as the main function
+    // of the .glslv
+    void main()
+    {
+        gl_Position = gWVPXf * vec4(in_position, 1);
+    }
+}
+
+// All the functions or constants that will be used by the pixel
+// shader
+GLSLShader PS
+{
+    // Only the main function, which is the same as the main function
+    // of the .glslf
+    void main()
+    {
+        out_color = vec4(1, 0, 0, 1);
+    }
+}
+
+// Declaration of the techniques and passes - for this example, 1
+// technique with 1 pass
+technique Main
+{
+    pass p0
+    {
+        // We have 1 vertex shader stage that uses :
+        // - the vs_input attribute as input,
+        // - the vs_to_ps attribute as output,
+        // - all functions declared in the GLSLShader block VS - must contain main()
+        VertexShader (in vs_input, out vs_to_ps) = VS;
+
+        // We have 1 pixel shader stage that uses :
+        // - the vs_to_ps attribute as input,
+        // - the ps_output attribute as output,
+        // - all functions declared in the GLSLShader block PS - must contain main()
+        PixelShader (in vs_to_ps, out ps_output) = PS;
+    }
+}
