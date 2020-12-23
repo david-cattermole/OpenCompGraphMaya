@@ -124,12 +124,12 @@ void ImagePlaneSubSceneOverride::update(
     // the instances every frame to look for changes is not efficient
     // enough. Monitoring change events and changing only the required
     // instances should be done instead.
-    for (unsigned int i = 0; i < numInstances; i++) {
+    for (uint32_t i = 0; i < numInstances; i++) {
         const MDagPath &instance = fInstanceDagPaths[i];
         if (instance.isValid() && instance.isVisible()) {
-            InstanceInfo instanceInfo(instance.inclusiveMatrix(),
-                                      MHWRender::MGeometryUtilities::wireframeColor(
-                                          instance));
+            InstanceInfo instanceInfo(
+                instance.inclusiveMatrix(),
+                MHWRender::MGeometryUtilities::wireframeColor(instance));
 
             InstanceInfoMap::iterator iter = fInstanceInfoCache.find(i);
             if (iter == fInstanceInfoCache.end() ||
@@ -141,21 +141,17 @@ void ImagePlaneSubSceneOverride::update(
                          instanceInfo.fMatrix))) {
                     fAreUIDrawablesDirty = true;
                 }
-
                 anyInstanceChanged = true;
-
                 fInstanceInfoCache[i] = instanceInfo;
             }
 
             instanceMatrixArray[numVisibleInstances] = instanceInfo.fMatrix;
-            instanceColorArray[numVisibleInstances *
-                               componentsPerColor] = instanceInfo.fColor.r;
-            instanceColorArray[numVisibleInstances * componentsPerColor +
-                               1] = instanceInfo.fColor.g;
-            instanceColorArray[numVisibleInstances * componentsPerColor +
-                               2] = instanceInfo.fColor.b;
-            instanceColorArray[numVisibleInstances * componentsPerColor +
-                               3] = instanceInfo.fColor.a;
+
+            uint32_t idx = numVisibleInstances * componentsPerColor;
+            instanceColorArray[idx + 0] = instanceInfo.fColor.r;
+            instanceColorArray[idx + 1] = instanceInfo.fColor.g;
+            instanceColorArray[idx + 2] = instanceInfo.fColor.b;
+            instanceColorArray[idx + 3] = instanceInfo.fColor.a;
 
             numVisibleInstances++;
         } else {
@@ -178,22 +174,20 @@ void ImagePlaneSubSceneOverride::update(
         for (unsigned int i = numVisibleInstances; i < numInstanceInfo; i++) {
             fInstanceInfoCache.erase(i);
         }
-
         anyInstanceChanged = true;
         fAreUIDrawablesDirty = true;
     }
 
     bool itemsChanged = false;
-
     MHWRender::MRenderItem *wireItem = container.find(wireframeItemName_);
     if (!wireItem) {
-        wireItem = MHWRender::MRenderItem::Create(wireframeItemName_,
-                                                  MHWRender::MRenderItem::DecorationItem,
-                                                  MHWRender::MGeometry::kLines);
+        wireItem = MHWRender::MRenderItem::Create(
+            wireframeItemName_,
+            MHWRender::MRenderItem::DecorationItem,
+            MHWRender::MGeometry::kLines);
         wireItem->setDrawMode(MHWRender::MGeometry::kWireframe);
         wireItem->depthPriority(5);
         container.add(wireItem);
-
         itemsChanged = true;
     }
 
@@ -219,18 +213,18 @@ void ImagePlaneSubSceneOverride::update(
         MStatus status;
         MFnDagNode node(fLocatorNode, &status);
 
-        ImagePlaneShape *fp = status ? dynamic_cast<ImagePlaneShape *>(node.userNode())
-            : nullptr;
+        ImagePlaneShape *fp = status ? dynamic_cast<ImagePlaneShape *>(node.userNode()) : nullptr;
         MBoundingBox *bounds = fp ? new MBoundingBox(fp->boundingBox()) : nullptr;
 
         MHWRender::MVertexBufferArray vertexBuffers;
         vertexBuffers.addBuffer("positions", fPositionBuffer);
-        setGeometryForRenderItem(*wireItem, vertexBuffers, *fWireIndexBuffer,
-                                 bounds);
-        setGeometryForRenderItem(*shadedItem, vertexBuffers,
-                                 *fShadedIndexBuffer, bounds);
-
-        if (bounds) delete bounds;
+        setGeometryForRenderItem(
+                *wireItem, vertexBuffers, *fWireIndexBuffer, bounds);
+        setGeometryForRenderItem(
+                *shadedItem, vertexBuffers, *fShadedIndexBuffer, bounds);
+        if (bounds) {
+            delete bounds;
+        }
     }
 
     if (itemsChanged || anyInstanceChanged) {
@@ -262,10 +256,9 @@ void ImagePlaneSubSceneOverride::update(
             // are set, otherwise it will fail.
             setInstanceTransformArray(*wireItem, instanceMatrixArray);
             setInstanceTransformArray(*shadedItem, instanceMatrixArray);
-            setExtraInstanceData(*wireItem, colorParameterName_,
-                                 instanceColorArray);
-            setExtraInstanceData(*shadedItem, colorParameterName_,
-                                 instanceColorArray);
+            setInstanceTransformArray(*texturedItem, instanceMatrixArray);
+            setExtraInstanceData(*wireItem, colorParameterName_, instanceColorArray);
+            setExtraInstanceData(*shadedItem, colorParameterName_, instanceColorArray);
 
             // Once we change the render items into instance rendering
             // they can't be changed back without being deleted and
@@ -386,7 +379,7 @@ void ImagePlaneSubSceneOverride::rebuildGeometryBuffers() {
     if (fWireIndexBuffer) {
         int primitiveIndex = 0;
         int startIndex = 0;
-        int numPrimitive = shapeVerticesCountB + shapeVerticesCountA - 2;
+        int numPrimitive = (shapeVerticesCountB + shapeVerticesCountA) - 2;
         int numIndex = numPrimitive * 2;
 
         unsigned int *indices = (unsigned int *) fWireIndexBuffer->acquire(
@@ -455,4 +448,4 @@ void ImagePlaneSubSceneOverride::deleteGeometryBuffers() {
     }
 }
 
-} // namespace open_comp_graph_maya 
+} // namespace open_comp_graph_maya

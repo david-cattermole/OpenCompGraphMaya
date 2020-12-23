@@ -1,4 +1,3 @@
-
 // Maya
 #include <maya/MPxLocatorNode.h>
 #include <maya/MString.h>
@@ -118,8 +117,10 @@ void ImagePlaneShape::draw(M3dView &view, const MDagPath & /*path*/,
 
     // Draw the name of the ImagePlaneShape
     view.setDrawColor(MColor(0.1f, 0.8f, 0.8f, 1.0f));
-    view.drawText(MString("Open Comp Graph Maya"), MPoint(0.0, 0.0, 0.0),
-                  M3dView::kCenter);
+    view.drawText(
+        MString("Open Comp Graph Maya"),
+        MPoint(0.0, 0.0, 0.0),
+        M3dView::kCenter);
 
     view.endGL();
 }
@@ -170,4 +171,4 @@ MStatus ImagePlaneShape::initialize() {
     return MS::kSuccess;
 }
 
-} // namespace open_comp_graph_maya 
+} // namespace open_comp_graph_maya
