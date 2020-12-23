@@ -24,9 +24,12 @@ namespace open_comp_graph_maya {
 
 // Constants for the shape node.
 MTypeId ImagePlaneShape::m_id(OCGM_IMAGE_PLANE_SHAPE_TYPE_ID);
-MString ImagePlaneShape::drawDbClassification("drawdb/subscene/ocgImagePlane_SubSceneOverride");
-MString ImagePlaneShape::drawRegistrantId("ocgImagePlaneNode_SubSceneOverridePlugin");
-MString ImagePlaneShape::selectionTypeName("ocgImagePlaneSelection");
+MString ImagePlaneShape::drawDbClassification(
+    "drawdb/subscene/ocgImagePlane_SubSceneOverride");
+MString ImagePlaneShape::drawRegistrantId(
+    "ocgImagePlaneNode_SubSceneOverridePlugin");
+MString ImagePlaneShape::selectionTypeName(
+    "ocgImagePlaneSelection");
 
 // Attributes
 MObject ImagePlaneShape::size;
@@ -49,7 +52,6 @@ void ImagePlaneShape::draw(M3dView &view, const MDagPath & /*path*/,
                            M3dView::DisplayStyle style,
                            M3dView::DisplayStatus status) {
     // Get the size
-    //
     MObject thisNode = thisMObject();
     MPlug plug(thisNode, size);
     MDistance sizeVal;
@@ -58,12 +60,9 @@ void ImagePlaneShape::draw(M3dView &view, const MDagPath & /*path*/,
     float multiplier = (float) sizeVal.asCentimeters();
 
     view.beginGL();
-
-
     if ((style == M3dView::kFlatShaded) ||
         (style == M3dView::kGouraudShaded)) {
         // Push the color settings
-        //
         glPushAttrib(GL_CURRENT_BIT);
 
         if (status == M3dView::kActive) {
@@ -74,19 +73,19 @@ void ImagePlaneShape::draw(M3dView &view, const MDagPath & /*path*/,
 
         glBegin(GL_TRIANGLE_FAN);
         int i;
-        int last = shapeCountA - 1;
+        int last = shapeVerticesCountA - 1;
         for (i = 0; i < last; ++i) {
-            glVertex3f(shapeA[i][0] * multiplier,
-                       shapeA[i][1] * multiplier,
-                       shapeA[i][2] * multiplier);
+            glVertex3f(shapeVerticesA[i][0] * multiplier,
+                       shapeVerticesA[i][1] * multiplier,
+                       shapeVerticesA[i][2] * multiplier);
         }
         glEnd();
         glBegin(GL_TRIANGLE_FAN);
-        last = shapeCountB - 1;
+        last = shapeVerticesCountB - 1;
         for (i = 0; i < last; ++i) {
-            glVertex3f(shapeB[i][0] * multiplier,
-                       shapeB[i][1] * multiplier,
-                       shapeB[i][2] * multiplier);
+            glVertex3f(shapeVerticesB[i][0] * multiplier,
+                       shapeVerticesB[i][1] * multiplier,
+                       shapeVerticesB[i][2] * multiplier);
         }
         glEnd();
 
@@ -97,23 +96,23 @@ void ImagePlaneShape::draw(M3dView &view, const MDagPath & /*path*/,
     //
     glBegin(GL_LINES);
     int i;
-    int last = shapeCountA - 1;
+    int last = shapeVerticesCountA - 1;
     for (i = 0; i < last; ++i) {
-        glVertex3f(shapeA[i][0] * multiplier,
-                   shapeA[i][1] * multiplier,
-                   shapeA[i][2] * multiplier);
-        glVertex3f(shapeA[i + 1][0] * multiplier,
-                   shapeA[i + 1][1] * multiplier,
-                   shapeA[i + 1][2] * multiplier);
+        glVertex3f(shapeVerticesA[i][0] * multiplier,
+                   shapeVerticesA[i][1] * multiplier,
+                   shapeVerticesA[i][2] * multiplier);
+        glVertex3f(shapeVerticesA[i + 1][0] * multiplier,
+                   shapeVerticesA[i + 1][1] * multiplier,
+                   shapeVerticesA[i + 1][2] * multiplier);
     }
-    last = shapeCountB - 1;
+    last = shapeVerticesCountB - 1;
     for (i = 0; i < last; ++i) {
-        glVertex3f(shapeB[i][0] * multiplier,
-                   shapeB[i][1] * multiplier,
-                   shapeB[i][2] * multiplier);
-        glVertex3f(shapeB[i + 1][0] * multiplier,
-                   shapeB[i + 1][1] * multiplier,
-                   shapeB[i + 1][2] * multiplier);
+        glVertex3f(shapeVerticesB[i][0] * multiplier,
+                   shapeVerticesB[i][1] * multiplier,
+                   shapeVerticesB[i][2] * multiplier);
+        glVertex3f(shapeVerticesB[i + 1][0] * multiplier,
+                   shapeVerticesB[i + 1][1] * multiplier,
+                   shapeVerticesB[i + 1][2] * multiplier);
     }
     glEnd();
 
@@ -131,7 +130,6 @@ bool ImagePlaneShape::isBounded() const {
 
 MBoundingBox ImagePlaneShape::boundingBox() const {
     // Get the size
-    //
     MObject thisNode = thisMObject();
     MPlug plug(thisNode, size);
     MDistance sizeVal;

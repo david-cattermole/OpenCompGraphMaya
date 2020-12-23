@@ -21,10 +21,6 @@
 #include <map>
 #include <unordered_map>
 
-// OCG Maya
-#include "utils/unused.h"
-
-
 namespace open_comp_graph_maya{
 
 class ImagePlaneSubSceneOverride : public MHWRender::MPxSubSceneOverride {
@@ -41,10 +37,8 @@ public:
     }
 
     bool requiresUpdate(
-            const MHWRender::MSubSceneContainer &container,
-            const MHWRender::MFrameContext &frameContext) const override {
-        UNUSED(container);
-        UNUSED(frameContext);
+        const MHWRender::MSubSceneContainer &/*container*/,
+        const MHWRender::MFrameContext &/*frameContext*/) const override {
         return true;
     }
 

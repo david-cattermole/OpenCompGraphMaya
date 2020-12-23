@@ -21,9 +21,6 @@
 #include <map>
 #include <unordered_map>
 
-// OCG Maya
-#include "utils/unused.h"
-
 namespace open_comp_graph_maya{
 
 // Viewport 2.0 specific data

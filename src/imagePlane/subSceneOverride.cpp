@@ -28,9 +28,9 @@ ImagePlaneSubSceneOverride::ImagePlaneSubSceneOverride(const MObject &obj)
           fMultiplier(0.0f),
           fIsInstanceMode(false),
           fAreUIDrawablesDirty(true),
-          fPositionBuffer(NULL),
-          fWireIndexBuffer(NULL),
-          fShadedIndexBuffer(NULL),
+          fPositionBuffer(nullptr),
+          fWireIndexBuffer(nullptr),
+          fShadedIndexBuffer(nullptr),
           fInstanceAddedCbId(0),
           fInstanceRemovedCbId(0) {
     MDagPath dagPath;
@@ -77,11 +77,12 @@ void ImagePlaneSubSceneOverride::update(
             MStreamUtils::stdErrorStream() << "ImagePlaneSubSceneOverride: Failed to get all DAG paths.\n";
             return;
         }
-
         numInstances = fInstanceDagPaths.length();
     }
 
-    if (numInstances == 0) return;
+    if (numInstances == 0) {
+        return;
+    }
 
     // MHWRender::MShaderInstance *shader = get3dSolidShader(
     //     MHWRender::MGeometryUtilities::wireframeColor(
@@ -103,13 +104,10 @@ void ImagePlaneSubSceneOverride::update(
     }
 
     bool updateGeometry = (container.count() == 0);
-
     if (fMultiplier != newMultiplier) {
         fMultiplier = newMultiplier;
-
         updateGeometry = true;
     }
-
     if (updateGeometry) {
         rebuildGeometryBuffers();
     }
@@ -222,8 +220,8 @@ void ImagePlaneSubSceneOverride::update(
         MFnDagNode node(fLocatorNode, &status);
 
         ImagePlaneShape *fp = status ? dynamic_cast<ImagePlaneShape *>(node.userNode())
-            : NULL;
-        MBoundingBox *bounds = fp ? new MBoundingBox(fp->boundingBox()) : NULL;
+            : nullptr;
+        MBoundingBox *bounds = fp ? new MBoundingBox(fp->boundingBox()) : nullptr;
 
         MHWRender::MVertexBufferArray vertexBuffers;
         vertexBuffers.addBuffer("positions", fPositionBuffer);
@@ -342,33 +340,36 @@ bool ImagePlaneSubSceneOverride::getInstancedSelectionPath(
 void ImagePlaneSubSceneOverride::rebuildGeometryBuffers() {
     ImagePlaneSubSceneOverride::deleteGeometryBuffers();
 
-    // VertexBuffer for positions. We concatenate the shapeB and shapeA positions into a single vertex buffer.
-    // The index buffers will decide which positions will be selected for each render items.
-    const MHWRender::MVertexBufferDescriptor vbDesc("",
-                                                    MHWRender::MGeometry::kPosition,
-                                                    MHWRender::MGeometry::kFloat,
-                                                    3);
+    // VertexBuffer for positions. We concatenate the shapeVerticesB and
+    // shapeVerticesA positions into a single vertex buffer.  The index
+    // buffers will decide which positions will be selected for each
+    // render items.
+    const MHWRender::MVertexBufferDescriptor vbDesc(
+        "",
+        MHWRender::MGeometry::kPosition,
+        MHWRender::MGeometry::kFloat,
+        3);
     fPositionBuffer = new MHWRender::MVertexBuffer(vbDesc);
     if (fPositionBuffer) {
-        float *positions = (float *) fPositionBuffer->acquire(shapeCountA + shapeCountB, true);
+        float *positions = (float *) fPositionBuffer->acquire(shapeVerticesCountA + shapeVerticesCountB, true);
         if (positions) {
             int verticesPointerOffset = 0;
-
             for (int currentVertex = 0;
-                 currentVertex < shapeCountA + shapeCountB; ++currentVertex) {
-                if (currentVertex < shapeCountB) {
+                 currentVertex < shapeVerticesCountA + shapeVerticesCountB;
+                 ++currentVertex) {
+                if (currentVertex < shapeVerticesCountB) {
                     int shapeBVtx = currentVertex;
-                    float x = shapeB[shapeBVtx][0] * fMultiplier;
-                    float y = shapeB[shapeBVtx][1] * fMultiplier;
-                    float z = shapeB[shapeBVtx][2] * fMultiplier;
+                    float x = shapeVerticesB[shapeBVtx][0] * fMultiplier;
+                    float y = shapeVerticesB[shapeBVtx][1] * fMultiplier;
+                    float z = shapeVerticesB[shapeBVtx][2] * fMultiplier;
                     positions[verticesPointerOffset++] = x;
                     positions[verticesPointerOffset++] = y;
                     positions[verticesPointerOffset++] = z;
                 } else {
-                    int shapeAVtx = currentVertex - shapeCountB;
-                    float x = shapeA[shapeAVtx][0] * fMultiplier;
-                    float y = shapeA[shapeAVtx][1] * fMultiplier;
-                    float z = shapeA[shapeAVtx][2] * fMultiplier;
+                    int shapeAVtx = currentVertex - shapeVerticesCountB;
+                    float x = shapeVerticesA[shapeAVtx][0] * fMultiplier;
+                    float y = shapeVerticesA[shapeAVtx][1] * fMultiplier;
+                    float z = shapeVerticesA[shapeAVtx][2] * fMultiplier;
                     positions[verticesPointerOffset++] = x;
                     positions[verticesPointerOffset++] = y;
                     positions[verticesPointerOffset++] = z;
@@ -385,19 +386,19 @@ void ImagePlaneSubSceneOverride::rebuildGeometryBuffers() {
     if (fWireIndexBuffer) {
         int primitiveIndex = 0;
         int startIndex = 0;
-        int numPrimitive = shapeCountB + shapeCountA - 2;
+        int numPrimitive = shapeVerticesCountB + shapeVerticesCountA - 2;
         int numIndex = numPrimitive * 2;
 
         unsigned int *indices = (unsigned int *) fWireIndexBuffer->acquire(
             numIndex, true);
         if (indices) {
             for (int i = 0; i < numIndex;) {
-                if (i < (shapeCountB - 1) * 2) {
+                if (i < (shapeVerticesCountB - 1) * 2) {
                     startIndex = 0;
                     primitiveIndex = i / 2;
                 } else {
-                    startIndex = shapeCountB;
-                    primitiveIndex = i / 2 - shapeCountB + 1;
+                    startIndex = shapeVerticesCountB;
+                    primitiveIndex = i / 2 - shapeVerticesCountB + 1;
                 }
                 indices[i++] = startIndex + primitiveIndex;
                 indices[i++] = startIndex + primitiveIndex + 1;
@@ -413,19 +414,19 @@ void ImagePlaneSubSceneOverride::rebuildGeometryBuffers() {
     if (fShadedIndexBuffer) {
         int primitiveIndex = 0;
         int startIndex = 0;
-        int numPrimitive = shapeCountB + shapeCountA - 4;
+        int numPrimitive = shapeVerticesCountB + shapeVerticesCountA - 4;
         int numIndex = numPrimitive * 3;
 
         unsigned int *indices = (unsigned int *) fShadedIndexBuffer->acquire(
             numIndex, true);
         if (indices) {
             for (int i = 0; i < numIndex;) {
-                if (i < (shapeCountB - 2) * 3) {
+                if (i < (shapeVerticesCountB - 2) * 3) {
                     startIndex = 0;
                     primitiveIndex = i / 3;
                 } else {
-                    startIndex = shapeCountB;
-                    primitiveIndex = i / 3 - shapeCountB + 2;
+                    startIndex = shapeVerticesCountB;
+                    primitiveIndex = i / 3 - shapeVerticesCountB + 2;
                 }
                 indices[i++] = startIndex;
                 indices[i++] = startIndex + primitiveIndex + 1;
@@ -440,17 +441,17 @@ void ImagePlaneSubSceneOverride::rebuildGeometryBuffers() {
 void ImagePlaneSubSceneOverride::deleteGeometryBuffers() {
     if (fPositionBuffer) {
         delete fPositionBuffer;
-        fPositionBuffer = NULL;
+        fPositionBuffer = nullptr;
     }
 
     if (fWireIndexBuffer) {
         delete fWireIndexBuffer;
-        fWireIndexBuffer = NULL;
+        fWireIndexBuffer = nullptr;
     }
 
     if (fShadedIndexBuffer) {
         delete fShadedIndexBuffer;
-        fShadedIndexBuffer = NULL;
+        fShadedIndexBuffer = nullptr;
     }
 }
 
