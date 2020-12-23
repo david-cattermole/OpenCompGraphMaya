@@ -40,6 +40,7 @@ set(MAYA_INCLUDE_PATH "/usr/autodesk/maya${MAYA_VERSION}/include" CACHE PATH "Ma
 set(MAYA_LIB_PATH "/usr/autodesk/maya${MAYA_VERSION}/lib" CACHE PATH "Maya library directory")
 
 add_subdirectory(modules)
+add_subdirectory(shader)
 add_subdirectory(include)
 add_subdirectory(src)
 

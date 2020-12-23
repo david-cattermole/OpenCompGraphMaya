@@ -14,6 +14,7 @@
 
 // STL
 #include <unordered_map>
+#include <cstdlib>
 
 // OCG Maya
 #include "shader.h"
@@ -87,8 +88,13 @@ MHWRender::MShaderInstance *getImagePlaneShader() {
     if (renderer) {
         const MHWRender::MShaderManager *shaderMgr = renderer->getShaderManager();
         if (shaderMgr) {
-            const MString searchPath("C:\\Users\\user\\dev\\OpenCompGraphMaya\\shaders");
-            shaderMgr->addShaderPath(searchPath);
+            MString shaderLocation;
+            MString cmd = MString("getModulePath -moduleName \"OpenCompGraphMaya\";");
+            if( !MGlobal::executeCommand(cmd, shaderLocation, false) ) {
+                shaderLocation = MString(std::getenv("OPENCOMPGRAPHMAYA_LOCATION"));
+            }
+            shaderLocation += MString("/shader");
+            shaderMgr->addShaderPath(shaderLocation);
 
             MShaderCompileMacro *macros = nullptr;
             unsigned int numberOfMacros = 0;
@@ -100,8 +106,7 @@ MHWRender::MShaderInstance *getImagePlaneShader() {
             imagePlaneShader = shaderMgr->getEffectsFileShader(
                 effectsFileName, techniqueName,
                 macros, numberOfMacros, useEffectCache,
-                preCb, postCb
-            );
+                preCb, postCb);
             if (!imagePlaneShader) {
                 MGlobal::displayError(shaderMgr->getLastError());
                 return nullptr;
