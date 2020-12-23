@@ -85,8 +85,8 @@ namespace open_comp_graph_maya {
 
 MHWRender::MShaderInstance *getImagePlaneShader() {
     if (imagePlaneShader != nullptr) {
-        MStreamUtils::stdErrorStream()
-            << "ocgImagePlane, found shader!\n";
+        // MStreamUtils::stdErrorStream()
+        //     << "ocgImagePlane, found shader!\n";
         return imagePlaneShader;
     } else {
         MStreamUtils::stdErrorStream()
