@@ -201,6 +201,21 @@ MHWRender::MShaderInstance *getImagePlaneShader() {
             << "ocgImagePlane: param" << i << ": " << paramlist[i].asChar() << "\n";
     }
 
+    // Set a color parameter.
+    MString parameterName = MString("gSolidColor");
+    const float colorValues[4] = {0.0, 0.0, 1.0, 1.0};
+    status = imagePlaneShader->setParameter(
+        parameterName,
+        colorValues);
+    if (status != MStatus::kSuccess) {
+        MStreamUtils::stdErrorStream()
+            << "ocgImagePlane: failed to set color parameter!\n";
+        MString errorMsg = MString(
+            "ocgImagePlane: failed to set color parameter.");
+        MGlobal::displayError(errorMsg);
+        return nullptr;
+    }
+
     // MHWRender::MTextureManager* textureManager =
     //     renderer->getTextureManager();
     // if (!textureManager) {
