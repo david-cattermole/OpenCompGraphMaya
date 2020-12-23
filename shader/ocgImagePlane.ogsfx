@@ -2,39 +2,33 @@
 uniform mat4 gWVPXf : WorldViewProjection;
 
 // The solid color uniform, its default value and several extra parameters
-uniform vec4 gSolidColor : DIFFUSE
+uniform vec4 gSolidColor : DIFFUSE = {1, 0, 0, 1};
+
+uniform texture2D gTexture
 <
-    // The UI name for this parameter in the Attribute Editor (AE)
-    // If not set (or empty), the name of the uniform itself will be used
-    string UIName = "Solid Color";
+    string ResourceName = "";
+    string ResourceType = "2D";
+>;
 
-    // The group in which to put this parameter in the AE
-    // If not set (or empty), the parameter will not be added to any named group
-    string UIGroup = "Editable Parameters";
-
-    // The value used to sort the parameters within the same group
-    // If not set, the parameter will be placed in the same order as it appears
-    // in the shader file, but after the parameters with a specified UIOrder
-    int UIOrder = 1;
-
-    // Specify the widget used to control the uniform value in the AE
-    // Currently only "None" - the parameter will not be visible in the AE -
-    // and "ColorPicker" - use the color picked widget - are supported;
-    // any other value such as "Color" below will be ignored.
-    // The GLSLShader plug-in will try to find the proper widget
-    // based on the name of the attribute and its semantic (here DIFFUSE).
-    string UIWidget = "Color";
-
-> = {1, 0, 0, 1};
+uniform sampler2D gTextureSampler = sampler_state
+{
+    Texture = <gTexture>;
+    TEXTURE_MIN_FILTER = NEAREST;
+    TEXTURE_MAG_FILTER = NEAREST;
+    TEXTURE_WRAP_S = CLAMP_TO_EDGE;
+    TEXTURE_WRAP_T = CLAMP_TO_EDGE;
+    TEXTURE_WRAP_R = CLAMP_TO_EDGE;
+};
 
 attribute vs_input
 {
     vec3 in_position : POSITION;
+    vec2 in_texcoord : TEXCOORD0;
 };
 
 attribute vs_to_ps
 {
-    // None
+    vec2 texcoord;
 };
 
 attribute ps_output
@@ -47,6 +41,7 @@ GLSLShader VS
     void main()
     {
         gl_Position = gWVPXf * vec4(in_position, 1);
+        vsOut.texcoord = in_texcoord;
     }
 }
 
@@ -54,7 +49,7 @@ GLSLShader PS
 {
     void main()
     {
-        out_color = gSolidColor;
+        out_color = gSolidColor * texture2D(gTextureSampler, psIn.texcoord);
     }
 }
 
@@ -62,7 +57,7 @@ technique Main
 {
     pass p0
     {
-        VertexShader (in vs_input, out vs_to_ps) = VS;
-        PixelShader (in vs_to_ps, out ps_output) = PS;
+        VertexShader (in vs_input, out vs_to_ps vsOut) = VS;
+        PixelShader (in vs_to_ps psIn, out ps_output) = PS;
     }
 }

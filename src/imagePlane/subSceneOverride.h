@@ -82,6 +82,7 @@ private:
     bool fAreUIDrawablesDirty;
 
     MHWRender::MVertexBuffer *fPositionBuffer;
+    MHWRender::MVertexBuffer *fUvBuffer;
     MHWRender::MIndexBuffer *fWireIndexBuffer;
     MHWRender::MIndexBuffer *fShadedIndexBuffer;
 

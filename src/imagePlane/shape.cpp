@@ -138,8 +138,8 @@ MBoundingBox ImagePlaneShape::boundingBox() const {
 
     double multiplier = sizeVal.asCentimeters();
 
-    MPoint corner1(-0.17, 0.0, -0.7);
-    MPoint corner2(0.17, 0.0, 0.3);
+    MPoint corner1(-1.0, -1.0, -1.0);
+    MPoint corner2(1.0, 1.0, 1.0);
 
     corner1 = corner1 * multiplier;
     corner2 = corner2 * multiplier;

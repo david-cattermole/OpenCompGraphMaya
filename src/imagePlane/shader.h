@@ -24,9 +24,12 @@
 namespace open_comp_graph_maya{
 
 // Viewport 2.0 specific data
-const MString colorParameterName_ = "solidColor";
-const MString wireframeItemName_ = "ocgImagePlaneLocatorWires";
-const MString shadedItemName_ = "ocgImagePlaneLocatorTriangles";
+const MString colorParameterName_ = "gSolidColor";
+const MString textureParameterName_ = "gTexture";
+const MString textureSamplerParameterName_ = "gTextureSampler";
+const MString wireframeItemName_ = "ocgImagePlaneWireframe";
+const MString shadedItemName_ = "ocgImagePlaneShadedTriangles";
+const MString texturedItemName_ = "ocgImagePlaneTexturedTriangles";
 
 // struct MColorHash {
 //     std::size_t operator()(const MColor &color) const;

@@ -198,82 +198,86 @@ MHWRender::MShaderInstance *getImagePlaneShader() {
     imagePlaneShader->parameterList(paramlist);
     for (uint32_t i = 0; i < paramlist.length(); ++i) {
         MStreamUtils::stdErrorStream()
-            << "ocgImagePlane: param" << i << ": " << paramlist[i].asChar() << "\n";
+            << "ocgImagePlane: param" << i << ": " << paramlist[i].asChar() << '\n';
     }
 
     // Set a color parameter.
-    MString parameterName = MString("gSolidColor");
     const float colorValues[4] = {0.0f, 0.0f, 1.0f, 1.0f};
     status = imagePlaneShader->setParameter(
-        parameterName,
+        colorParameterName_,
         colorValues);
     if (status != MStatus::kSuccess) {
         MStreamUtils::stdErrorStream()
-            << "ocgImagePlane: Failed to set color parameter!\n";
+            << "ocgImagePlane: Failed to set color parameter!" << '\n';
         MString errorMsg = MString(
             "ocgImagePlane: Failed to set color parameter.");
         MGlobal::displayError(errorMsg);
         return nullptr;
     }
 
-    // MHWRender::MTextureManager* textureManager =
-    //     renderer->getTextureManager();
-    // if (!textureManager) {
-    //     MString errorMsg = MString(
-    //         "ocgImagePlane failed to get texture manager.");
-    //     MGlobal::displayError(errorMsg);
-    //     return nullptr;
-    // }
-    // MString textureLocation("C:/Users/catte/dev/OpenCompGraphMaya/src/OpenCompGraph/tests/data");
-    // textureManager->addImagePath(textureLocation);
+    MHWRender::MTextureManager* textureManager =
+        renderer->getTextureManager();
+    if (!textureManager) {
+        MString errorMsg = MString(
+            "ocgImagePlane failed to get texture manager.");
+        MGlobal::displayError(errorMsg);
+        return nullptr;
+    }
+    MString textureLocation("C:/Users/user/dev/OpenCompGraphMaya/src/OpenCompGraph/tests/data");
+    textureManager->addImagePath(textureLocation);
 
-    // // Load texture onto shader.
-    // int mipmapLevels = 1;
-    // bool useExposureControl = false;
-    // MString textureName("checker_8bit_rgba_8x8.png");
-    // const MString contextNodeFullName("ocgImagePlane1");
-    // MHWRender::MTexture* texture =
-    //     textureManager->acquireTexture(
-    //         textureName,
-    //         contextNodeFullName,
-    //         mipmapLevels,
-    //         useExposureControl);
-    // if (texture) {
-    //     MHWRender::MTextureAssignment texResource;
-    //     texResource.texture = texture;
-    //     MStreamUtils::stdErrorStream()
-    //         << "ocgImagePlane: Setting texture parameter...\n";
-    //     imagePlaneShader->setParameter(
-    //         "gTexture",
-    //         texResource);
+    // Load texture onto shader.
+    int mipmapLevels = 1;  // 1 = Only one mip-map level, don't create more.
+    bool useExposureControl = true;
+    MString textureName("checker_8bit_rgba_8x8.png");
+    const MString contextNodeFullName("ocgImagePlane1");
+    MHWRender::MTexture* texture =
+        textureManager->acquireTexture(
+            textureName,
+            contextNodeFullName,
+            mipmapLevels,
+            useExposureControl);
+    if (texture) {
+        MHWRender::MTextureAssignment texResource;
+        texResource.texture = texture;
+        MStreamUtils::stdErrorStream()
+            << "ocgImagePlane: Setting texture parameter...\n";
+        imagePlaneShader->setParameter(
+            textureParameterName_,
+            texResource);
 
-    //     // Release our reference now that it is set on the shader
-    //     textureManager->releaseTexture(texture);
-    // } else {
-    //     MString errorMsg = MString(
-    //         "ocgImagePlane failed to acquire texture from ");
-    //     MGlobal::displayError(errorMsg + textureName);
-    // }
+        // Release our reference now that it is set on the shader
+        textureManager->releaseTexture(texture);
+    } else {
+        MStreamUtils::stdErrorStream()
+            << "ocgImagePlane: Failed to acquire texture from "
+            << textureName.asChar() << '\n';
+        MString errorMsg = MString(
+            "ocgImagePlane: Failed to acquire texture from ");
+        MGlobal::displayError(errorMsg + textureName);
+    }
 
-    // // Acquire and bind the default texture sampler.
-    // MHWRender::MSamplerStateDesc samplerDesc;
-    // samplerDesc.filter = MHWRender::MSamplerState::kMinMagMipPoint;
-    // samplerDesc.addressU = MHWRender::MSamplerState::kTexClamp;
-    // samplerDesc.addressV = MHWRender::MSamplerState::kTexClamp;
-    // const MHWRender::MSamplerState* sampler =
-    //     MHWRender::MStateManager::acquireSamplerState(samplerDesc);
-    // if (sampler) {
-    //     MStreamUtils::stdErrorStream()
-    //         << "ocgImagePlane: Setting texture sampler parameter...\n";
-    //     imagePlaneShader->setParameter(
-    //         "gTextureSampler",
-    //         *sampler);
-    // } else {
-    //     MString errorMsg = MString(
-    //         "ocgImagePlane failed to get texture sampler.");
-    //     MGlobal::displayError(errorMsg);
-    //     return nullptr;
-    // }
+    // Acquire and bind the default texture sampler.
+    MHWRender::MSamplerStateDesc samplerDesc;
+    samplerDesc.filter = MHWRender::MSamplerState::kMinMagMipPoint;
+    samplerDesc.addressU = MHWRender::MSamplerState::kTexClamp;
+    samplerDesc.addressV = MHWRender::MSamplerState::kTexClamp;
+    const MHWRender::MSamplerState* sampler =
+        MHWRender::MStateManager::acquireSamplerState(samplerDesc);
+    if (sampler) {
+        MStreamUtils::stdErrorStream()
+            << "ocgImagePlane: Setting texture sampler parameter...\n";
+        imagePlaneShader->setParameter(
+            textureSamplerParameterName_,
+            *sampler);
+    } else {
+        MStreamUtils::stdErrorStream()
+            << "ocgImagePlane: Failed to get texture sampler.\n";
+        MString errorMsg = MString(
+            "ocgImagePlane: Failed to get texture sampler.");
+        MGlobal::displayError(errorMsg);
+        return nullptr;
+    }
 
     return imagePlaneShader;
 }

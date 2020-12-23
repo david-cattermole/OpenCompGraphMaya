@@ -29,6 +29,7 @@ ImagePlaneSubSceneOverride::ImagePlaneSubSceneOverride(const MObject &obj)
           fIsInstanceMode(false),
           fAreUIDrawablesDirty(true),
           fPositionBuffer(nullptr),
+          fUvBuffer(nullptr),
           fWireIndexBuffer(nullptr),
           fShadedIndexBuffer(nullptr),
           fInstanceAddedCbId(0),
@@ -186,27 +187,47 @@ void ImagePlaneSubSceneOverride::update(
             MHWRender::MRenderItem::DecorationItem,
             MHWRender::MGeometry::kLines);
         wireItem->setDrawMode(MHWRender::MGeometry::kWireframe);
-        wireItem->depthPriority(5);
+        wireItem->depthPriority(MRenderItem::sDormantWireDepthPriority);
         container.add(wireItem);
         itemsChanged = true;
     }
 
-    MHWRender::MRenderItem *shadedItem = container.find(shadedItemName_);
-    if (!shadedItem) {
-        shadedItem = MHWRender::MRenderItem::Create(shadedItemName_,
-                                                    MHWRender::MRenderItem::DecorationItem,
-                                                    MHWRender::MGeometry::kTriangles);
-        shadedItem->setDrawMode((MHWRender::MGeometry::DrawMode)
-                                (MHWRender::MGeometry::kShaded |
-                                 MHWRender::MGeometry::kTextured));
+    MHWRender::MRenderItem* shadedItem = container.find(shadedItemName_);
+    if (!shadedItem)
+    {
+        shadedItem = MRenderItem::Create(
+            shadedItemName_,
+            MRenderItem::MaterialSceneItem,
+            MGeometry::kTriangles);
+        shadedItem->setDrawMode(MGeometry::kShaded);
+        shadedItem->setExcludedFromPostEffects(false);
+        shadedItem->castsShadows(true);
+        shadedItem->receivesShadows(true);
+        shadedItem->depthPriority(MRenderItem::sDormantFilledDepthPriority);
         container.add(shadedItem);
+        itemsChanged = true;
+    }
 
+    MHWRender::MRenderItem* texturedItem = container.find(texturedItemName_);
+    if (!texturedItem)
+    {
+        texturedItem = MRenderItem::Create(
+            texturedItemName_,
+            MRenderItem::MaterialSceneItem,
+            MGeometry::kTriangles);
+        texturedItem->setDrawMode(MGeometry::kTextured);
+        texturedItem->setExcludedFromPostEffects(false);
+        texturedItem->castsShadows(true);
+        texturedItem->receivesShadows(true);
+        texturedItem->depthPriority(MRenderItem::sDormantFilledDepthPriority);
+        container.add(texturedItem);
         itemsChanged = true;
     }
 
     if (itemsChanged || anyInstanceChanged) {
         wireItem->setShader(shader);
         shadedItem->setShader(shader);
+        texturedItem->setShader(shader);
     }
 
     if (itemsChanged || updateGeometry) {
@@ -218,10 +239,14 @@ void ImagePlaneSubSceneOverride::update(
 
         MHWRender::MVertexBufferArray vertexBuffers;
         vertexBuffers.addBuffer("positions", fPositionBuffer);
+        vertexBuffers.addBuffer("uvs", fUvBuffer);
         setGeometryForRenderItem(
                 *wireItem, vertexBuffers, *fWireIndexBuffer, bounds);
         setGeometryForRenderItem(
                 *shadedItem, vertexBuffers, *fShadedIndexBuffer, bounds);
+        setGeometryForRenderItem(
+                *texturedItem, vertexBuffers, *fShadedIndexBuffer, bounds);
+
         if (bounds) {
             delete bounds;
         }
@@ -234,6 +259,7 @@ void ImagePlaneSubSceneOverride::update(
             // improve tumbling performance.
             wireItem->setWantSubSceneConsolidation(true);
             shadedItem->setWantSubSceneConsolidation(true);
+            texturedItem->setWantSubSceneConsolidation(true);
 
             // When not dealing with multiple instances, don't convert
             // the render items into instanced mode.  Set the matrices
@@ -241,11 +267,13 @@ void ImagePlaneSubSceneOverride::update(
             MMatrix &objToWorld = instanceMatrixArray[0];
             wireItem->setMatrix(&objToWorld);
             shadedItem->setMatrix(&objToWorld);
+            texturedItem->setMatrix(&objToWorld);
         } else {
             // For multiple instances, subscene conslidation should be
             // turned off so that the GPU instancing can kick in.
             wireItem->setWantSubSceneConsolidation(false);
             shadedItem->setWantSubSceneConsolidation(false);
+            texturedItem->setWantSubSceneConsolidation(false);
 
             // If we have DAG instances of this shape then use the
             // MPxSubSceneOverride instance transform API to set up
@@ -259,6 +287,7 @@ void ImagePlaneSubSceneOverride::update(
             setInstanceTransformArray(*texturedItem, instanceMatrixArray);
             setExtraInstanceData(*wireItem, colorParameterName_, instanceColorArray);
             setExtraInstanceData(*shadedItem, colorParameterName_, instanceColorArray);
+            setExtraInstanceData(*texturedItem, colorParameterName_, instanceColorArray);
 
             // Once we change the render items into instance rendering
             // they can't be changed back without being deleted and
@@ -373,6 +402,41 @@ void ImagePlaneSubSceneOverride::rebuildGeometryBuffers() {
         }
     }
 
+    // UV Vertex Buffer
+    const MHWRender::MVertexBufferDescriptor uvDesc(
+        "",
+        MHWRender::MGeometry::kTexture,
+        MHWRender::MGeometry::kFloat,
+        2);
+    fUvBuffer = new MHWRender::MVertexBuffer(uvDesc);
+    if (fUvBuffer) {
+        bool writeOnly = true;  // We don't need the current buffer values
+        float *uvs = (float *) fUvBuffer->acquire(
+            shapeUvsCountA + shapeUvsCountB,
+            writeOnly);
+        if (uvs) {
+            int uvsPointerOffset = 0;
+            for (int currentVertex = 0;
+                 currentVertex < (shapeUvsCountA + shapeUvsCountB);
+                 ++currentVertex) {
+                if (currentVertex < shapeUvsCountB) {
+                    int shapeBUv = currentVertex;
+                    float x = shapeUvsB[shapeBUv][0];
+                    float y = shapeUvsB[shapeBUv][1];
+                    uvs[uvsPointerOffset++] = x;
+                    uvs[uvsPointerOffset++] = y;
+                } else {
+                    int shapeAUv = currentVertex - shapeUvsCountB;
+                    float x = shapeUvsA[shapeAUv][0];
+                    float y = shapeUvsA[shapeAUv][1];
+                    uvs[uvsPointerOffset++] = x;
+                    uvs[uvsPointerOffset++] = y;
+                }
+            }
+            fUvBuffer->commit(uvs);
+        }
+    }
+
     // IndexBuffer for the wireframe item
     fWireIndexBuffer = new MHWRender::MIndexBuffer(
         MHWRender::MGeometry::kUnsignedInt32);
@@ -435,6 +499,11 @@ void ImagePlaneSubSceneOverride::deleteGeometryBuffers() {
     if (fPositionBuffer) {
         delete fPositionBuffer;
         fPositionBuffer = nullptr;
+    }
+
+    if (fUvBuffer) {
+        delete fUvBuffer;
+        fUvBuffer = nullptr;
     }
 
     if (fWireIndexBuffer) {
