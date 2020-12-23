@@ -195,11 +195,12 @@ void ImagePlaneSubSceneOverride::update(
     MHWRender::MRenderItem* shadedItem = container.find(shadedItemName_);
     if (!shadedItem)
     {
-        shadedItem = MRenderItem::Create(
+        shadedItem = MHWRender::MRenderItem::Create(
             shadedItemName_,
             MRenderItem::MaterialSceneItem,
             MGeometry::kTriangles);
-        shadedItem->setDrawMode(MGeometry::kShaded);
+        shadedItem->setDrawMode(
+            static_cast<MGeometry::DrawMode>(MGeometry::kShaded | MGeometry::kTextured));
         shadedItem->setExcludedFromPostEffects(false);
         shadedItem->castsShadows(true);
         shadedItem->receivesShadows(true);
@@ -208,26 +209,9 @@ void ImagePlaneSubSceneOverride::update(
         itemsChanged = true;
     }
 
-    MHWRender::MRenderItem* texturedItem = container.find(texturedItemName_);
-    if (!texturedItem)
-    {
-        texturedItem = MRenderItem::Create(
-            texturedItemName_,
-            MRenderItem::MaterialSceneItem,
-            MGeometry::kTriangles);
-        texturedItem->setDrawMode(MGeometry::kTextured);
-        texturedItem->setExcludedFromPostEffects(false);
-        texturedItem->castsShadows(true);
-        texturedItem->receivesShadows(true);
-        texturedItem->depthPriority(MRenderItem::sDormantFilledDepthPriority);
-        container.add(texturedItem);
-        itemsChanged = true;
-    }
-
     if (itemsChanged || anyInstanceChanged) {
         wireItem->setShader(shader);
         shadedItem->setShader(shader);
-        texturedItem->setShader(shader);
     }
 
     if (itemsChanged || updateGeometry) {
@@ -244,8 +228,6 @@ void ImagePlaneSubSceneOverride::update(
                 *wireItem, vertexBuffers, *fWireIndexBuffer, bounds);
         setGeometryForRenderItem(
                 *shadedItem, vertexBuffers, *fShadedIndexBuffer, bounds);
-        setGeometryForRenderItem(
-                *texturedItem, vertexBuffers, *fShadedIndexBuffer, bounds);
 
         if (bounds) {
             delete bounds;
@@ -259,7 +241,6 @@ void ImagePlaneSubSceneOverride::update(
             // improve tumbling performance.
             wireItem->setWantSubSceneConsolidation(true);
             shadedItem->setWantSubSceneConsolidation(true);
-            texturedItem->setWantSubSceneConsolidation(true);
 
             // When not dealing with multiple instances, don't convert
             // the render items into instanced mode.  Set the matrices
@@ -267,13 +248,11 @@ void ImagePlaneSubSceneOverride::update(
             MMatrix &objToWorld = instanceMatrixArray[0];
             wireItem->setMatrix(&objToWorld);
             shadedItem->setMatrix(&objToWorld);
-            texturedItem->setMatrix(&objToWorld);
         } else {
             // For multiple instances, subscene conslidation should be
             // turned off so that the GPU instancing can kick in.
             wireItem->setWantSubSceneConsolidation(false);
             shadedItem->setWantSubSceneConsolidation(false);
-            texturedItem->setWantSubSceneConsolidation(false);
 
             // If we have DAG instances of this shape then use the
             // MPxSubSceneOverride instance transform API to set up
@@ -284,10 +263,8 @@ void ImagePlaneSubSceneOverride::update(
             // are set, otherwise it will fail.
             setInstanceTransformArray(*wireItem, instanceMatrixArray);
             setInstanceTransformArray(*shadedItem, instanceMatrixArray);
-            setInstanceTransformArray(*texturedItem, instanceMatrixArray);
             setExtraInstanceData(*wireItem, colorParameterName_, instanceColorArray);
             setExtraInstanceData(*shadedItem, colorParameterName_, instanceColorArray);
-            setExtraInstanceData(*texturedItem, colorParameterName_, instanceColorArray);
 
             // Once we change the render items into instance rendering
             // they can't be changed back without being deleted and
