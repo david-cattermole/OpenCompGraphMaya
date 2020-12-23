@@ -88,7 +88,8 @@ void ImagePlaneSubSceneOverride::update(
     //         fInstanceDagPaths[0]));
     MHWRender::MShaderInstance *shader = getImagePlaneShader();
     if (!shader) {
-        MStreamUtils::stdErrorStream() << "ImagePlaneSubSceneOverride: Failed to get a shader.\n";
+        MStreamUtils::stdErrorStream()
+            << "ImagePlaneSubSceneOverride: Failed to get a shader.\n";
         return;
     }
 
