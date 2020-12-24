@@ -224,6 +224,31 @@ MHWRender::MShaderInstance *getImagePlaneShader() {
         return nullptr;
     }
 
+    // MTextureManager Caching Behaviour
+    //
+    // When using the MTextureManager::acquire* methods a cache is
+    // used to look up existing textures.
+    //
+    // If the texure name provided is an empty string then the texture
+    // will not be cached as part of the internal texture caching
+    // system. Thus each such call to this method will create a new
+    // texture.
+    //
+    // If a non-empty texture name is specified then the caching
+    // system will attempt to return any previously cached texture
+    // with that name.
+    //
+    // The renderer will add 1 reference to this texture on
+    // creation. If the texture has already been acquired then no new
+    // texture will be created, and a new reference will be added. To
+    // release the reference, call releaseTexture().
+    //
+    // If no pre-existing cached texture exists, then a new texture is
+    // created by tiling a set of images on disk. The images are
+    // specified by a set of file names and their tile position. The
+    // input images must be 2D textures.
+    //
+
     // MString textureLocation("C:/Users/user/dev/OpenCompGraphMaya/src/OpenCompGraph/tests/data");
     // textureManager->addImagePath(textureLocation);
     // // Load texture onto shader, using Maya's image loading libraries.
