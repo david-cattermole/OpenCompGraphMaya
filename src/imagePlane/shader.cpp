@@ -223,38 +223,70 @@ MHWRender::MShaderInstance *getImagePlaneShader() {
         MGlobal::displayError(errorMsg);
         return nullptr;
     }
-    MString textureLocation("C:/Users/user/dev/OpenCompGraphMaya/src/OpenCompGraph/tests/data");
-    textureManager->addImagePath(textureLocation);
 
-    // Load texture onto shader.
-    int mipmapLevels = 1;  // 1 = Only one mip-map level, don't create more.
-    bool useExposureControl = true;
-    MString textureName("checker_8bit_rgba_8x8.png");
-    const MString contextNodeFullName("ocgImagePlane1");
-    MHWRender::MTexture* texture =
-        textureManager->acquireTexture(
-            textureName,
-            contextNodeFullName,
-            mipmapLevels,
-            useExposureControl);
-    if (texture) {
-        MHWRender::MTextureAssignment texResource;
-        texResource.texture = texture;
+    // MString textureLocation("C:/Users/user/dev/OpenCompGraphMaya/src/OpenCompGraph/tests/data");
+    // textureManager->addImagePath(textureLocation);
+    // // Load texture onto shader, using Maya's image loading libraries.
+    // int mipmapLevels = 1;  // 1 = Only one mip-map level, don't create more.
+    // bool useExposureControl = true;
+    // MString textureName("checker_8bit_rgba_8x8.png");
+    // const MString contextNodeFullName("ocgImagePlane1");
+    // MHWRender::MTexture* texture =
+    //     textureManager->acquireTexture(
+    //         textureName,
+    //         contextNodeFullName,
+    //         mipmapLevels,
+    //         useExposureControl);
+
+    // Upload Texture data to the GPU using Maya's API.
+    if (!imagePlaneTexture_)
+    {
+        // First, search the texture cache to see if another instance
+        // of this override has already generated the texture. We can
+        // reuse it to save GPU memory since the noise data is
+        // constant.
+        imagePlaneTexture_ =
+            textureManager->findTexture(imagePlaneTextureName_);
+        // Not in cache, so we need to actually build the texture.
+        if (!imagePlaneTexture_)
+        {
+            // Create a 2D texture with the hard-coded data.
+            //
+            // See:
+            // http://help.autodesk.com/view/MAYAUL/2018/ENU/?guid=__cpp_ref_class_m_h_w_render_1_1_m_texture_description_html
+            MHWRender::MTextureDescription desc;
+            desc.setToDefault2DTexture();
+            desc.fWidth = 4;
+            desc.fHeight = 4;
+            // desc.fDepth = 1;  // 2D Textures have a depth of 1.
+            desc.fFormat = MHWRender::kR32G32B32_FLOAT;
+            // desc.fTextureType = MHWRender::kImage2D;
+            desc.fMipmaps = 1;
+            imagePlaneTexture_ = textureManager->acquireTexture(
+                imagePlaneTextureName_,
+                desc,
+                (const void*)&(colorBars_f32_8x8_[0]),
+                false);
+        }
+    }
+
+    // Set the shader's texture parameter to use our uploaded texture.
+    if (imagePlaneTexture_) {
         MStreamUtils::stdErrorStream()
             << "ocgImagePlane: Setting texture parameter...\n";
+        MHWRender::MTextureAssignment texResource;
+        texResource.texture = imagePlaneTexture_;
         imagePlaneShader->setParameter(
             textureParameterName_,
             texResource);
-
         // Release our reference now that it is set on the shader
-        textureManager->releaseTexture(texture);
+        textureManager->releaseTexture(imagePlaneTexture_);
     } else {
         MStreamUtils::stdErrorStream()
-            << "ocgImagePlane: Failed to acquire texture from "
-            << textureName.asChar() << '\n';
+            << "ocgImagePlane: Failed to acquire texture." << '\n';
         MString errorMsg = MString(
-            "ocgImagePlane: Failed to acquire texture from ");
-        MGlobal::displayError(errorMsg + textureName);
+            "ocgImagePlane: Failed to acquire texture!");
+        MGlobal::displayError(errorMsg);
     }
 
     // Acquire and bind the default texture sampler.
