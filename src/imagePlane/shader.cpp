@@ -202,7 +202,7 @@ MHWRender::MShaderInstance *getImagePlaneShader() {
     }
 
     // Set a color parameter.
-    const float colorValues[4] = {0.0f, 0.0f, 1.0f, 1.0f};
+    const float colorValues[4] = {1.0f, 1.0f, 1.0f, 1.0f};
     status = imagePlaneShader->setParameter(
         colorParameterName_,
         colorValues);
