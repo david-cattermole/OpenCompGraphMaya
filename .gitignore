@@ -6,7 +6,7 @@
 cmake-build-*
 *build/*
 *build_*/*
-include/OpenCompGraphMaya/buildConstant.h
+include/opencompgraphmaya/build_constants.h
 packages/
 examples/
 

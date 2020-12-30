@@ -21,6 +21,6 @@
 
 # Create C Header file with some build options baked in.
 configure_file(
-        buildConstant.h.in
-        buildConstant.h
+  build_constants.h.in
+  build_constants.h
   @ONLY)
