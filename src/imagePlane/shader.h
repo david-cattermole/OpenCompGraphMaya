@@ -52,7 +52,8 @@ const MString shadedItemName_ = "ocgImagePlaneShadedTriangles";
  * The texture block (below) starts at the lower-left (zeroth index)
  * and continues the upper-right (last index).
  *
- * Note to make things even (only 8 entries), we skip the 75% white.
+ * Note: To make things even (only 8 entries), we skip the "75% white"
+ * value.
  */
 static const float colorBars_f32_8x8_[] = {
     // Row 0
