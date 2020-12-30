@@ -16,4 +16,4 @@ def main():
     file_path1 = "C:/Users/catte/dev/OpenCompGraphMaya/src/OpenCompGraph/tests/data/checker_8bit_rgba_3840x2160.png"
     file_path2 = "C:/Users/catte/dev/OpenCompGraphMaya/src/OpenCompGraph/tests/data/oiio-images/tahoe-gps.jpg"
     file_path = random.choice([file_path1, file_path2])
-    maya.cmds.setAttr(node + '.filePath', os.path.abspath(file_path1), type='string')
+    maya.cmds.setAttr(node + '.filePath', os.path.abspath(file_path), type='string')
