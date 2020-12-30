@@ -64,31 +64,12 @@ SET GENERATE_SOLUTION=0
 SET PROJECT_ROOT=%CD%
 ECHO OpenCompGraphMaya Root: %PROJECT_ROOT%
 
-
-rem :: The root of the OpenCompGraph project.
-rem SET OCG_ROOT=%PROJECT_ROOT%\src\OpenCompGraph\
-rem ECHO OpenCompGroup Root: %OCG_ROOT%
-rem CHDIR %OCG_ROOT%
-
-rem :: Install directory
-rem SET INSTALL_DIR="%OCG_ROOT%\install"
-
-rem :: Where to find the Rust libraries and headers.
-rem SET RUST_BUILD_DIR="%OCG_ROOT%\target\release"
-rem SET RUST_INCLUDE_DIR="%OCG_ROOT%\include"
-
-rem :: Build Rust
-rem ::
-rem :: Assumes 'cxxbridge-cmd' and 'cbindgen' is installed.
-rem cxxbridge --header --output "%OCG_ROOT%\include\rust\cxx.h"
-rem cbindgen --config cbindgen.toml ^
-rem          --crate opencompgraph ^
-rem          --output "%OCG_ROOT%\include\opencompgraph\_cbindgen.h"
-rem cargo build --release
-
-rem :: Return back project root directory.
-rem CHDIR %PROJECT_ROOT%
-
+:: Build the OpenCompGraph project.
+SET OCG_ROOT=%PROJECT_ROOT%\src\OpenCompGraph\
+call %OCG_ROOT%\scripts\build_rust_windows64.bat
+:: Where to find the Rust libraries and headers.
+SET RUST_BUILD_DIR="%OCG_ROOT%\target\release"
+SET RUST_INCLUDE_DIR="%OCG_ROOT%\include"
 
 :: Build plugin
 MKDIR build_windows64_maya%MAYA_VERSION%_%BUILD_TYPE%

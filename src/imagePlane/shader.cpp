@@ -18,10 +18,17 @@
 
 // STL
 #include <unordered_map>
+#include <memory>
 #include <cstdlib>
+
+// OCG
+#include "opencompgraph.h"
+
 
 // OCG Maya
 #include "shader.h"
+
+namespace ocg = open_comp_graph;
 
 namespace open_comp_graph_maya {
 
@@ -275,23 +282,66 @@ MHWRender::MShaderInstance *getImagePlaneShader() {
         // Not in cache, so we need to actually build the texture.
         if (!imagePlaneTexture_)
         {
-            // Create a 2D texture with the hard-coded data.
-            //
-            // See:
-            // http://help.autodesk.com/view/MAYAUL/2018/ENU/?guid=__cpp_ref_class_m_h_w_render_1_1_m_texture_description_html
-            MHWRender::MTextureDescription desc;
-            desc.setToDefault2DTexture();
-            desc.fWidth = 4;
-            desc.fHeight = 4;
-            // desc.fDepth = 1;  // 2D Textures have a depth of 1.
-            desc.fFormat = MHWRender::kR32G32B32_FLOAT;
-            // desc.fTextureType = MHWRender::kImage2D;
-            desc.fMipmaps = 1;
-            imagePlaneTexture_ = textureManager->acquireTexture(
-                imagePlaneTextureName_,
-                desc,
-                (const void*)&(colorBars_f32_8x8_[0]),
-                false);
+            // // Create a 2D texture with the hard-coded data.
+            // //
+            // // See:
+            // // http://help.autodesk.com/view/MAYAUL/2018/ENU/?guid=__cpp_ref_class_m_h_w_render_1_1_m_texture_description_html
+            // MHWRender::MTextureDescription desc;
+            // desc.setToDefault2DTexture();
+            // desc.fWidth = 4;
+            // desc.fHeight = 4;
+            // desc.fFormat = MHWRender::kR32G32B32_FLOAT;
+            // desc.fMipmaps = 1;
+            // imagePlaneTexture_ = textureManager->acquireTexture(
+            //     imagePlaneTextureName_,
+            //     desc,
+            //     (const void*)&(colorBars_f32_8x8_[0]),
+            //     false);
+
+            auto graph = ocg::Graph();
+            auto read_node = ocg::Node(ocg::NodeType::kReadImage, "read1");
+            auto grade_node = ocg::Node(ocg::NodeType::kGrade, "grade1");
+            // read_node.set_attr_str("file_path", "C:/Users/catte/dev/OpenCompGraphMaya/src/OpenCompGraph/tests/data/checker_8bit_rgba_3840x2160.png");
+            read_node.set_attr_str("file_path", "C:/Users/catte/dev/OpenCompGraphMaya/src/OpenCompGraph/tests/data/oiio-images/tahoe-gps.jpg");
+            grade_node.set_attr_f32("multiply", 1.0f);
+            auto read_node_id = graph.add_node(read_node);
+            auto grade_node_id = graph.add_node(grade_node);
+            graph.connect(read_node_id, grade_node_id, 0);
+
+            auto cache = std::make_shared<ocg::Cache>();
+            auto exec_status = graph.execute(grade_node_id, cache);
+            if (exec_status == ocg::ExecuteStatus::kSuccess) {
+                auto stream_data = graph.output_stream();
+                auto pixel_buffer = stream_data.pixel_buffer();
+                auto pixel_width = stream_data.pixel_width();
+                auto pixel_height = stream_data.pixel_height();
+                auto pixel_num_channels = stream_data.pixel_num_channels();
+                MStreamUtils::stdErrorStream()
+                        << "pixels: "
+                        << pixel_width << "x"
+                        << pixel_height << "x"
+                        << static_cast<uint32_t>(pixel_num_channels)
+                        << " | data=" << &pixel_buffer << '\n';
+                // auto buffer = static_cast<const void*>(colorBars_f32_8x8_[0]),
+                auto buffer = static_cast<const void*>(pixel_buffer.data());
+
+                // Upload Texture via Maya.
+                MHWRender::MTextureDescription desc;
+                desc.setToDefault2DTexture();
+                desc.fWidth = pixel_width;
+                desc.fHeight = pixel_height;
+                if (pixel_num_channels == 4) {
+                    desc.fFormat = MHWRender::kR32G32B32A32_FLOAT;
+                } else {
+                    desc.fFormat = MHWRender::kR32G32B32_FLOAT;
+                }
+                desc.fMipmaps = 1;
+                imagePlaneTexture_ = textureManager->acquireTexture(
+                    imagePlaneTextureName_,
+                    desc,
+                    buffer,
+                    false);
+            }
         }
     }
 

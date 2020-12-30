@@ -19,7 +19,8 @@
 # Building the C++ code for OpenCompGraphMaya.
 #
 
-# add_subdirectory(OpenCompGraph)
+set(OpenCompGraph_INSTALL_PREFIX "${MODULE_FULL_NAME}/" CACHE STRING "")
+add_subdirectory(OpenCompGraph)
 
 # Source
 set(SOURCE_FILES
@@ -32,12 +33,12 @@ set(SOURCE_FILES
 # Find external packages
 find_package(Maya REQUIRED)
 
-# Treat warnings as errors.
-if(MSVC)
-  add_compile_options(/W4 /WX)
-else()
-  add_compile_options(-W -Wall -Werror -Wpedantic)
-endif()
+# # Treat warnings as errors.
+# if(MSVC)
+#   add_compile_options(/W4 /WX)
+# else()
+#   add_compile_options(-W -Wall -Werror -Wpedantic)
+# endif()
 
 # Compile Flags.
 #
@@ -58,7 +59,7 @@ if (MSVC)
   set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} /Ob0 /GR /GL /Oi /Gy /Zi /EHsc")
 
   set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS} /D \"NDEBUG\"")
-  set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} /Gy /Gm- /O2 /Ob1 /GF")
+  set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} /MD /Gy /Gm- /O2 /Ob1 /GF")
 
   # Must add the plug-in entry/exit points otherwise
   # the plug-in won't load.
@@ -124,7 +125,7 @@ target_link_libraries(OpenCompGraphMaya
   ${MAYA_OpenMayaUI_LIBRARY}
   ${MAYA_OpenMayaRender_LIBRARY}
   ${MAYA_Foundation_LIBRARY}
-  # opencompgraph  # Target the OpenCompGraph git submodule.
+  opencompgraph  # Target the OpenCompGraph git submodule.
   )
 
 # On Linux the 'm' library is required.
