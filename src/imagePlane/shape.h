@@ -114,6 +114,8 @@ public:
 
     // Attribute MObjects
     static MObject m_size_attr;
+    static MObject m_file_path_attr;
+    static MObject m_exposure_attr;
 
     // Node Constants.
     static MTypeId m_id;
