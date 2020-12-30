@@ -95,7 +95,7 @@ void ImagePlaneSubSceneOverride::update(
         return;
     }
 
-    MPlug plug(fLocatorNode, ImagePlaneShape::size);
+    MPlug plug(fLocatorNode, ImagePlaneShape::m_size_attr);
     float newMultiplier = 1.0f;
     if (!plug.isNull()) {
         MDistance sizeVal;

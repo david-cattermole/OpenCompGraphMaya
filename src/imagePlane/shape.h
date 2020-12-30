@@ -113,7 +113,7 @@ public:
     static MString nodeName();
 
     // Attribute MObjects
-    static MObject size;
+    static MObject m_size_attr;
 
     // Node Constants.
     static MTypeId m_id;

@@ -31,7 +31,7 @@ MString ImagePlaneShape::selectionTypeName(
     "ocgImagePlaneSelection");
 
 // Attributes
-MObject ImagePlaneShape::size;
+MObject ImagePlaneShape::m_size_attr;
 
 // Defines the Node name as a callable static function.
 MString ImagePlaneShape::nodeName() {
@@ -52,7 +52,7 @@ void ImagePlaneShape::draw(M3dView &view, const MDagPath & /*path*/,
                            M3dView::DisplayStatus status) {
     // Get the size
     MObject thisNode = thisMObject();
-    MPlug plug(thisNode, size);
+    MPlug plug(thisNode, m_size_attr);
     MDistance sizeVal;
     plug.getValue(sizeVal);
 
@@ -132,7 +132,7 @@ bool ImagePlaneShape::isBounded() const {
 MBoundingBox ImagePlaneShape::boundingBox() const {
     // Get the size
     MObject thisNode = thisMObject();
-    MPlug plug(thisNode, size);
+    MPlug plug(thisNode, m_size_attr);
     MDistance sizeVal;
     plug.getValue(sizeVal);
 
@@ -156,17 +156,15 @@ void *ImagePlaneShape::creator() {
 }
 
 MStatus ImagePlaneShape::initialize() {
-    MFnUnitAttribute unitFn;
-    MStatus stat;
+    MFnUnitAttribute    uAttr;
+    MStatus status;
 
-    size = unitFn.create("size", "sz", MFnUnitAttribute::kDistance);
-    unitFn.setDefault(1.0);
 
-    stat = addAttribute(size);
-    if (!stat) {
-        stat.perror("addAttribute");
-        return stat;
-    }
+    // Size
+    m_size_attr = uAttr.create("size", "sz", MFnUnitAttribute::kDistance);
+    uAttr.setDefault(1.0);
+    status = MPxNode::addAttribute(m_size_attr);
+    CHECK_MSTATUS_AND_RETURN_IT(status);
 
     return MS::kSuccess;
 }
