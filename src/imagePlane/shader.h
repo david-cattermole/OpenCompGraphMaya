@@ -114,14 +114,6 @@ static const float colorBars_f32_8x8_[] = {
 };
 static const int colorBars_f32_8x8_count_ = 16;
 
-// struct MColorHash {
-//     std::size_t operator()(const MColor &color) const;
-//     void CombineHashCode(std::size_t &seed, float v) const;
-// };
-// MHWRender::MShaderInstance *get3dSolidShader(const MColor &color);
-// MStatus releaseShaders();
-// static std::unordered_map<MColor, MHWRender::MShaderInstance *, MColorHash> the3dSolidShaders;
-
 static MHWRender::MShaderInstance *imagePlaneShader = nullptr;
 static MHWRender::MTexture *imagePlaneTexture_ = nullptr;
 const MString imagePlaneTextureName_ = "MyColorBarsTexture";
