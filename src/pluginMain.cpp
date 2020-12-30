@@ -89,13 +89,6 @@ MStatus uninitializePlugin(MObject obj) {
         return status;
     }
 
-    // status = ocgm::releaseShaders();
-    status = ocgm::releaseImagePlaneShader();
-    if (!status) {
-        status.perror("releaseShaders");
-        return status;
-    }
-
     status = plugin.deregisterNode(ocgm::ImagePlaneShape::m_id);
     if (!status) {
         status.perror("deregisterNode");

@@ -19,7 +19,6 @@
 
 // STL
 #include <map>
-#include <unordered_map>
 
 namespace open_comp_graph_maya{
 
@@ -75,6 +74,10 @@ private:
     void rebuildGeometryBuffers();
     void deleteGeometryBuffers();
 
+    // Shader Creation and deletion
+    MHWRender::MShaderInstance* compile_shaders();
+    MStatus release_shaders();
+
     MObject m_locator_node;
     float m_multiplier;
     bool m_is_instance_mode;
@@ -106,6 +109,18 @@ private:
     MCallbackId m_instance_added_cb_id;
     MCallbackId m_instance_removed_cb_id;
     MDagPathArray m_instance_dag_paths;
+
+    // Shaders and Textures
+    MHWRender::MShaderInstance *m_shader;
+    MHWRender::MTexture *m_texture;
+
+    // Shader Constants
+    static MString m_texture_name;
+    static MString m_shader_color_parameter_name;
+    static MString m_shader_texture_parameter_name;
+    static MString m_shader_texture_sampler_parameter_name;
+    static MString m_wireframe_render_item_name;
+    static MString m_shaded_render_item_name;
 };
 
 } // namespace open_comp_graph_maya

@@ -1,34 +1,7 @@
 #ifndef OPENCOMPGRAPHMAYA_IMAGE_PLANE_SHADER_H
 #define OPENCOMPGRAPHMAYA_IMAGE_PLANE_SHADER_H
 
-// Maya
-#include <maya/MString.h>
-#include <maya/MTypeId.h>
-#include <maya/MPlug.h>
-#include <maya/MColor.h>
-#include <maya/MDistance.h>
-#include <maya/MGlobal.h>
-#include <maya/MFnDagNode.h>
-#include <maya/MDagMessage.h>
-
-// Maya Viewport 2.0
-#include <maya/MPxSubSceneOverride.h>
-#include <maya/MShaderManager.h>
-#include <maya/MHWGeometry.h>
-#include <maya/MHWGeometryUtilities.h>
-
-// STL
-#include <map>
-#include <unordered_map>
-
 namespace open_comp_graph_maya{
-
-// Viewport 2.0 specific data
-const MString colorParameterName_ = "gSolidColor";
-const MString textureParameterName_ = "gTexture";
-const MString textureSamplerParameterName_ = "gTextureSampler";
-const MString wireframeItemName_ = "ocgImagePlaneWireframe";
-const MString shadedItemName_ = "ocgImagePlaneShadedTriangles";
 
 /*
  * Color Bars Texture, for debug.
@@ -113,12 +86,6 @@ static const float colorBars_f32_8x8_[] = {
     0.0627f, 0.9215f, 0.0627f
 };
 static const int colorBars_f32_8x8_count_ = 16;
-
-static MHWRender::MShaderInstance *imagePlaneShader = nullptr;
-static MHWRender::MTexture *imagePlaneTexture_ = nullptr;
-const MString imagePlaneTextureName_ = "MyColorBarsTexture";
-MHWRender::MShaderInstance *get_image_plane_shader();
-MStatus releaseImagePlaneShader();
 
 } // namespace open_comp_graph_maya
 
