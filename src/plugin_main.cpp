@@ -30,8 +30,8 @@
 
 #include <OpenCompGraphMaya/buildConstant.h>  // Build-Time constant values.
 #include <OpenCompGraphMaya/nodeTypeIds.h>
-#include <imagePlane/image_plane_shape.h>
-#include <imagePlane/image_plane_sub_scene_override.h>
+#include <image_plane_shape.h>
+#include <image_plane_sub_scene_override.h>
 
 namespace ocgm = open_comp_graph_maya;
 

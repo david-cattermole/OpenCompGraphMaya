@@ -24,8 +24,8 @@ add_subdirectory(OpenCompGraph)
 
 # Source
 set(SOURCE_FILES
-  imagePlane/image_plane_shape.cpp
-  imagePlane/image_plane_sub_scene_override.cpp
+  image_plane_shape.cpp
+  image_plane_sub_scene_override.cpp
   plugin_main.cpp
   )
 

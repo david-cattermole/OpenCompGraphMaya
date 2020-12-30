@@ -9,7 +9,7 @@
 #include <maya/MDagMessage.h>
 #include <maya/MSelectionContext.h>
 #include <maya/MStreamUtils.h>
-#include <Maya/M3dView.h>
+#include <maya/M3dView.h>
 
 // Maya Viewport 2.0
 #include <maya/MPxSubSceneOverride.h>
