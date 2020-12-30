@@ -29,7 +29,7 @@
 namespace open_comp_graph_maya{
 
 // Shape Data
-static const float shape_vertices_a[6][3] = {
+static const float shape_vertices[6][3] = {
     // First Triangle - counter clockwise direction.
     {-1.0, -1.0, 0.0}, // Lower left
     {1.0, 1.0, 0.0},   // Upper right
@@ -39,9 +39,9 @@ static const float shape_vertices_a[6][3] = {
     {-1.0, -1.0, 0.0}, // Lower left
     {1.0, -1.0, 0.0},  // Lower Right
     {1.0, 1.0, 0.0}};  // Upper right
-static const int shape_vertices_count_a = 6;
+static const int shape_vertices_count = 6;
 
-static const float shape_uvs_a[6][2] = {
+static const float shape_uvs[6][2] = {
    // First Triangle - counter clockwise direction.
    {0.0, 0.0}, // Lower left
    {1.0, 1.0}, // Upper right
@@ -51,47 +51,7 @@ static const float shape_uvs_a[6][2] = {
    {0.0, 0.0},  // Lower left
    {1.0, 0.0},  // Lower Right
    {1.0, 1.0}}; // Upper right
-static const int shape_uvs_count_a = 6;
-
-static const float shape_vertices_b[17][3] = {
-    {0.00f,  0.0f, 0.06f},
-    {0.13f,  0.0f, 0.06f},
-    {0.14f,  0.0f, 0.15f},
-    {0.14f,  0.0f, 0.21f},
-    {0.13f,  0.0f, 0.25f},
-    {0.11f,  0.0f, 0.28f},
-    {0.09f,  0.0f, 0.29f},
-    {0.04f,  0.0f, 0.30f},
-    {0.00f,  0.0f, 0.30f},
-    {-0.04f, 0.0f, 0.30f},
-    {-0.09f, 0.0f, 0.29f},
-    {-0.11f, 0.0f, 0.28f},
-    {-0.13f, 0.0f, 0.25f},
-    {-0.14f, 0.0f, 0.21f},
-    {-0.14f, 0.0f, 0.15f},
-    {-0.13f, 0.0f, 0.06f},
-    {-0.00f, 0.0f, 0.06f}};
-static const int shape_vertices_count_b = 17;
-
-static const float shape_uvs_b[17][2] = {
-   {0.0f, 0.0f},
-   {0.0f, 0.0f},
-   {0.0f, 0.0f},
-   {0.0f, 0.0f},
-   {0.0f, 0.0f},
-   {0.0f, 0.0f},
-   {0.0f, 0.0f},
-   {0.0f, 0.0f},
-   {0.0f, 0.0f},
-   {0.0f, 0.0f},
-   {0.0f, 0.0f},
-   {0.0f, 0.0f},
-   {0.0f, 0.0f},
-   {0.0f, 0.0f},
-   {0.0f, 0.0f},
-   {0.0f, 0.0f},
-   {0.0f, 0.0f}};
-static const int shape_uvs_count_b = 17;
+static const int shape_uvs_count = 6;
 
 class ImagePlaneShape : public MPxLocatorNode {
 public:

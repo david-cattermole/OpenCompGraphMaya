@@ -74,19 +74,11 @@ void ImagePlaneShape::draw(M3dView &view, const MDagPath &path,
 
         glBegin(GL_TRIANGLE_FAN);
         int i;
-        int last = shape_vertices_count_a - 1;
+        int last = shape_vertices_count - 1;
         for (i = 0; i < last; ++i) {
-            glVertex3f(shape_vertices_a[i][0] * multiplier,
-                       shape_vertices_a[i][1] * multiplier,
-                       shape_vertices_a[i][2] * multiplier);
-        }
-        glEnd();
-        glBegin(GL_TRIANGLE_FAN);
-        last = shape_vertices_count_b - 1;
-        for (i = 0; i < last; ++i) {
-            glVertex3f(shape_vertices_b[i][0] * multiplier,
-                       shape_vertices_b[i][1] * multiplier,
-                       shape_vertices_b[i][2] * multiplier);
+            glVertex3f(shape_vertices[i][0] * multiplier,
+                       shape_vertices[i][1] * multiplier,
+                       shape_vertices[i][2] * multiplier);
         }
         glEnd();
 
@@ -97,23 +89,14 @@ void ImagePlaneShape::draw(M3dView &view, const MDagPath &path,
     //
     glBegin(GL_LINES);
     int i;
-    int last = shape_vertices_count_a - 1;
+    int last = shape_vertices_count - 1;
     for (i = 0; i < last; ++i) {
-        glVertex3f(shape_vertices_a[i][0] * multiplier,
-                   shape_vertices_a[i][1] * multiplier,
-                   shape_vertices_a[i][2] * multiplier);
-        glVertex3f(shape_vertices_a[i + 1][0] * multiplier,
-                   shape_vertices_a[i + 1][1] * multiplier,
-                   shape_vertices_a[i + 1][2] * multiplier);
-    }
-    last = shape_vertices_count_b - 1;
-    for (i = 0; i < last; ++i) {
-        glVertex3f(shape_vertices_b[i][0] * multiplier,
-                   shape_vertices_b[i][1] * multiplier,
-                   shape_vertices_b[i][2] * multiplier);
-        glVertex3f(shape_vertices_b[i + 1][0] * multiplier,
-                   shape_vertices_b[i + 1][1] * multiplier,
-                   shape_vertices_b[i + 1][2] * multiplier);
+        glVertex3f(shape_vertices[i][0] * multiplier,
+                   shape_vertices[i][1] * multiplier,
+                   shape_vertices[i][2] * multiplier);
+        glVertex3f(shape_vertices[i + 1][0] * multiplier,
+                   shape_vertices[i + 1][1] * multiplier,
+                   shape_vertices[i + 1][2] * multiplier);
     }
     glEnd();
 
@@ -136,10 +119,10 @@ MBoundingBox ImagePlaneShape::boundingBox() const {
     // Get the size
     MObject this_node = thisMObject();
     MPlug plug(this_node, m_size_attr);
-    MDistance size_val;
-    plug.getValue(size_val);
+    MDistance size_value;
+    plug.getValue(size_value);
 
-    double multiplier = size_val.asCentimeters();
+    double multiplier = size_value.asCentimeters();
 
     MPoint corner1(-1.0, -1.0, -1.0);
     MPoint corner2(1.0, 1.0, 1.0);

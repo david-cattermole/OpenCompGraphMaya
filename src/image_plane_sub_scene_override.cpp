@@ -415,10 +415,8 @@ bool ImagePlaneSubSceneOverride::getInstancedSelectionPath(
 void ImagePlaneSubSceneOverride::rebuild_geometry_buffers() {
     ImagePlaneSubSceneOverride::delete_geometry_buffers();
 
-    // VertexBuffer for positions. We concatenate the shape_vertices_b and
-    // shape_vertices_a positions into a single vertex buffer.  The index
-    // buffers will decide which positions will be selected for each
-    // render items.
+    // VertexBuffer for positions. The index buffers will decide which
+    // positions will be selected for each render items.
     const MHWRender::MVertexBufferDescriptor vb_desc(
         "",
         MHWRender::MGeometry::kPosition,
@@ -426,29 +424,20 @@ void ImagePlaneSubSceneOverride::rebuild_geometry_buffers() {
         3);
     m_position_buffer = new MHWRender::MVertexBuffer(vb_desc);
     if (m_position_buffer) {
-        float *positions = (float *) m_position_buffer->acquire(shape_vertices_count_a + shape_vertices_count_b, true);
+        bool write_only = true;  // We don't need the current buffer values
+        float *positions = static_cast<float *>(
+            m_position_buffer->acquire(shape_vertices_count, write_only));
         if (positions) {
             int vertices_pointer_offset = 0;
             for (int current_vertex = 0;
-                 current_vertex < shape_vertices_count_a + shape_vertices_count_b;
+                 current_vertex < shape_vertices_count;
                  ++current_vertex) {
-                if (current_vertex < shape_vertices_count_b) {
-                    int shape_vtx = current_vertex;
-                    float x = shape_vertices_b[shape_vtx][0] * m_size;
-                    float y = shape_vertices_b[shape_vtx][1] * m_size;
-                    float z = shape_vertices_b[shape_vtx][2] * m_size;
-                    positions[vertices_pointer_offset++] = x;
-                    positions[vertices_pointer_offset++] = y;
-                    positions[vertices_pointer_offset++] = z;
-                } else {
-                    int shapeAVtx = current_vertex - shape_vertices_count_b;
-                    float x = shape_vertices_a[shapeAVtx][0] * m_size;
-                    float y = shape_vertices_a[shapeAVtx][1] * m_size;
-                    float z = shape_vertices_a[shapeAVtx][2] * m_size;
-                    positions[vertices_pointer_offset++] = x;
-                    positions[vertices_pointer_offset++] = y;
-                    positions[vertices_pointer_offset++] = z;
-                }
+                float x = shape_vertices[current_vertex][0] * m_size;
+                float y = shape_vertices[current_vertex][1] * m_size;
+                float z = shape_vertices[current_vertex][2] * m_size;
+                positions[vertices_pointer_offset++] = x;
+                positions[vertices_pointer_offset++] = y;
+                positions[vertices_pointer_offset++] = z;
             }
 
             m_position_buffer->commit(positions);
@@ -464,27 +453,17 @@ void ImagePlaneSubSceneOverride::rebuild_geometry_buffers() {
     m_uv_buffer = new MHWRender::MVertexBuffer(uv_desc);
     if (m_uv_buffer) {
         bool write_only = true;  // We don't need the current buffer values
-        float *uvs = (float *) m_uv_buffer->acquire(
-                shape_uvs_count_a + shape_uvs_count_b,
-                write_only);
+        float *uvs = static_cast<float *>(
+            m_uv_buffer->acquire(shape_uvs_count, write_only));
         if (uvs) {
             int uvs_pointer_offset = 0;
             for (int current_vertex = 0;
-                 current_vertex < (shape_uvs_count_a + shape_uvs_count_b);
+                 current_vertex < shape_uvs_count;
                  ++current_vertex) {
-                if (current_vertex < shape_uvs_count_b) {
-                    int shape_uv = current_vertex;
-                    float x = shape_uvs_b[shape_uv][0];
-                    float y = shape_uvs_b[shape_uv][1];
-                    uvs[uvs_pointer_offset++] = x;
-                    uvs[uvs_pointer_offset++] = y;
-                } else {
-                    int shape_uv = current_vertex - shape_uvs_count_b;
-                    float x = shape_uvs_a[shape_uv][0];
-                    float y = shape_uvs_a[shape_uv][1];
-                    uvs[uvs_pointer_offset++] = x;
-                    uvs[uvs_pointer_offset++] = y;
-                }
+                float x = shape_uvs[current_vertex][0];
+                float y = shape_uvs[current_vertex][1];
+                uvs[uvs_pointer_offset++] = x;
+                uvs[uvs_pointer_offset++] = y;
             }
             m_uv_buffer->commit(uvs);
         }
@@ -494,24 +473,18 @@ void ImagePlaneSubSceneOverride::rebuild_geometry_buffers() {
     m_wire_index_buffer = new MHWRender::MIndexBuffer(
         MHWRender::MGeometry::kUnsignedInt32);
     if (m_wire_index_buffer) {
-        int primitive_index = 0;
-        int start_index = 0;
-        int num_primitive = (shape_vertices_count_b + shape_vertices_count_a) - 2;
+        int num_primitive = shape_vertices_count - 1;
         int num_index = num_primitive * 2;
 
-        unsigned int *indices = static_cast<unsigned int *>(m_wire_index_buffer->acquire(
-                num_index, true));
+        bool write_only = true;  // We don't need the current buffer values
+        unsigned int *indices = static_cast<unsigned int *>(
+            m_wire_index_buffer->acquire(num_index, write_only));
         if (indices) {
+            int primitive_index = 0;
             for (int i = 0; i < num_index;) {
-                if (i < (shape_vertices_count_b - 1) * 2) {
-                    start_index = 0;
-                    primitive_index = i / 2;
-                } else {
-                    start_index = shape_vertices_count_b;
-                    primitive_index = i / 2 - shape_vertices_count_b + 1;
-                }
-                indices[i++] = start_index + primitive_index;
-                indices[i++] = start_index + primitive_index + 1;
+                primitive_index = i / 2;
+                indices[i++] = primitive_index;
+                indices[i++] = primitive_index + 1;
             }
 
             m_wire_index_buffer->commit(indices);
@@ -522,25 +495,19 @@ void ImagePlaneSubSceneOverride::rebuild_geometry_buffers() {
     m_shaded_index_buffer = new MHWRender::MIndexBuffer(
         MHWRender::MGeometry::kUnsignedInt32);
     if (m_shaded_index_buffer) {
-        int primitive_index = 0;
-        int start_index = 0;
-        int num_primitive = shape_vertices_count_b + shape_vertices_count_a - 4;
+        int num_primitive = shape_vertices_count - 2;
         int num_index = num_primitive * 3;
 
-        unsigned int *indices = (unsigned int *) m_shaded_index_buffer->acquire(
-                num_index, true);
+        bool write_only = true;  // We don't need the current buffer values
+        unsigned int *indices = static_cast<unsigned int *>(
+            m_shaded_index_buffer->acquire(num_index, write_only));
         if (indices) {
+            int primitive_index = 0;
             for (int i = 0; i < num_index;) {
-                if (i < (shape_vertices_count_b - 2) * 3) {
-                    start_index = 0;
-                    primitive_index = i / 3;
-                } else {
-                    start_index = shape_vertices_count_b;
-                    primitive_index = i / 3 - shape_vertices_count_b + 2;
-                }
-                indices[i++] = start_index;
-                indices[i++] = start_index + primitive_index + 1;
-                indices[i++] = start_index + primitive_index + 2;
+                primitive_index = i / 3;
+                indices[i++] = 0;
+                indices[i++] = primitive_index + 1;
+                indices[i++] = primitive_index + 2;
             }
 
             m_shaded_index_buffer->commit(indices);
