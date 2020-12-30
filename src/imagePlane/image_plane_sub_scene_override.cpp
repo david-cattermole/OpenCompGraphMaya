@@ -23,8 +23,8 @@
 
 // OCG Maya
 #include "constant_texture_data.h"
-#include "subSceneOverride.h"
-#include "shape.h"
+#include "image_plane_sub_scene_override.h"
+#include "image_plane_shape.h"
 
 // OCG
 #include "opencompgraph.h"

@@ -22,7 +22,7 @@
 
 // OCG Maya
 #include <OpenCompGraphMaya/nodeTypeIds.h>
-#include "shape.h"
+#include "image_plane_shape.h"
 
 namespace open_comp_graph_maya {
 
