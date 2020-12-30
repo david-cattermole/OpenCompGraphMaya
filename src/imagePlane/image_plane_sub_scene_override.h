@@ -71,8 +71,8 @@ private:
     ImagePlaneSubSceneOverride(const MObject &obj);
 
     // Create and delete VB/IB
-    void rebuildGeometryBuffers();
-    void deleteGeometryBuffers();
+    void rebuild_geometry_buffers();
+    void delete_geometry_buffers();
 
     // Shader Creation and deletion
     MHWRender::MShaderInstance* compile_shaders();

@@ -67,7 +67,7 @@ ImagePlaneSubSceneOverride::ImagePlaneSubSceneOverride(const MObject &obj)
 
 ImagePlaneSubSceneOverride::~ImagePlaneSubSceneOverride() {
     ImagePlaneSubSceneOverride::release_shaders();
-    ImagePlaneSubSceneOverride::deleteGeometryBuffers();
+    ImagePlaneSubSceneOverride::delete_geometry_buffers();
 
     // Remove callbacks related to instances.
     if (m_instance_added_cb_id != 0) {
@@ -132,7 +132,7 @@ void ImagePlaneSubSceneOverride::update(
         update_geometry = true;
     }
     if (update_geometry) {
-        rebuildGeometryBuffers();
+        rebuild_geometry_buffers();
     }
 
     bool any_instance_changed = false;
@@ -310,10 +310,11 @@ void ImagePlaneSubSceneOverride::addUIDrawables(
     draw_manager.setColor(text_color);
     draw_manager.setFontSize(MHWRender::MUIDrawManager::kSmallFontSize);
 
-    // MUIDrawManager assumes the object space of the original instance. If there
-    // are multiple instances, each text needs to be drawn in the origin of each
-    // instance, so we need to transform the coordinates from each instance's
-    // object space to the original instance's object space.
+    // MUIDrawManager assumes the object space of the original
+    // instance. If there are multiple instances, each text needs to
+    // be drawn in the origin of each instance, so we need to
+    // transform the coordinates from each instance's object space to
+    // the original instance's object space.
     MMatrix world_inverse0 = m_instance_info_cache[0].m_matrix.inverse();
     for (auto it = m_instance_info_cache.begin();
          it != m_instance_info_cache.end(); it++) {
@@ -359,8 +360,8 @@ bool ImagePlaneSubSceneOverride::getInstancedSelectionPath(
         dag_path);
 }
 
-void ImagePlaneSubSceneOverride::rebuildGeometryBuffers() {
-    ImagePlaneSubSceneOverride::deleteGeometryBuffers();
+void ImagePlaneSubSceneOverride::rebuild_geometry_buffers() {
+    ImagePlaneSubSceneOverride::delete_geometry_buffers();
 
     // VertexBuffer for positions. We concatenate the shape_vertices_b and
     // shape_vertices_a positions into a single vertex buffer.  The index
@@ -375,26 +376,26 @@ void ImagePlaneSubSceneOverride::rebuildGeometryBuffers() {
     if (m_position_buffer) {
         float *positions = (float *) m_position_buffer->acquire(shape_vertices_count_a + shape_vertices_count_b, true);
         if (positions) {
-            int verticesPointerOffset = 0;
+            int vertices_pointer_offset = 0;
             for (int current_vertex = 0;
                  current_vertex < shape_vertices_count_a + shape_vertices_count_b;
                  ++current_vertex) {
                 if (current_vertex < shape_vertices_count_b) {
-                    int shapeBVtx = current_vertex;
-                    float x = shape_vertices_b[shapeBVtx][0] * m_multiplier;
-                    float y = shape_vertices_b[shapeBVtx][1] * m_multiplier;
-                    float z = shape_vertices_b[shapeBVtx][2] * m_multiplier;
-                    positions[verticesPointerOffset++] = x;
-                    positions[verticesPointerOffset++] = y;
-                    positions[verticesPointerOffset++] = z;
+                    int shape_vtx = current_vertex;
+                    float x = shape_vertices_b[shape_vtx][0] * m_multiplier;
+                    float y = shape_vertices_b[shape_vtx][1] * m_multiplier;
+                    float z = shape_vertices_b[shape_vtx][2] * m_multiplier;
+                    positions[vertices_pointer_offset++] = x;
+                    positions[vertices_pointer_offset++] = y;
+                    positions[vertices_pointer_offset++] = z;
                 } else {
                     int shapeAVtx = current_vertex - shape_vertices_count_b;
                     float x = shape_vertices_a[shapeAVtx][0] * m_multiplier;
                     float y = shape_vertices_a[shapeAVtx][1] * m_multiplier;
                     float z = shape_vertices_a[shapeAVtx][2] * m_multiplier;
-                    positions[verticesPointerOffset++] = x;
-                    positions[verticesPointerOffset++] = y;
-                    positions[verticesPointerOffset++] = z;
+                    positions[vertices_pointer_offset++] = x;
+                    positions[vertices_pointer_offset++] = y;
+                    positions[vertices_pointer_offset++] = z;
                 }
             }
 
@@ -415,22 +416,22 @@ void ImagePlaneSubSceneOverride::rebuildGeometryBuffers() {
                 shape_uvs_count_a + shape_uvs_count_b,
                 write_only);
         if (uvs) {
-            int uvsPointerOffset = 0;
+            int uvs_pointer_offset = 0;
             for (int current_vertex = 0;
                  current_vertex < (shape_uvs_count_a + shape_uvs_count_b);
                  ++current_vertex) {
                 if (current_vertex < shape_uvs_count_b) {
-                    int shapeBUv = current_vertex;
-                    float x = shape_uvs_b[shapeBUv][0];
-                    float y = shape_uvs_b[shapeBUv][1];
-                    uvs[uvsPointerOffset++] = x;
-                    uvs[uvsPointerOffset++] = y;
+                    int shape_uv = current_vertex;
+                    float x = shape_uvs_b[shape_uv][0];
+                    float y = shape_uvs_b[shape_uv][1];
+                    uvs[uvs_pointer_offset++] = x;
+                    uvs[uvs_pointer_offset++] = y;
                 } else {
-                    int shapeAUv = current_vertex - shape_uvs_count_b;
-                    float x = shape_uvs_a[shapeAUv][0];
-                    float y = shape_uvs_a[shapeAUv][1];
-                    uvs[uvsPointerOffset++] = x;
-                    uvs[uvsPointerOffset++] = y;
+                    int shape_uv = current_vertex - shape_uvs_count_b;
+                    float x = shape_uvs_a[shape_uv][0];
+                    float y = shape_uvs_a[shape_uv][1];
+                    uvs[uvs_pointer_offset++] = x;
+                    uvs[uvs_pointer_offset++] = y;
                 }
             }
             m_uv_buffer->commit(uvs);
@@ -495,7 +496,7 @@ void ImagePlaneSubSceneOverride::rebuildGeometryBuffers() {
     }
 }
 
-void ImagePlaneSubSceneOverride::deleteGeometryBuffers() {
+void ImagePlaneSubSceneOverride::delete_geometry_buffers() {
     if (m_position_buffer) {
         delete m_position_buffer;
         m_position_buffer = nullptr;
@@ -530,9 +531,9 @@ ImagePlaneSubSceneOverride::compile_shaders() {
 
     MHWRender::MRenderer *renderer = MHWRender::MRenderer::theRenderer();
     if (!renderer) {
-        MString errorMsg = MString(
-                "ocgImagePlane failed to get renderer.");
-        MGlobal::displayError(errorMsg);
+        MString error_message = MString(
+            "ocgImagePlane failed to get renderer.");
+        MGlobal::displayError(error_message);
         return nullptr;
     }
 
@@ -540,15 +541,15 @@ ImagePlaneSubSceneOverride::compile_shaders() {
     // and leave.
     if (renderer->drawAPI() != MHWRender::kOpenGLCoreProfile) {
         MStreamUtils::stdErrorStream()
-                << "ocgImagePlane is only supported with OpenGL Core Profile!\n";
+            << "ocgImagePlane is only supported with OpenGL Core Profile!\n";
         return nullptr;
     }
 
-    const MHWRender::MShaderManager *shaderMgr = renderer->getShaderManager();
-    if (!shaderMgr) {
-        MString errorMsg = MString(
-                "ocgImagePlane failed to get shader manager.");
-        MGlobal::displayError(errorMsg);
+    const MHWRender::MShaderManager *shader_manager = renderer->getShaderManager();
+    if (!shader_manager) {
+        MString error_message = MString(
+            "ocgImagePlane failed to get shader manager.");
+        MGlobal::displayError(error_message);
         return nullptr;
     }
 
@@ -568,94 +569,94 @@ ImagePlaneSubSceneOverride::compile_shaders() {
     }
     view.makeSharedContextCurrent();
 
-    MString shaderLocation;
+    MString shader_location;
     MString cmd = MString("getModulePath -moduleName \"OpenCompGraphMaya\";");
-    if( !MGlobal::executeCommand(cmd, shaderLocation, false) ) {
-        MString warnMsg = MString(
-                "ocgImagePlane: Could not get module path, looking up env var.");
-        MGlobal::displayWarning(warnMsg);
-        shaderLocation = MString(std::getenv("OPENCOMPGRAPHMAYA_LOCATION"));
+    if( !MGlobal::executeCommand(cmd, shader_location, false) ) {
+        MString warning_message = MString(
+            "ocgImagePlane: Could not get module path, looking up env var.");
+        MGlobal::displayWarning(warning_message);
+        shader_location = MString(std::getenv("OPENCOMPGRAPHMAYA_LOCATION"));
     }
-    shaderLocation += MString("/shader");
-    MString shaderPathMsg = MString(
-            "ocgImagePlane: Shader path is ") + shaderLocation;
-    MGlobal::displayWarning(shaderPathMsg);
-    shaderMgr->addShaderPath(shaderLocation);
+    shader_location += MString("/shader");
+    MString shader_path_message = MString(
+        "ocgImagePlane: Shader path is ") + shader_location;
+    MGlobal::displayWarning(shader_path_message);
+    shader_manager->addShaderPath(shader_location);
 
     // Shader compiling options.
-    const MString effectsFileName("ocgImagePlane");
+    const MString effects_file_name("ocgImagePlane");
     MShaderCompileMacro *macros = nullptr;
-    unsigned int numberOfMacros = 0;
-    bool useEffectCache = true;
+    unsigned int number_of_macros = 0;
+    bool use_effect_cache = true;
 
     // Get Techniques.
     MStreamUtils::stdErrorStream() << "ocgImagePlane: Get techniques...\n";
-    MStringArray techniqueNames;
-    shaderMgr->getEffectsTechniques(
-            effectsFileName,
-            techniqueNames,
-            macros, numberOfMacros,
-            useEffectCache);
-    for (uint32_t i = 0; i < techniqueNames.length(); ++i) {
+    MStringArray technique_names;
+    shader_manager->getEffectsTechniques(
+        effects_file_name,
+        technique_names,
+        macros, number_of_macros,
+        use_effect_cache);
+    for (uint32_t i = 0; i < technique_names.length(); ++i) {
         MStreamUtils::stdErrorStream()
-                << "ocgImagePlane: technique"
-                << i << ": " << techniqueNames[i].asChar() << '\n';
+            << "ocgImagePlane: technique"
+            << i << ": " << technique_names[i].asChar() << '\n';
     }
-    if (techniqueNames.length() == 0) {
-        MString errorMsg = MString(
-                "ocgImagePlane shader contains no techniques!");
-        MGlobal::displayError(errorMsg);
+    if (technique_names.length() == 0) {
+        MString error_message = MString(
+            "ocgImagePlane shader contains no techniques!");
+        MGlobal::displayError(error_message);
         MStreamUtils::stdErrorStream()
-                << "ocgImagePlane: shader contains no techniques..\n";
+            << "ocgImagePlane: shader contains no techniques..\n";
         return nullptr;
     }
 
     // Compile shader.
     MStreamUtils::stdErrorStream() << "ocgImagePlane: Compiling shader...\n";
-    const MString techniqueName(techniqueNames[0]);  // pick first technique.
-    m_shader = shaderMgr->getEffectsFileShader(
-            effectsFileName, techniqueName,
-            macros, numberOfMacros,
-            useEffectCache);
+    const MString technique_name(technique_names[0]);  // pick first technique.
+    m_shader = shader_manager->getEffectsFileShader(
+        effects_file_name, technique_name,
+        macros, number_of_macros,
+        use_effect_cache);
     if (!m_shader) {
-        MString errorMsg = MString(
-                "ocgImagePlane failed to compile shader.");
-        bool displayLineNumber = true;
-        bool filterSource = true;
-        uint32_t numLines = 2;
-        MGlobal::displayError(errorMsg);
-        MGlobal::displayError(shaderMgr->getLastError());
-        MGlobal::displayError(shaderMgr->getLastErrorSource(
-                displayLineNumber, filterSource, numLines));
+        MString error_message = MString(
+            "ocgImagePlane failed to compile shader.");
+        bool display_line_number = true;
+        bool filter_source = true;
+        uint32_t num_lines = 2;
+        MGlobal::displayError(error_message);
+        MGlobal::displayError(shader_manager->getLastError());
+        MGlobal::displayError(shader_manager->getLastErrorSource(
+                                  display_line_number, filter_source, num_lines));
         return nullptr;
     }
     MStringArray paramlist;
     m_shader->parameterList(paramlist);
     for (uint32_t i = 0; i < paramlist.length(); ++i) {
         MStreamUtils::stdErrorStream()
-                << "ocgImagePlane: param" << i << ": " << paramlist[i].asChar() << '\n';
+            << "ocgImagePlane: param" << i << ": " << paramlist[i].asChar() << '\n';
     }
 
     // Set a color parameter.
-    const float colorValues[4] = {1.0f, 1.0f, 1.0f, 1.0f};
+    const float color_values[4] = {1.0f, 1.0f, 1.0f, 1.0f};
     status = m_shader->setParameter(
-            m_shader_color_parameter_name,
-            colorValues);
+        m_shader_color_parameter_name,
+        color_values);
     if (status != MStatus::kSuccess) {
         MStreamUtils::stdErrorStream()
-                << "ocgImagePlane: Failed to set color parameter!" << '\n';
-        MString errorMsg = MString(
-                "ocgImagePlane: Failed to set color parameter.");
-        MGlobal::displayError(errorMsg);
+            << "ocgImagePlane: Failed to set color parameter!" << '\n';
+        MString error_message = MString(
+            "ocgImagePlane: Failed to set color parameter.");
+        MGlobal::displayError(error_message);
         return nullptr;
     }
 
-    MHWRender::MTextureManager* textureManager =
+    MHWRender::MTextureManager* texture_manager =
             renderer->getTextureManager();
-    if (!textureManager) {
-        MString errorMsg = MString(
+    if (!texture_manager) {
+        MString error_message = MString(
                 "ocgImagePlane failed to get texture manager.");
-        MGlobal::displayError(errorMsg);
+        MGlobal::displayError(error_message);
         return nullptr;
     }
 
@@ -685,14 +686,14 @@ ImagePlaneSubSceneOverride::compile_shaders() {
     //
 
     // MString textureLocation("C:/Users/user/dev/OpenCompGraphMaya/src/OpenCompGraph/tests/data");
-    // textureManager->addImagePath(textureLocation);
+    // texture_manager->addImagePath(textureLocation);
     // // Load texture onto shader, using Maya's image loading libraries.
     // int mipmapLevels = 1;  // 1 = Only one mip-map level, don't create more.
     // bool useExposureControl = true;
     // MString textureName("checker_8bit_rgba_8x8.png");
     // const MString contextNodeFullName("ocgImagePlane1");
     // MHWRender::MTexture* texture =
-    //     textureManager->acquireTexture(
+    //     texture_manager->acquireTexture(
     //         textureName,
     //         contextNodeFullName,
     //         mipmapLevels,
@@ -705,7 +706,7 @@ ImagePlaneSubSceneOverride::compile_shaders() {
         // of this override has already generated the texture. We can
         // reuse it to save GPU memory since the noise data is
         // constant.
-        m_texture = textureManager->findTexture(m_texture_name);
+        m_texture = texture_manager->findTexture(m_texture_name);
         // Not in cache, so we need to actually build the texture.
         if (!m_texture)
         {
@@ -713,17 +714,17 @@ ImagePlaneSubSceneOverride::compile_shaders() {
             // //
             // // See:
             // // http://help.autodesk.com/view/MAYAUL/2018/ENU/?guid=__cpp_ref_class_m_h_w_render_1_1_m_texture_description_html
-            // MHWRender::MTextureDescription desc;
-            // desc.setToDefault2DTexture();
-            // desc.fWidth = 4;
-            // desc.fHeight = 4;
-            // desc.fFormat = MHWRender::kR32G32B32_FLOAT;
-            // desc.fMipmaps = 1;
-            // m_texture = textureManager->acquireTexture(
-            //     m_texture_name,
-            //     desc,
-            //     (const void*)&(color_bars_f32_8x8_[0]),
-            //     false);
+            // MHWRender::MTextureDescription texture_description;
+            // texture_description.setToDefault2DTexture();
+            // texture_description.fWidth = 4;
+            // texture_description.fHeight = 4;
+            // texture_description.fFormat = MHWRender::kR32G32B32_FLOAT;
+            // texture_description.fMipmaps = 1;
+            // m_texture = texture_manager->acquireTexture(
+            //         m_texture_name,
+            //         texture_description,
+            //         (const void*)&(color_bars_f32_8x8_[0]),
+            //         false);
 
             auto graph = ocg::Graph();
             auto read_node = ocg::Node(ocg::NodeType::kReadImage, "read1");
@@ -753,19 +754,19 @@ ImagePlaneSubSceneOverride::compile_shaders() {
                 auto buffer = static_cast<const void*>(pixel_buffer.data());
 
                 // Upload Texture via Maya.
-                MHWRender::MTextureDescription desc;
-                desc.setToDefault2DTexture();
-                desc.fWidth = pixel_width;
-                desc.fHeight = pixel_height;
+                MHWRender::MTextureDescription texture_description;
+                texture_description.setToDefault2DTexture();
+                texture_description.fWidth = pixel_width;
+                texture_description.fHeight = pixel_height;
                 if (pixel_num_channels == 4) {
-                    desc.fFormat = MHWRender::kR32G32B32A32_FLOAT;
+                    texture_description.fFormat = MHWRender::kR32G32B32A32_FLOAT;
                 } else {
-                    desc.fFormat = MHWRender::kR32G32B32_FLOAT;
+                    texture_description.fFormat = MHWRender::kR32G32B32_FLOAT;
                 }
-                desc.fMipmaps = 1;
-                m_texture = textureManager->acquireTexture(
+                texture_description.fMipmaps = 1;
+                m_texture = texture_manager->acquireTexture(
                         m_texture_name,
-                        desc,
+                        texture_description,
                         buffer,
                         false);
             }
@@ -776,28 +777,28 @@ ImagePlaneSubSceneOverride::compile_shaders() {
     if (m_texture) {
         MStreamUtils::stdErrorStream()
                 << "ocgImagePlane: Setting texture parameter...\n";
-        MHWRender::MTextureAssignment texResource;
-        texResource.texture = m_texture;
+        MHWRender::MTextureAssignment texture_resource;
+        texture_resource.texture = m_texture;
         m_shader->setParameter(
                 m_shader_texture_parameter_name,
-                texResource);
+                texture_resource);
         // Release our reference now that it is set on the shader
-        textureManager->releaseTexture(m_texture);
+        texture_manager->releaseTexture(m_texture);
     } else {
         MStreamUtils::stdErrorStream()
                 << "ocgImagePlane: Failed to acquire texture." << '\n';
-        MString errorMsg = MString(
+        MString error_message = MString(
                 "ocgImagePlane: Failed to acquire texture!");
-        MGlobal::displayError(errorMsg);
+        MGlobal::displayError(error_message);
     }
 
     // Acquire and bind the default texture sampler.
-    MHWRender::MSamplerStateDesc samplerDesc;
-    samplerDesc.filter = MHWRender::MSamplerState::kMinMagMipPoint;
-    samplerDesc.addressU = MHWRender::MSamplerState::kTexClamp;
-    samplerDesc.addressV = MHWRender::MSamplerState::kTexClamp;
+    MHWRender::MSamplerStateDesc sampler_desc;
+    sampler_desc.filter = MHWRender::MSamplerState::kMinMagMipPoint;
+    sampler_desc.addressU = MHWRender::MSamplerState::kTexClamp;
+    sampler_desc.addressV = MHWRender::MSamplerState::kTexClamp;
     const MHWRender::MSamplerState* sampler =
-            MHWRender::MStateManager::acquireSamplerState(samplerDesc);
+            MHWRender::MStateManager::acquireSamplerState(sampler_desc);
     if (sampler) {
         MStreamUtils::stdErrorStream()
                 << "ocgImagePlane: Setting texture sampler parameter...\n";
@@ -807,9 +808,9 @@ ImagePlaneSubSceneOverride::compile_shaders() {
     } else {
         MStreamUtils::stdErrorStream()
                 << "ocgImagePlane: Failed to get texture sampler.\n";
-        MString errorMsg = MString(
+        MString error_message = MString(
                 "ocgImagePlane: Failed to get texture sampler.");
-        MGlobal::displayError(errorMsg);
+        MGlobal::displayError(error_message);
         return nullptr;
     }
 
@@ -819,16 +820,39 @@ ImagePlaneSubSceneOverride::compile_shaders() {
 MStatus
 ImagePlaneSubSceneOverride::release_shaders() {
     MStreamUtils::stdErrorStream()
-            << "ocgImagePlane: Releasing shaders....\n";
+        << "ocgImagePlane: Releasing shader...\n";
+
     MHWRender::MRenderer *renderer = MHWRender::MRenderer::theRenderer();
-    if (renderer) {
-        const MHWRender::MShaderManager *shader_mgr = renderer->getShaderManager();
-        if (shader_mgr && m_shader) {
-            shader_mgr->releaseShader(m_shader);
-            return MS::kSuccess;
-        }
+    if (!renderer) {
+        MString error_message = MString(
+                "ocgImagePlane: Failed to get renderer.");
+        MStreamUtils::stdErrorStream()
+            << "ocgImagePlane: Failed to get renderer.\n";
+        MGlobal::displayError(error_message);
+        return MS::kFailure;
     }
-    return MS::kFailure;
+
+    const MHWRender::MShaderManager *shader_manager = renderer->getShaderManager();
+    if (!shader_manager) {
+        MString error_message = MString(
+                "ocgImagePlane: Failed to get shader manager.");
+        MStreamUtils::stdErrorStream()
+            << "ocgImagePlane: Failed to get shader manager.\n";
+        MGlobal::displayError(error_message);
+        return MS::kFailure;
+    }
+
+    if (!m_shader) {
+        MString error_message = MString(
+                "ocgImagePlane: Failed to release shader.");
+        MStreamUtils::stdErrorStream()
+                << "ocgImagePlane: Failed to release shader.\n";
+        MGlobal::displayError(error_message);
+        return MS::kFailure;
+    }
+
+    shader_manager->releaseShader(m_shader);
+    return MS::kSuccess;
 }
 
 
