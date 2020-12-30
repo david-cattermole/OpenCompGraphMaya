@@ -17,7 +17,6 @@
 #include <maya/MStateManager.h>
 
 // STL
-#include <unordered_map>
 #include <memory>
 #include <cstdlib>
 
@@ -34,7 +33,7 @@ namespace ocg = open_comp_graph;
 
 namespace open_comp_graph_maya {
 
-MString ImagePlaneSubSceneOverride::m_texture_name = "MyColorBarsTexture";
+MString ImagePlaneSubSceneOverride::m_texture_name = "";
 MString ImagePlaneSubSceneOverride::m_shader_color_parameter_name = "gSolidColor";
 MString ImagePlaneSubSceneOverride::m_shader_texture_parameter_name = "gTexture";
 MString ImagePlaneSubSceneOverride::m_shader_texture_sampler_parameter_name = "gTextureSampler";
@@ -44,7 +43,7 @@ MString ImagePlaneSubSceneOverride::m_shaded_render_item_name = "ocgImagePlaneSh
 ImagePlaneSubSceneOverride::ImagePlaneSubSceneOverride(const MObject &obj)
         : MHWRender::MPxSubSceneOverride(obj),
           m_locator_node(obj),
-          m_multiplier(0.0f),
+          m_size(0.0f),
           m_is_instance_mode(false),
           m_are_ui_drawables_dirty(true),
           m_position_buffer(nullptr),
@@ -95,6 +94,8 @@ void ImagePlaneSubSceneOverride::InstanceChangedCallback(
 void ImagePlaneSubSceneOverride::update(
     MHWRender::MSubSceneContainer &container,
     const MHWRender::MFrameContext &/*frame_context*/) {
+    MStatus status;
+
     std::uint32_t num_instances = m_instance_dag_paths.length();
     if (num_instances == 0) {
         if (!MDagPath::getAllPathsTo(m_locator_node, m_instance_dag_paths)) {
@@ -108,31 +109,83 @@ void ImagePlaneSubSceneOverride::update(
         return;
     }
 
-    // MColor = MHWRender::MGeometryUtilities::wireframeColor(m_instance_dag_paths[0]);
-    MHWRender::MShaderInstance *shader =
-        ImagePlaneSubSceneOverride::compile_shaders();
-    if (!shader) {
-        MStreamUtils::stdErrorStream()
-            << "ImagePlaneSubSceneOverride: Failed to get a shader.\n";
-        return;
-    }
+    uint32_t attr_values_changed = 0;
+    uint32_t shader_values_changed = 0;
+    uint32_t geometry_values_changed = 0;
 
-    MPlug plug(m_locator_node, ImagePlaneShape::m_size_attr);
-    float new_multiplier = 1.0f;
-    if (!plug.isNull()) {
-        MDistance size_val;
-        if (plug.getValue(size_val)) {
-            new_multiplier = static_cast<float>(size_val.asCentimeters());
+    // Get size attribute value.
+    MPlug size_plug(ImagePlaneSubSceneOverride::m_locator_node,
+                    ImagePlaneShape::m_size_attr);
+    if (!size_plug.isNull()) {
+        float new_size = 1.0f;
+        MDistance size_value;
+        if (size_plug.getValue(size_value)) {
+            new_size = static_cast<float>(size_value.asCentimeters());
+        }
+        bool size_has_changed = m_size != new_size;
+        attr_values_changed += static_cast<uint32_t>(size_has_changed);
+        geometry_values_changed += static_cast<uint32_t>(size_has_changed);
+        if (size_has_changed) {
+            m_size = new_size;
         }
     }
 
-    bool update_geometry = (container.count() == 0);
-    if (m_multiplier != new_multiplier) {
-        m_multiplier = new_multiplier;
+    // Get file path attribute value.
+    MPlug file_path_plug(ImagePlaneSubSceneOverride::m_locator_node,
+                         ImagePlaneShape::m_file_path_attr);
+    if (!file_path_plug.isNull()) {
+        MString new_file_path = file_path_plug.asString(&status);
+        CHECK_MSTATUS(status);
+        bool file_path_has_changed = m_file_path != new_file_path;
+        attr_values_changed += static_cast<uint32_t>(file_path_has_changed);
+        shader_values_changed += static_cast<uint32_t>(file_path_has_changed);
+        if (file_path_has_changed) {
+            m_file_path = new_file_path;
+        }
+    }
+
+    // Get exposure attribute value.
+    MPlug exposure_plug(ImagePlaneSubSceneOverride::m_locator_node,
+                        ImagePlaneShape::m_exposure_attr);
+    if (!exposure_plug.isNull()) {
+        float new_exposure = exposure_plug.asFloat(&status);
+        CHECK_MSTATUS(status);
+        bool exposure_has_changed = m_exposure != new_exposure;
+        attr_values_changed += static_cast<uint32_t>(exposure_has_changed);
+        shader_values_changed += static_cast<uint32_t>(exposure_has_changed);
+        if (exposure_has_changed) {
+            m_exposure = new_exposure;
+        }
+    }
+
+    // Have the attribute values changed?
+    bool update_geometry = container.count() == 0;
+    bool update_shader = container.count() == 0;
+    if (geometry_values_changed > 0) {
         update_geometry = true;
     }
+    if (shader_values_changed > 0) {
+        update_shader = true;
+    }
     if (update_geometry) {
-        rebuild_geometry_buffers();
+        ImagePlaneSubSceneOverride::rebuild_geometry_buffers();
+    }
+
+    // Compile and update shader.
+    status = ImagePlaneSubSceneOverride::compile_shaders();
+    if (!m_shader) {
+        MStreamUtils::stdErrorStream()
+                << "ImagePlaneSubSceneOverride: Failed to get a shader.\n";
+        return;
+    }
+    if (update_shader) {
+        MStreamUtils::stdErrorStream()
+                << "ImagePlaneSubSceneOverride: Update shader parameters...\n";
+        // MColor = MHWRender::MGeometryUtilities::wireframeColor(m_instance_dag_paths[0]);
+        const float color_values[4] = {1.0f, 1.0f, 1.0f, 1.0f};
+        ImagePlaneSubSceneOverride::set_shader_color(m_shader, color_values);
+        ImagePlaneSubSceneOverride::set_shader_texture(
+                m_shader, m_texture, m_file_path, m_exposure);
     }
 
     bool any_instance_changed = false;
@@ -221,8 +274,8 @@ void ImagePlaneSubSceneOverride::update(
                 m_shaded_render_item_name,
                 MRenderItem::MaterialSceneItem,
                 MGeometry::kTriangles);
-        shaded_item->setDrawMode(
-            static_cast<MGeometry::DrawMode>(MGeometry::kShaded | MGeometry::kTextured));
+        shaded_item->setDrawMode(static_cast<MGeometry::DrawMode>(
+                MGeometry::kShaded | MGeometry::kTextured));
         shaded_item->setExcludedFromPostEffects(false);
         shaded_item->castsShadows(true);
         shaded_item->receivesShadows(true);
@@ -232,12 +285,11 @@ void ImagePlaneSubSceneOverride::update(
     }
 
     if (items_changed || any_instance_changed) {
-        wire_item->setShader(shader);
-        shaded_item->setShader(shader);
+        wire_item->setShader(m_shader);
+        shaded_item->setShader(m_shader);
     }
 
     if (items_changed || update_geometry) {
-        MStatus status;
         MFnDagNode node(m_locator_node, &status);
 
         ImagePlaneShape *fp = status ? dynamic_cast<ImagePlaneShape *>(node.userNode()) : nullptr;
@@ -382,17 +434,17 @@ void ImagePlaneSubSceneOverride::rebuild_geometry_buffers() {
                  ++current_vertex) {
                 if (current_vertex < shape_vertices_count_b) {
                     int shape_vtx = current_vertex;
-                    float x = shape_vertices_b[shape_vtx][0] * m_multiplier;
-                    float y = shape_vertices_b[shape_vtx][1] * m_multiplier;
-                    float z = shape_vertices_b[shape_vtx][2] * m_multiplier;
+                    float x = shape_vertices_b[shape_vtx][0] * m_size;
+                    float y = shape_vertices_b[shape_vtx][1] * m_size;
+                    float z = shape_vertices_b[shape_vtx][2] * m_size;
                     positions[vertices_pointer_offset++] = x;
                     positions[vertices_pointer_offset++] = y;
                     positions[vertices_pointer_offset++] = z;
                 } else {
                     int shapeAVtx = current_vertex - shape_vertices_count_b;
-                    float x = shape_vertices_a[shapeAVtx][0] * m_multiplier;
-                    float y = shape_vertices_a[shapeAVtx][1] * m_multiplier;
-                    float z = shape_vertices_a[shapeAVtx][2] * m_multiplier;
+                    float x = shape_vertices_a[shapeAVtx][0] * m_size;
+                    float y = shape_vertices_a[shapeAVtx][1] * m_size;
+                    float z = shape_vertices_a[shapeAVtx][2] * m_size;
                     positions[vertices_pointer_offset++] = x;
                     positions[vertices_pointer_offset++] = y;
                     positions[vertices_pointer_offset++] = z;
@@ -518,15 +570,16 @@ void ImagePlaneSubSceneOverride::delete_geometry_buffers() {
     }
 }
 
-MHWRender::MShaderInstance *
+MStatus
 ImagePlaneSubSceneOverride::compile_shaders() {
+    MStatus status = MS::kSuccess;
     if (m_shader != nullptr) {
         // MStreamUtils::stdErrorStream()
         //     << "ocgImagePlane, found shader!\n";
-        return m_shader;
+        return status;
     } else {
         MStreamUtils::stdErrorStream()
-                << "ocgImagePlane compiling shader...\n";
+            << "ocgImagePlane compiling shader...\n";
     }
 
     MHWRender::MRenderer *renderer = MHWRender::MRenderer::theRenderer();
@@ -534,7 +587,8 @@ ImagePlaneSubSceneOverride::compile_shaders() {
         MString error_message = MString(
             "ocgImagePlane failed to get renderer.");
         MGlobal::displayError(error_message);
-        return nullptr;
+        status = MS::kFailure;
+        return status;
     }
 
     // If not core profile: ogsfx is not available save effect name
@@ -542,7 +596,8 @@ ImagePlaneSubSceneOverride::compile_shaders() {
     if (renderer->drawAPI() != MHWRender::kOpenGLCoreProfile) {
         MStreamUtils::stdErrorStream()
             << "ocgImagePlane is only supported with OpenGL Core Profile!\n";
-        return nullptr;
+        status = MS::kFailure;
+        return status;
     }
 
     const MHWRender::MShaderManager *shader_manager = renderer->getShaderManager();
@@ -550,7 +605,8 @@ ImagePlaneSubSceneOverride::compile_shaders() {
         MString error_message = MString(
             "ocgImagePlane failed to get shader manager.");
         MGlobal::displayError(error_message);
-        return nullptr;
+        status = MS::kFailure;
+        return status;
     }
 
     // In core profile, there used to be the problem where the shader
@@ -562,16 +618,15 @@ ImagePlaneSubSceneOverride::compile_shaders() {
     // context... so that in the draw phase, after switching to the
     // viewport context, the drawing is erroneous.  In order to solve
     // that problem, make the view context current
-    MStatus status;
     M3dView view = M3dView::active3dView(&status);
     if (status != MStatus::kSuccess) {
-        return nullptr;
+        return status;
     }
     view.makeSharedContextCurrent();
 
     MString shader_location;
     MString cmd = MString("getModulePath -moduleName \"OpenCompGraphMaya\";");
-    if( !MGlobal::executeCommand(cmd, shader_location, false) ) {
+    if (!MGlobal::executeCommand(cmd, shader_location, false)) {
         MString warning_message = MString(
             "ocgImagePlane: Could not get module path, looking up env var.");
         MGlobal::displayWarning(warning_message);
@@ -608,7 +663,8 @@ ImagePlaneSubSceneOverride::compile_shaders() {
         MGlobal::displayError(error_message);
         MStreamUtils::stdErrorStream()
             << "ocgImagePlane: shader contains no techniques..\n";
-        return nullptr;
+        status = MS::kFailure;
+        return status;
     }
 
     // Compile shader.
@@ -628,18 +684,27 @@ ImagePlaneSubSceneOverride::compile_shaders() {
         MGlobal::displayError(shader_manager->getLastError());
         MGlobal::displayError(shader_manager->getLastErrorSource(
                                   display_line_number, filter_source, num_lines));
-        return nullptr;
+        status = MS::kFailure;
+        return status;
     }
-    MStringArray paramlist;
-    m_shader->parameterList(paramlist);
-    for (uint32_t i = 0; i < paramlist.length(); ++i) {
+    MStringArray parameter_list;
+    m_shader->parameterList(parameter_list);
+    for (uint32_t i = 0; i < parameter_list.length(); ++i) {
         MStreamUtils::stdErrorStream()
-            << "ocgImagePlane: param" << i << ": " << paramlist[i].asChar() << '\n';
+            << "ocgImagePlane: param "
+            << i << ": " << parameter_list[i].asChar()
+            << '\n';
     }
 
-    // Set a color parameter.
-    const float color_values[4] = {1.0f, 1.0f, 1.0f, 1.0f};
-    status = m_shader->setParameter(
+    return status;
+}
+
+/// Set a color parameter.
+MStatus
+ImagePlaneSubSceneOverride::set_shader_color(
+        MHWRender::MShaderInstance* shader,
+        const float color_values[4]) {
+    MStatus status = shader->setParameter(
         m_shader_color_parameter_name,
         color_values);
     if (status != MStatus::kSuccess) {
@@ -648,16 +713,37 @@ ImagePlaneSubSceneOverride::compile_shaders() {
         MString error_message = MString(
             "ocgImagePlane: Failed to set color parameter.");
         MGlobal::displayError(error_message);
-        return nullptr;
+    }
+    return status;
+}
+
+MStatus
+ImagePlaneSubSceneOverride::set_shader_texture(
+        MHWRender::MShaderInstance* shader,
+        MHWRender::MTexture *texture,
+        MString file_path,
+        float exposure) {
+    MStatus status = MS::kSuccess;
+
+    MHWRender::MRenderer *renderer = MHWRender::MRenderer::theRenderer();
+    if (!renderer) {
+        MString error_message = MString(
+            "ocgImagePlane: Failed to get renderer.");
+        MStreamUtils::stdErrorStream()
+            << "ocgImagePlane: Failed to get renderer.\n";
+        MGlobal::displayError(error_message);
+        status = MS::kFailure;
+        return status;
     }
 
     MHWRender::MTextureManager* texture_manager =
-            renderer->getTextureManager();
+        renderer->getTextureManager();
     if (!texture_manager) {
         MString error_message = MString(
-                "ocgImagePlane failed to get texture manager.");
+            "ocgImagePlane failed to get texture manager.");
         MGlobal::displayError(error_message);
-        return nullptr;
+        status = MS::kFailure;
+        return status;
     }
 
     // MTextureManager Caching Behaviour
@@ -700,159 +786,171 @@ ImagePlaneSubSceneOverride::compile_shaders() {
     //         useExposureControl);
 
     // Upload Texture data to the GPU using Maya's API.
-    if (!m_texture)
+    if (!texture)
     {
         // First, search the texture cache to see if another instance
         // of this override has already generated the texture. We can
         // reuse it to save GPU memory since the noise data is
         // constant.
-        m_texture = texture_manager->findTexture(m_texture_name);
-        // Not in cache, so we need to actually build the texture.
-        if (!m_texture)
-        {
-            // // Create a 2D texture with the hard-coded data.
-            // //
-            // // See:
-            // // http://help.autodesk.com/view/MAYAUL/2018/ENU/?guid=__cpp_ref_class_m_h_w_render_1_1_m_texture_description_html
-            // MHWRender::MTextureDescription texture_description;
-            // texture_description.setToDefault2DTexture();
-            // texture_description.fWidth = 4;
-            // texture_description.fHeight = 4;
-            // texture_description.fFormat = MHWRender::kR32G32B32_FLOAT;
-            // texture_description.fMipmaps = 1;
-            // m_texture = texture_manager->acquireTexture(
-            //         m_texture_name,
-            //         texture_description,
-            //         (const void*)&(color_bars_f32_8x8_[0]),
-            //         false);
+        // // texture = texture_manager->findTexture(m_texture_name);
 
-            auto graph = ocg::Graph();
-            auto read_node = ocg::Node(ocg::NodeType::kReadImage, "read1");
-            auto grade_node = ocg::Node(ocg::NodeType::kGrade, "grade1");
-            // read_node.set_attr_str("file_path", "C:/Users/catte/dev/OpenCompGraphMaya/src/OpenCompGraph/tests/data/checker_8bit_rgba_3840x2160.png");
-            read_node.set_attr_str("file_path", "C:/Users/catte/dev/OpenCompGraphMaya/src/OpenCompGraph/tests/data/oiio-images/tahoe-gps.jpg");
-            grade_node.set_attr_f32("multiply", 2.0f);
-            auto read_node_id = graph.add_node(read_node);
-            auto grade_node_id = graph.add_node(grade_node);
-            graph.connect(read_node_id, grade_node_id, 0);
+        // // Not in cache, so we need to actually build the texture.
+        // if (!texture) {
 
-            auto cache = std::make_shared<ocg::Cache>();
-            auto exec_status = graph.execute(grade_node_id, cache);
-            if (exec_status == ocg::ExecuteStatus::kSuccess) {
-                auto stream_data = graph.output_stream();
-                auto pixel_buffer = stream_data.pixel_buffer();
-                auto pixel_width = stream_data.pixel_width();
-                auto pixel_height = stream_data.pixel_height();
-                auto pixel_num_channels = stream_data.pixel_num_channels();
-                MStreamUtils::stdErrorStream()
-                        << "pixels: "
-                        << pixel_width << "x"
-                        << pixel_height << "x"
-                        << static_cast<uint32_t>(pixel_num_channels)
-                        << " | data=" << &pixel_buffer << '\n';
-                // auto buffer = static_cast<const void*>(color_bars_f32_8x8_[0]),
-                auto buffer = static_cast<const void*>(pixel_buffer.data());
+        // // Create a 2D texture with the hard-coded data.
+        // //
+        // // See:
+        // // http://help.autodesk.com/view/MAYAUL/2018/ENU/?guid=__cpp_ref_class_m_h_w_render_1_1_texture_description_html
+        // MHWRender::MTextureDescription texture_description;
+        // texture_description.setToDefault2DTexture();
+        // texture_description.fWidth = 4;
+        // texture_description.fHeight = 4;
+        // texture_description.fFormat = MHWRender::kR32G32B32_FLOAT;
+        // texture_description.fMipmaps = 1;
+        // texture = texture_manager->acquireTexture(
+        //         m_texture_name,
+        //         texture_description,
+        //         (const void*)&(color_bars_f32_8x8_[0]),
+        //         false);
 
-                // Upload Texture via Maya.
-                MHWRender::MTextureDescription texture_description;
-                texture_description.setToDefault2DTexture();
-                texture_description.fWidth = pixel_width;
-                texture_description.fHeight = pixel_height;
-                if (pixel_num_channels == 4) {
-                    texture_description.fFormat = MHWRender::kR32G32B32A32_FLOAT;
-                } else {
-                    texture_description.fFormat = MHWRender::kR32G32B32_FLOAT;
-                }
-                texture_description.fMipmaps = 1;
-                m_texture = texture_manager->acquireTexture(
-                        m_texture_name,
-                        texture_description,
-                        buffer,
-                        false);
+        // "C:/Users/catte/dev/OpenCompGraphMaya/src/OpenCompGraph/tests/data/checker_8bit_rgba_3840x2160.png"
+        // "C:/Users/catte/dev/OpenCompGraphMaya/src/OpenCompGraph/tests/data/oiio-images/tahoe-gps.jpg"
+
+        const rust::Str file_path_str(file_path.asChar());
+        float multiply = std::pow(2.0, exposure);  // Exposure Value
+
+        auto graph = ocg::Graph();
+        auto read_node = ocg::Node(ocg::NodeType::kReadImage, "read1");
+        auto grade_node = ocg::Node(ocg::NodeType::kGrade, "grade1");
+        read_node.set_attr_str("file_path", file_path_str);
+        grade_node.set_attr_f32("multiply", multiply);
+        auto read_node_id = graph.add_node(read_node);
+        auto grade_node_id = graph.add_node(grade_node);
+        graph.connect(read_node_id, grade_node_id, 0);
+
+        auto cache = std::make_shared<ocg::Cache>();
+        auto exec_status = graph.execute(grade_node_id, cache);
+        if (exec_status == ocg::ExecuteStatus::kSuccess) {
+            auto stream_data = graph.output_stream();
+            auto pixel_buffer = stream_data.pixel_buffer();
+            auto pixel_width = stream_data.pixel_width();
+            auto pixel_height = stream_data.pixel_height();
+            auto pixel_num_channels = stream_data.pixel_num_channels();
+            MStreamUtils::stdErrorStream()
+                << "pixels: "
+                << pixel_width << "x"
+                << pixel_height << "x"
+                << static_cast<uint32_t>(pixel_num_channels)
+                << " | data=" << &pixel_buffer << '\n';
+            // auto buffer = static_cast<const void*>(color_bars_f32_8x8_[0]),
+            auto buffer = static_cast<const void*>(pixel_buffer.data());
+
+            // Upload Texture via Maya.
+            MHWRender::MTextureDescription texture_description;
+            texture_description.setToDefault2DTexture();
+            texture_description.fWidth = pixel_width;
+            texture_description.fHeight = pixel_height;
+            if (pixel_num_channels == 4) {
+                texture_description.fFormat = MHWRender::kR32G32B32A32_FLOAT;
+            } else {
+                texture_description.fFormat = MHWRender::kR32G32B32_FLOAT;
             }
+            texture_description.fMipmaps = 1;
+            texture = texture_manager->acquireTexture(
+                m_texture_name,
+                texture_description,
+                buffer,
+                false);
         }
+        // }
     }
 
     // Set the shader's texture parameter to use our uploaded texture.
-    if (m_texture) {
+    if (texture) {
         MStreamUtils::stdErrorStream()
-                << "ocgImagePlane: Setting texture parameter...\n";
+            << "ocgImagePlane: Setting texture parameter...\n";
         MHWRender::MTextureAssignment texture_resource;
-        texture_resource.texture = m_texture;
-        m_shader->setParameter(
-                m_shader_texture_parameter_name,
-                texture_resource);
+        texture_resource.texture = texture;
+        shader->setParameter(
+            m_shader_texture_parameter_name,
+            texture_resource);
         // Release our reference now that it is set on the shader
-        texture_manager->releaseTexture(m_texture);
+        texture_manager->releaseTexture(texture);
+
+        // Acquire and bind the default texture sampler.
+        MHWRender::MSamplerStateDesc sampler_desc;
+        sampler_desc.filter = MHWRender::MSamplerState::kMinMagMipPoint;
+        sampler_desc.addressU = MHWRender::MSamplerState::kTexClamp;
+        sampler_desc.addressV = MHWRender::MSamplerState::kTexClamp;
+        const MHWRender::MSamplerState* sampler =
+                MHWRender::MStateManager::acquireSamplerState(sampler_desc);
+        if (sampler) {
+            MStreamUtils::stdErrorStream()
+                    << "ocgImagePlane: Setting texture sampler parameter...\n";
+            shader->setParameter(
+                    m_shader_texture_sampler_parameter_name,
+                    *sampler);
+        } else {
+            MStreamUtils::stdErrorStream()
+                    << "ocgImagePlane: Failed to get texture sampler.\n";
+            MString error_message = MString(
+                    "ocgImagePlane: Failed to get texture sampler.");
+            MGlobal::displayError(error_message);
+            status = MS::kFailure;
+            return status;
+        }
     } else {
         MStreamUtils::stdErrorStream()
-                << "ocgImagePlane: Failed to acquire texture." << '\n';
+            << "ocgImagePlane: Failed to acquire texture." << '\n';
         MString error_message = MString(
-                "ocgImagePlane: Failed to acquire texture!");
+            "ocgImagePlane: Failed to acquire texture!");
         MGlobal::displayError(error_message);
+        status = MS::kFailure;
+        return status;
     }
-
-    // Acquire and bind the default texture sampler.
-    MHWRender::MSamplerStateDesc sampler_desc;
-    sampler_desc.filter = MHWRender::MSamplerState::kMinMagMipPoint;
-    sampler_desc.addressU = MHWRender::MSamplerState::kTexClamp;
-    sampler_desc.addressV = MHWRender::MSamplerState::kTexClamp;
-    const MHWRender::MSamplerState* sampler =
-            MHWRender::MStateManager::acquireSamplerState(sampler_desc);
-    if (sampler) {
-        MStreamUtils::stdErrorStream()
-                << "ocgImagePlane: Setting texture sampler parameter...\n";
-        m_shader->setParameter(
-                m_shader_texture_sampler_parameter_name,
-                *sampler);
-    } else {
-        MStreamUtils::stdErrorStream()
-                << "ocgImagePlane: Failed to get texture sampler.\n";
-        MString error_message = MString(
-                "ocgImagePlane: Failed to get texture sampler.");
-        MGlobal::displayError(error_message);
-        return nullptr;
-    }
-
-    return m_shader;
+    return status;
 }
 
 MStatus
 ImagePlaneSubSceneOverride::release_shaders() {
+    MStatus status = MS::kSuccess;
     MStreamUtils::stdErrorStream()
         << "ocgImagePlane: Releasing shader...\n";
 
     MHWRender::MRenderer *renderer = MHWRender::MRenderer::theRenderer();
     if (!renderer) {
         MString error_message = MString(
-                "ocgImagePlane: Failed to get renderer.");
+            "ocgImagePlane: Failed to get renderer.");
         MStreamUtils::stdErrorStream()
             << "ocgImagePlane: Failed to get renderer.\n";
         MGlobal::displayError(error_message);
-        return MS::kFailure;
+        status = MS::kFailure;
+        return status;
     }
 
     const MHWRender::MShaderManager *shader_manager = renderer->getShaderManager();
     if (!shader_manager) {
         MString error_message = MString(
-                "ocgImagePlane: Failed to get shader manager.");
+            "ocgImagePlane: Failed to get shader manager.");
         MStreamUtils::stdErrorStream()
             << "ocgImagePlane: Failed to get shader manager.\n";
         MGlobal::displayError(error_message);
-        return MS::kFailure;
+        status = MS::kFailure;
+        return status;
     }
 
     if (!m_shader) {
         MString error_message = MString(
-                "ocgImagePlane: Failed to release shader.");
+            "ocgImagePlane: Failed to release shader.");
         MStreamUtils::stdErrorStream()
-                << "ocgImagePlane: Failed to release shader.\n";
+            << "ocgImagePlane: Failed to release shader.\n";
         MGlobal::displayError(error_message);
-        return MS::kFailure;
+        status = MS::kFailure;
+        return status;
     }
 
     shader_manager->releaseShader(m_shader);
-    return MS::kSuccess;
+    return status;
 }
 
 

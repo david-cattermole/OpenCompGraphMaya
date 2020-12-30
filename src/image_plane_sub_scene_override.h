@@ -70,23 +70,36 @@ private:
 
     ImagePlaneSubSceneOverride(const MObject &obj);
 
-    // Create and delete VB/IB
+    // Create and delete VertexBuffers and Index Buffers, etc.
     void rebuild_geometry_buffers();
     void delete_geometry_buffers();
-
-    // Shader Creation and deletion
-    MHWRender::MShaderInstance* compile_shaders();
-    MStatus release_shaders();
-
-    MObject m_locator_node;
-    float m_multiplier;
-    bool m_is_instance_mode;
-    bool m_are_ui_drawables_dirty;
 
     MHWRender::MVertexBuffer *m_position_buffer;
     MHWRender::MVertexBuffer *m_uv_buffer;
     MHWRender::MIndexBuffer *m_wire_index_buffer;
     MHWRender::MIndexBuffer *m_shaded_index_buffer;
+
+    // Shader compile and release.
+    MStatus compile_shaders();
+    MStatus release_shaders();
+    MStatus set_shader_color(
+            MHWRender::MShaderInstance* shader,
+            const float color_values[4]);
+    MStatus set_shader_texture(
+            MHWRender::MShaderInstance* shader,
+            MHWRender::MTexture *texture,
+            MString file_path,
+            float exposure);
+
+    // Internal state.
+    MObject m_locator_node;
+    bool m_is_instance_mode;
+    bool m_are_ui_drawables_dirty;
+
+    // Cached attribute values
+    float m_size;
+    MString m_file_path;
+    float m_exposure;
 
     struct InstanceInfo {
         MMatrix m_matrix;

@@ -17,9 +17,6 @@
 #include <maya/MSelectionContext.h>
 #include <maya/MDagMessage.h>
 
-// STL
-#include <unordered_map>
-
 // OCG Maya
 #include <OpenCompGraphMaya/nodeTypeIds.h>
 #include "image_plane_shape.h"
@@ -174,13 +171,13 @@ MStatus ImagePlaneShape::initialize() {
     MFnStringData empty_string_data;
     MObject empty_string_data_obj = empty_string_data.create("");
 
-    // Size
+    // Size Attribute
     m_size_attr = uAttr.create("size", "sz", MFnUnitAttribute::kDistance);
     uAttr.setDefault(1.0);
     status = MPxNode::addAttribute(m_size_attr);
     CHECK_MSTATUS_AND_RETURN_IT(status);
 
-    // File Path
+    // File Path Attribute
     m_file_path_attr = tAttr.create(
             "filePath", "fp",
         MFnData::kString, empty_string_data_obj);
@@ -191,9 +188,10 @@ MStatus ImagePlaneShape::initialize() {
     status = MPxNode::addAttribute(m_file_path_attr);
     CHECK_MSTATUS_AND_RETURN_IT(status);
 
-    // Exposure
+    // Exposure Attribute
     //
-    // math.pow(2.0, exposure)
+    // Increase/Decrease the image brightness with EV (exposure
+    // values).
     m_exposure_attr = nAttr.create("exposure", "exp", MFnNumericData::kFloat, 0.0f);
     status = nAttr.setWritable(true);
     CHECK_MSTATUS_AND_RETURN_IT(status);
@@ -211,13 +209,21 @@ MStatus ImagePlaneShape::initialize() {
     // status = MPxNode::addAttribute(m_time_attr);
     // CHECK_MSTATUS_AND_RETURN_IT(status);
 
-    // MFnEnumAttribute eAttr;
-    // aTransformType = eAttr.create("transformType", "tt", kTranslate);
-    // eAttr.addField("Translate", kTranslate);
-    // eAttr.addField("Rotate", kRotate);
-    // eAttr.addField("Scale", kScale);
-    // eAttr.addField("Shear", kShear);
-    // MPxNode::addAttribute(aTransformType);
+    // Geometry Type Attribute
+    //
+    // The type of geometry that will draw the image.
+    //
+    // Possible values:
+    // - Camera Plane
+    // - Flat Plane
+    // - Sphere
+    // - Input Mesh
+    // // aTransformType = eAttr.create("transformType", "tt", kTranslate);
+    // // eAttr.addField("Translate", kTranslate);
+    // // eAttr.addField("Rotate", kRotate);
+    // // eAttr.addField("Scale", kScale);
+    // // eAttr.addField("Shear", kShear);
+    // // MPxNode::addAttribute(aTransformType);
 
     return MS::kSuccess;
 }
