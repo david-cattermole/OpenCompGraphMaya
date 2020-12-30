@@ -22,7 +22,7 @@
 #include <cstdlib>
 
 // OCG Maya
-#include "shader.h"
+#include "constant_texture_data.h"
 #include "subSceneOverride.h"
 #include "shape.h"
 
@@ -722,7 +722,7 @@ ImagePlaneSubSceneOverride::compile_shaders() {
             // m_texture = textureManager->acquireTexture(
             //     m_texture_name,
             //     desc,
-            //     (const void*)&(colorBars_f32_8x8_[0]),
+            //     (const void*)&(color_bars_f32_8x8_[0]),
             //     false);
 
             auto graph = ocg::Graph();
@@ -749,7 +749,7 @@ ImagePlaneSubSceneOverride::compile_shaders() {
                         << pixel_height << "x"
                         << static_cast<uint32_t>(pixel_num_channels)
                         << " | data=" << &pixel_buffer << '\n';
-                // auto buffer = static_cast<const void*>(colorBars_f32_8x8_[0]),
+                // auto buffer = static_cast<const void*>(color_bars_f32_8x8_[0]),
                 auto buffer = static_cast<const void*>(pixel_buffer.data());
 
                 // Upload Texture via Maya.

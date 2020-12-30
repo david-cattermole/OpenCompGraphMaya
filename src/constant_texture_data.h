@@ -1,5 +1,5 @@
-#ifndef OPENCOMPGRAPHMAYA_IMAGE_PLANE_SHADER_H
-#define OPENCOMPGRAPHMAYA_IMAGE_PLANE_SHADER_H
+#ifndef OPENCOMPGRAPHMAYA_CONSTANT_TEXTURE_DATA_H
+#define OPENCOMPGRAPHMAYA_CONSTANT_TEXTURE_DATA_H
 
 namespace open_comp_graph_maya{
 
@@ -28,7 +28,7 @@ namespace open_comp_graph_maya{
  * Note: To make things even (only 8 entries), we skip the "75% white"
  * value.
  */
-static const float colorBars_f32_8x8_[] = {
+static const float color_bars_f32_8x8_[] = {
     // Row 0
     //
     // 235, 16, 235  - Magenta
@@ -85,8 +85,8 @@ static const float colorBars_f32_8x8_[] = {
     // 16, 235, 16   - Green
     0.0627f, 0.9215f, 0.0627f
 };
-static const int colorBars_f32_8x8_count_ = 16;
+static const int color_bars_f32_8x8_count_ = 16;
 
 } // namespace open_comp_graph_maya
 
-#endif // OPENCOMPGRAPHMAYA_IMAGE_PLANE_SHADER_H
+#endif //OPENCOMPGRAPHMAYA_CONSTANT_TEXTURE_DATA_H

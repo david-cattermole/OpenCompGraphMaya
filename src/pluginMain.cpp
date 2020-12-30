@@ -30,7 +30,6 @@
 
 #include <OpenCompGraphMaya/buildConstant.h>  // Build-Time constant values.
 #include <OpenCompGraphMaya/nodeTypeIds.h>
-#include <imagePlane/shader.h>
 #include <imagePlane/shape.h>
 #include <imagePlane/subSceneOverride.h>
 
