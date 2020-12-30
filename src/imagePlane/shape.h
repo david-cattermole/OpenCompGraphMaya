@@ -44,13 +44,13 @@ static const int shapeVerticesCountA = 6;
 static const float shapeUvsA[6][2] = {
    // First Triangle - counter clockwise direction.
    {0.0, 0.0}, // Lower left
-   {1.0, 1.0},   // Upper right
-   {0.0, 1.0},  // Upper left
+   {1.0, 1.0}, // Upper right
+   {0.0, 1.0}, // Upper left
 
    // Second Triangle - counter clockwise direction.
-   {0.0, 0.0}, // Lower left
+   {0.0, 0.0},  // Lower left
    {1.0, 0.0},  // Lower Right
-   {1.0, 1.0}};  // Upper right
+   {1.0, 1.0}}; // Upper right
 static const int shapeUvsCountA = 6;
 
 static const float shapeVerticesB[17][3] = {
