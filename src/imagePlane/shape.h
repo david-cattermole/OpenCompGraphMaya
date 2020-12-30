@@ -100,9 +100,9 @@ public:
 
     MStatus compute(const MPlug &plug, MDataBlock &data) override;
 
-    void draw(M3dView &view, const MDagPath &path,
-              M3dView::DisplayStyle style,
-              M3dView::DisplayStatus status) override;
+    // void draw(M3dView &view, const MDagPath &path,
+    //           M3dView::DisplayStyle style,
+    //           M3dView::DisplayStatus status) override;
 
     bool isBounded() const override;
     MBoundingBox boundingBox() const override;

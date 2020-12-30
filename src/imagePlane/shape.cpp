@@ -47,7 +47,8 @@ MStatus ImagePlaneShape::compute(const MPlug & /*plug*/, MDataBlock & /*data*/ )
 }
 
 // Called by legacy default viewport
-void ImagePlaneShape::draw(M3dView &view, const MDagPath & /*path*/,
+/*
+void ImagePlaneShape::draw(M3dView &view, const MDagPath &path,
                            M3dView::DisplayStyle style,
                            M3dView::DisplayStatus status) {
     // Get the size
@@ -124,6 +125,7 @@ void ImagePlaneShape::draw(M3dView &view, const MDagPath & /*path*/,
 
     view.endGL();
 }
+*/
 
 bool ImagePlaneShape::isBounded() const {
     return true;
