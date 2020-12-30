@@ -51,15 +51,15 @@ MStatus initializePlugin(MObject obj) {
         &ocgm::ImagePlaneShape::creator,
         &ocgm::ImagePlaneShape::initialize,
         MPxNode::kLocatorNode,
-        &ocgm::ImagePlaneShape::drawDbClassification);
+        &ocgm::ImagePlaneShape::m_draw_db_classification);
     if (!status) {
         status.perror("registerNode");
         return status;
     }
 
     status = MHWRender::MDrawRegistry::registerSubSceneOverrideCreator(
-        ocgm::ImagePlaneShape::drawDbClassification,
-        ocgm::ImagePlaneShape::drawRegistrantId,
+        ocgm::ImagePlaneShape::m_draw_db_classification,
+        ocgm::ImagePlaneShape::m_draw_registrant_id,
         ocgm::ImagePlaneSubSceneOverride::Creator);
     if (!status) {
         status.perror("registerSubSceneOverrideCreator");
@@ -67,9 +67,9 @@ MStatus initializePlugin(MObject obj) {
     }
 
     // Register a custom selection mask with priority 2 (same as locators by default).
-    MSelectionMask::registerSelectionType(ocgm::ImagePlaneShape::selectionTypeName, 2);
+    MSelectionMask::registerSelectionType(ocgm::ImagePlaneShape::m_selection_type_name, 2);
     MString mel_cmd = "selectType -byName \"";
-    mel_cmd += ocgm::ImagePlaneShape::selectionTypeName;
+    mel_cmd += ocgm::ImagePlaneShape::m_selection_type_name;
     mel_cmd += "\" 1";
     status = MGlobal::executeCommand(mel_cmd);
 
@@ -82,8 +82,8 @@ MStatus uninitializePlugin(MObject obj) {
     MFnPlugin plugin(obj);
 
     status = MHWRender::MDrawRegistry::deregisterSubSceneOverrideCreator(
-        ocgm::ImagePlaneShape::drawDbClassification,
-        ocgm::ImagePlaneShape::drawRegistrantId);
+        ocgm::ImagePlaneShape::m_draw_db_classification,
+        ocgm::ImagePlaneShape::m_draw_registrant_id);
     if (!status) {
         status.perror("deregisterSubSceneOverrideCreator");
         return status;
@@ -103,6 +103,6 @@ MStatus uninitializePlugin(MObject obj) {
     }
 
     // Deregister custom selection mask
-    MSelectionMask::deregisterSelectionType(ocgm::ImagePlaneShape::selectionTypeName);
+    MSelectionMask::deregisterSelectionType(ocgm::ImagePlaneShape::m_selection_type_name);
     return status;
 }

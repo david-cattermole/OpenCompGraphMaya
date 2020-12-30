@@ -29,7 +29,7 @@
 namespace open_comp_graph_maya{
 
 // Shape Data
-static const float shapeVerticesA[6][3] = {
+static const float shape_vertices_a[6][3] = {
     // First Triangle - counter clockwise direction.
     {-1.0, -1.0, 0.0}, // Lower left
     {1.0, 1.0, 0.0},   // Upper right
@@ -39,9 +39,9 @@ static const float shapeVerticesA[6][3] = {
     {-1.0, -1.0, 0.0}, // Lower left
     {1.0, -1.0, 0.0},  // Lower Right
     {1.0, 1.0, 0.0}};  // Upper right
-static const int shapeVerticesCountA = 6;
+static const int shape_vertices_count_a = 6;
 
-static const float shapeUvsA[6][2] = {
+static const float shape_uvs_a[6][2] = {
    // First Triangle - counter clockwise direction.
    {0.0, 0.0}, // Lower left
    {1.0, 1.0}, // Upper right
@@ -51,9 +51,9 @@ static const float shapeUvsA[6][2] = {
    {0.0, 0.0},  // Lower left
    {1.0, 0.0},  // Lower Right
    {1.0, 1.0}}; // Upper right
-static const int shapeUvsCountA = 6;
+static const int shape_uvs_count_a = 6;
 
-static const float shapeVerticesB[17][3] = {
+static const float shape_vertices_b[17][3] = {
     {0.00f,  0.0f, 0.06f},
     {0.13f,  0.0f, 0.06f},
     {0.14f,  0.0f, 0.15f},
@@ -71,9 +71,9 @@ static const float shapeVerticesB[17][3] = {
     {-0.14f, 0.0f, 0.15f},
     {-0.13f, 0.0f, 0.06f},
     {-0.00f, 0.0f, 0.06f}};
-static const int shapeVerticesCountB = 17;
+static const int shape_vertices_count_b = 17;
 
-static const float shapeUvsB[17][2] = {
+static const float shape_uvs_b[17][2] = {
    {0.0f, 0.0f},
    {0.0f, 0.0f},
    {0.0f, 0.0f},
@@ -91,7 +91,7 @@ static const float shapeUvsB[17][2] = {
    {0.0f, 0.0f},
    {0.0f, 0.0f},
    {0.0f, 0.0f}};
-static const int shapeUvsCountB = 17;
+static const int shape_uvs_count_b = 17;
 
 class ImagePlaneShape : public MPxLocatorNode {
 public:
@@ -119,9 +119,9 @@ public:
 
     // Node Constants.
     static MTypeId m_id;
-    static MString drawDbClassification;
-    static MString drawRegistrantId;
-    static MString selectionTypeName;
+    static MString m_draw_db_classification;
+    static MString m_draw_registrant_id;
+    static MString m_selection_type_name;
 };
 
 } // namespace open_comp_graph_maya

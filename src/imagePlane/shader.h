@@ -125,7 +125,7 @@ static const int colorBars_f32_8x8_count_ = 16;
 static MHWRender::MShaderInstance *imagePlaneShader = nullptr;
 static MHWRender::MTexture *imagePlaneTexture_ = nullptr;
 const MString imagePlaneTextureName_ = "MyColorBarsTexture";
-MHWRender::MShaderInstance *getImagePlaneShader();
+MHWRender::MShaderInstance *get_image_plane_shader();
 MStatus releaseImagePlaneShader();
 
 } // namespace open_comp_graph_maya

@@ -51,21 +51,21 @@ public:
     }
 
     bool areUIDrawablesDirty() const override {
-        return fAreUIDrawablesDirty;
+        return m_are_ui_drawables_dirty;
     }
 
     void addUIDrawables(
-            MHWRender::MUIDrawManager &drawManager,
+            MHWRender::MUIDrawManager &draw_manager,
             const MHWRender::MFrameContext &frameContext) override;
 
     bool getSelectionPath(
             const MHWRender::MRenderItem &renderItem,
-            MDagPath &dagPath) const override;
+            MDagPath &dag_path) const override;
 
     bool getInstancedSelectionPath(
             const MHWRender::MRenderItem &renderItem,
             const MHWRender::MIntersection &intersection,
-            MDagPath &dagPath) const override;
+            MDagPath &dag_path) const override;
 
 private:
 
@@ -73,39 +73,39 @@ private:
 
     // Create and delete VB/IB
     void rebuildGeometryBuffers();
-
     void deleteGeometryBuffers();
 
-    MObject fLocatorNode;
-    float fMultiplier;
-    bool fIsInstanceMode;
-    bool fAreUIDrawablesDirty;
+    MObject m_locator_node;
+    float m_multiplier;
+    bool m_is_instance_mode;
+    bool m_are_ui_drawables_dirty;
 
-    MHWRender::MVertexBuffer *fPositionBuffer;
-    MHWRender::MVertexBuffer *fUvBuffer;
-    MHWRender::MIndexBuffer *fWireIndexBuffer;
-    MHWRender::MIndexBuffer *fShadedIndexBuffer;
+    MHWRender::MVertexBuffer *m_position_buffer;
+    MHWRender::MVertexBuffer *m_uv_buffer;
+    MHWRender::MIndexBuffer *m_wire_index_buffer;
+    MHWRender::MIndexBuffer *m_shaded_index_buffer;
 
     struct InstanceInfo {
-        MMatrix fMatrix;
-        MColor fColor;
+        MMatrix m_matrix;
+        MColor m_color;
 
         InstanceInfo() {}
 
-        InstanceInfo(const MMatrix &m, const MColor &c) : fMatrix(m),
-                                                          fColor(c) {}
+        InstanceInfo(const MMatrix &matrix,
+                     const MColor &color) : m_matrix(matrix),
+                                            m_color(color) {}
     };
 
     typedef std::map<unsigned int, InstanceInfo> InstanceInfoMap;
-    InstanceInfoMap fInstanceInfoCache;
+    InstanceInfoMap m_instance_info_cache;
 
     // Callbacks on instance added/removed.
     static void InstanceChangedCallback(MDagPath &child, MDagPath &parent,
                                         void *clientData);
 
-    MCallbackId fInstanceAddedCbId;
-    MCallbackId fInstanceRemovedCbId;
-    MDagPathArray fInstanceDagPaths;
+    MCallbackId m_instance_added_cb_id;
+    MCallbackId m_instance_removed_cb_id;
+    MDagPathArray m_instance_dag_paths;
 };
 
 } // namespace open_comp_graph_maya

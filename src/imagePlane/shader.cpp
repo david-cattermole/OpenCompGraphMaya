@@ -90,7 +90,7 @@ namespace open_comp_graph_maya {
 // }
 
 
-MHWRender::MShaderInstance *getImagePlaneShader() {
+MHWRender::MShaderInstance *get_image_plane_shader() {
     if (imagePlaneShader != nullptr) {
         // MStreamUtils::stdErrorStream()
         //     << "ocgImagePlane, found shader!\n";

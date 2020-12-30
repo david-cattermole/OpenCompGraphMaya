@@ -28,12 +28,9 @@ namespace open_comp_graph_maya {
 
 // Constants for the shape node.
 MTypeId ImagePlaneShape::m_id(OCGM_IMAGE_PLANE_SHAPE_TYPE_ID);
-MString ImagePlaneShape::drawDbClassification(
-    "drawdb/subscene/ocgImagePlane_SubSceneOverride");
-MString ImagePlaneShape::drawRegistrantId(
-    "ocgImagePlaneNode_SubSceneOverridePlugin");
-MString ImagePlaneShape::selectionTypeName(
-    "ocgImagePlaneSelection");
+MString ImagePlaneShape::m_draw_db_classification("drawdb/subscene/ocgImagePlane_SubSceneOverride");
+MString ImagePlaneShape::m_draw_registrant_id("ocgImagePlaneNode_SubSceneOverridePlugin");
+MString ImagePlaneShape::m_selection_type_name("ocgImagePlaneSelection");
 
 // Attributes
 MObject ImagePlaneShape::m_size_attr;
@@ -80,19 +77,19 @@ void ImagePlaneShape::draw(M3dView &view, const MDagPath &path,
 
         glBegin(GL_TRIANGLE_FAN);
         int i;
-        int last = shapeVerticesCountA - 1;
+        int last = shape_vertices_count_a - 1;
         for (i = 0; i < last; ++i) {
-            glVertex3f(shapeVerticesA[i][0] * multiplier,
-                       shapeVerticesA[i][1] * multiplier,
-                       shapeVerticesA[i][2] * multiplier);
+            glVertex3f(shape_vertices_a[i][0] * multiplier,
+                       shape_vertices_a[i][1] * multiplier,
+                       shape_vertices_a[i][2] * multiplier);
         }
         glEnd();
         glBegin(GL_TRIANGLE_FAN);
-        last = shapeVerticesCountB - 1;
+        last = shape_vertices_count_b - 1;
         for (i = 0; i < last; ++i) {
-            glVertex3f(shapeVerticesB[i][0] * multiplier,
-                       shapeVerticesB[i][1] * multiplier,
-                       shapeVerticesB[i][2] * multiplier);
+            glVertex3f(shape_vertices_b[i][0] * multiplier,
+                       shape_vertices_b[i][1] * multiplier,
+                       shape_vertices_b[i][2] * multiplier);
         }
         glEnd();
 
@@ -103,23 +100,23 @@ void ImagePlaneShape::draw(M3dView &view, const MDagPath &path,
     //
     glBegin(GL_LINES);
     int i;
-    int last = shapeVerticesCountA - 1;
+    int last = shape_vertices_count_a - 1;
     for (i = 0; i < last; ++i) {
-        glVertex3f(shapeVerticesA[i][0] * multiplier,
-                   shapeVerticesA[i][1] * multiplier,
-                   shapeVerticesA[i][2] * multiplier);
-        glVertex3f(shapeVerticesA[i + 1][0] * multiplier,
-                   shapeVerticesA[i + 1][1] * multiplier,
-                   shapeVerticesA[i + 1][2] * multiplier);
+        glVertex3f(shape_vertices_a[i][0] * multiplier,
+                   shape_vertices_a[i][1] * multiplier,
+                   shape_vertices_a[i][2] * multiplier);
+        glVertex3f(shape_vertices_a[i + 1][0] * multiplier,
+                   shape_vertices_a[i + 1][1] * multiplier,
+                   shape_vertices_a[i + 1][2] * multiplier);
     }
-    last = shapeVerticesCountB - 1;
+    last = shape_vertices_count_b - 1;
     for (i = 0; i < last; ++i) {
-        glVertex3f(shapeVerticesB[i][0] * multiplier,
-                   shapeVerticesB[i][1] * multiplier,
-                   shapeVerticesB[i][2] * multiplier);
-        glVertex3f(shapeVerticesB[i + 1][0] * multiplier,
-                   shapeVerticesB[i + 1][1] * multiplier,
-                   shapeVerticesB[i + 1][2] * multiplier);
+        glVertex3f(shape_vertices_b[i][0] * multiplier,
+                   shape_vertices_b[i][1] * multiplier,
+                   shape_vertices_b[i][2] * multiplier);
+        glVertex3f(shape_vertices_b[i + 1][0] * multiplier,
+                   shape_vertices_b[i + 1][1] * multiplier,
+                   shape_vertices_b[i + 1][2] * multiplier);
     }
     glEnd();
 
@@ -140,12 +137,12 @@ bool ImagePlaneShape::isBounded() const {
 
 MBoundingBox ImagePlaneShape::boundingBox() const {
     // Get the size
-    MObject thisNode = thisMObject();
-    MPlug plug(thisNode, m_size_attr);
-    MDistance sizeVal;
-    plug.getValue(sizeVal);
+    MObject this_node = thisMObject();
+    MPlug plug(this_node, m_size_attr);
+    MDistance size_val;
+    plug.getValue(size_val);
 
-    double multiplier = sizeVal.asCentimeters();
+    double multiplier = size_val.asCentimeters();
 
     MPoint corner1(-1.0, -1.0, -1.0);
     MPoint corner2(1.0, 1.0, 1.0);
