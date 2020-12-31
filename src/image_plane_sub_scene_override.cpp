@@ -339,9 +339,7 @@ void ImagePlaneSubSceneOverride::update(
         setGeometryForRenderItem(
                 *shaded_item, vertex_buffers, *m_shaded_index_buffer, bounds);
 
-        if (bounds) {
-            delete bounds;
-        }
+        delete bounds;
     }
 
     if (items_changed || any_instance_changed) {
@@ -552,25 +550,17 @@ void ImagePlaneSubSceneOverride::rebuild_geometry_buffers() {
 }
 
 void ImagePlaneSubSceneOverride::delete_geometry_buffers() {
-    if (m_position_buffer) {
-        delete m_position_buffer;
-        m_position_buffer = nullptr;
-    }
+    delete m_position_buffer;
+    m_position_buffer = nullptr;
 
-    if (m_uv_buffer) {
-        delete m_uv_buffer;
-        m_uv_buffer = nullptr;
-    }
+    delete m_uv_buffer;
+    m_uv_buffer = nullptr;
 
-    if (m_wire_index_buffer) {
-        delete m_wire_index_buffer;
-        m_wire_index_buffer = nullptr;
-    }
+    delete m_wire_index_buffer;
+    m_wire_index_buffer = nullptr;
 
-    if (m_shaded_index_buffer) {
-        delete m_shaded_index_buffer;
-        m_shaded_index_buffer = nullptr;
-    }
+    delete m_shaded_index_buffer;
+    m_shaded_index_buffer = nullptr;
 }
 
 MStatus
