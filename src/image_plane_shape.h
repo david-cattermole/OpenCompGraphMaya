@@ -23,9 +23,6 @@
 #include <maya/MHWGeometry.h>
 #include <maya/MHWGeometryUtilities.h>
 
-// STL
-#include <unordered_map>
-
 namespace open_comp_graph_maya{
 
 // Shape Data
@@ -76,6 +73,7 @@ public:
     static MObject m_size_attr;
     static MObject m_file_path_attr;
     static MObject m_exposure_attr;
+    static MObject m_time_attr;
 
     // Node Constants.
     static MTypeId m_id;

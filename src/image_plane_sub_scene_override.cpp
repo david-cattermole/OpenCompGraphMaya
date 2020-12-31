@@ -144,6 +144,20 @@ void ImagePlaneSubSceneOverride::update(
         }
     }
 
+    // Get time attribute value.
+    MPlug time_plug(ImagePlaneSubSceneOverride::m_locator_node,
+                        ImagePlaneShape::m_time_attr);
+    if (!time_plug.isNull()) {
+        float new_time = time_plug.asFloat(&status);
+        CHECK_MSTATUS(status);
+        bool time_has_changed = m_time != new_time;
+        attr_values_changed += static_cast<uint32_t>(time_has_changed);
+        shader_values_changed += static_cast<uint32_t>(time_has_changed);
+        if (time_has_changed) {
+            m_time = new_time;
+        }
+    }
+
     // Get exposure attribute value.
     MPlug exposure_plug(ImagePlaneSubSceneOverride::m_locator_node,
                         ImagePlaneShape::m_exposure_attr);
@@ -175,17 +189,17 @@ void ImagePlaneSubSceneOverride::update(
     status = ImagePlaneSubSceneOverride::compile_shaders();
     if (!m_shader) {
         MStreamUtils::stdErrorStream()
-                << "ImagePlaneSubSceneOverride: Failed to get a shader.\n";
+            << "ImagePlaneSubSceneOverride: Failed to get a shader.\n";
         return;
     }
     if (update_shader) {
         MStreamUtils::stdErrorStream()
-                << "ImagePlaneSubSceneOverride: Update shader parameters...\n";
+            << "ImagePlaneSubSceneOverride: Update shader parameters...\n";
         // MColor = MHWRender::MGeometryUtilities::wireframeColor(m_instance_dag_paths[0]);
         const float color_values[4] = {1.0f, 1.0f, 1.0f, 1.0f};
         ImagePlaneSubSceneOverride::set_shader_color(m_shader, color_values);
         ImagePlaneSubSceneOverride::set_shader_texture(
-                m_shader, m_texture, m_file_path, m_exposure);
+            m_shader, m_texture, m_file_path, m_time, m_exposure);
     }
 
     bool any_instance_changed = false;
@@ -689,6 +703,7 @@ ImagePlaneSubSceneOverride::set_shader_texture(
         MHWRender::MShaderInstance* shader,
         MHWRender::MTexture *texture,
         MString file_path,
+        float time,
         float exposure) {
     MStatus status = MS::kSuccess;
 
@@ -790,6 +805,7 @@ ImagePlaneSubSceneOverride::set_shader_texture(
         auto read_node = ocg::Node(ocg::NodeType::kReadImage, "read1");
         auto grade_node = ocg::Node(ocg::NodeType::kGrade, "grade1");
         read_node.set_attr_str("file_path", file_path_str);
+        read_node.set_attr_f32("time", time);
         grade_node.set_attr_f32("multiply", multiply);
         auto read_node_id = graph.add_node(read_node);
         auto grade_node_id = graph.add_node(grade_node);

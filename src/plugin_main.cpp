@@ -32,6 +32,42 @@
 #include <opencompgraphmaya/node_type_ids.h>
 #include <image_plane_shape.h>
 #include <image_plane_sub_scene_override.h>
+#include <color_grade_node.h>
+#include <image_read_node.h>
+#include <graph_maya_data.h>
+
+
+#define REGISTER_NODE(plugin, name, id, creator, initialize, stat) \
+    stat = plugin.registerNode(name, id, creator, initialize);     \
+    if (!stat) {                                                   \
+        stat.perror(MString(name) + ": registerNode");             \
+        return (stat);                                             \
+    }
+
+#define REGISTER_DATA(plugin, name,                     \
+                      id, creator,                      \
+                      stat)                             \
+    stat = plugin.registerData(name,                    \
+                               id, creator);            \
+    if (!stat) {                                        \
+        stat.perror(MString(name) + ": registerData");  \
+        return (stat);                                  \
+    }
+
+#define DEREGISTER_NODE(plugin, name, id, stat)          \
+    stat = plugin.deregisterNode(id);                    \
+    if (!stat) {                                         \
+        stat.perror(MString(name) + ": deregisterNode"); \
+        return (stat);                                   \
+    }
+
+#define DEREGISTER_DATA(plugin, name, id, stat)             \
+    stat = plugin.deregisterData(id);                       \
+    if (!stat) {                                            \
+        stat.perror(MString(name) + ": deregisterData");    \
+        return (stat);                                      \
+    }
+
 
 namespace ocgm = open_comp_graph_maya;
 
@@ -44,6 +80,30 @@ MStatus initializePlugin(MObject obj) {
     MStatus status;
     MFnPlugin plugin(obj, PLUGIN_COMPANY, PLUGIN_VERSION, "Any");
 
+    // Register data types first, so the nodes and commands below can
+    // reference them.
+    REGISTER_DATA(
+        plugin,
+        ocgm::GraphMayaData::typeName(),
+        ocgm::GraphMayaData::m_id,
+        ocgm::GraphMayaData::creator,
+        status);
+
+    REGISTER_NODE(plugin,
+                  ocgm::ImageReadNode::nodeName(),
+                  ocgm::ImageReadNode::m_id,
+                  ocgm::ImageReadNode::creator,
+                  ocgm::ImageReadNode::initialize,
+                  status);
+
+    REGISTER_NODE(plugin,
+                  ocgm::ColorGradeNode::nodeName(),
+                  ocgm::ColorGradeNode::m_id,
+                  ocgm::ColorGradeNode::creator,
+                  ocgm::ColorGradeNode::initialize,
+                  status);
+
+    // Image Plane Shape Node
     status = plugin.registerNode(
         ocgm::ImagePlaneShape::nodeName(),
         ocgm::ImagePlaneShape::m_id,
@@ -56,6 +116,7 @@ MStatus initializePlugin(MObject obj) {
         return status;
     }
 
+    // Image Plane (Viewport 2.0)
     status = MHWRender::MDrawRegistry::registerSubSceneOverrideCreator(
         ocgm::ImagePlaneShape::m_draw_db_classification,
         ocgm::ImagePlaneShape::m_draw_registrant_id,
@@ -65,8 +126,10 @@ MStatus initializePlugin(MObject obj) {
         return status;
     }
 
-    // Register a custom selection mask with priority 2 (same as locators by default).
-    MSelectionMask::registerSelectionType(ocgm::ImagePlaneShape::m_selection_type_name, 2);
+    // Register a custom selection mask with priority 2 (same as
+    // locators by default).
+    MSelectionMask::registerSelectionType(
+        ocgm::ImagePlaneShape::m_selection_type_name, 2);
     MString mel_cmd = "selectType -byName \"";
     mel_cmd += ocgm::ImagePlaneShape::m_selection_type_name;
     mel_cmd += "\" 1";
@@ -95,6 +158,19 @@ MStatus uninitializePlugin(MObject obj) {
     }
 
     // Deregister custom selection mask
-    MSelectionMask::deregisterSelectionType(ocgm::ImagePlaneShape::m_selection_type_name);
+    MSelectionMask::deregisterSelectionType(
+        ocgm::ImagePlaneShape::m_selection_type_name);
+
+    DEREGISTER_NODE(plugin, ocgm::ImageReadNode::nodeName(),
+                    ocgm::ImageReadNode::m_id, status);
+
+    DEREGISTER_NODE(plugin, ocgm::ColorGradeNode::nodeName(),
+                    ocgm::ColorGradeNode::m_id, status);
+
+    // Unloaded last, so that all nodes needing it are unloaded first
+    // and we won't get a potential crash.
+    DEREGISTER_DATA(plugin,
+                    ocgm::GraphMayaData::typeName(),
+                    ocgm::GraphMayaData::m_id, status);
     return status;
 }

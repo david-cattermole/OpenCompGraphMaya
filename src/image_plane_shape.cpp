@@ -11,7 +11,6 @@
 #include <maya/MFnUnitAttribute.h>
 #include <maya/MFnTypedAttribute.h>
 #include <maya/MFnNumericAttribute.h>
-#include <maya/MFnGenericAttribute.h>
 #include <maya/MFnEnumAttribute.h>
 #include <maya/MFnDagNode.h>
 #include <maya/MSelectionContext.h>
@@ -32,6 +31,7 @@ MString ImagePlaneShape::m_selection_type_name("ocgImagePlaneSelection");
 // Attributes
 MObject ImagePlaneShape::m_size_attr;
 MObject ImagePlaneShape::m_file_path_attr;
+MObject ImagePlaneShape::m_time_attr;
 MObject ImagePlaneShape::m_exposure_attr;
 
 // Defines the Node name as a callable static function.
@@ -145,7 +145,6 @@ MStatus ImagePlaneShape::initialize() {
     MFnUnitAttribute    uAttr;
     MFnTypedAttribute   tAttr;
     MFnNumericAttribute nAttr;
-    MFnGenericAttribute gAttr;
     MFnEnumAttribute    eAttr;
     MStatus status;
 
@@ -155,42 +154,33 @@ MStatus ImagePlaneShape::initialize() {
     MObject empty_string_data_obj = empty_string_data.create("");
 
     // Size Attribute
+    float size_default = 1.0f;
     m_size_attr = uAttr.create("size", "sz", MFnUnitAttribute::kDistance);
-    uAttr.setDefault(1.0);
-    status = MPxNode::addAttribute(m_size_attr);
-    CHECK_MSTATUS_AND_RETURN_IT(status);
+    CHECK_MSTATUS(uAttr.setDefault(size_default));
+    CHECK_MSTATUS(MPxNode::addAttribute(m_size_attr));
 
     // File Path Attribute
     m_file_path_attr = tAttr.create(
             "filePath", "fp",
         MFnData::kString, empty_string_data_obj);
-    status = tAttr.setStorable(true);
-    CHECK_MSTATUS_AND_RETURN_IT(status);
-    status = tAttr.setUsedAsFilename(true);
-    CHECK_MSTATUS_AND_RETURN_IT(status);
-    status = MPxNode::addAttribute(m_file_path_attr);
-    CHECK_MSTATUS_AND_RETURN_IT(status);
+    CHECK_MSTATUS(tAttr.setStorable(true));
+    CHECK_MSTATUS(tAttr.setUsedAsFilename(true));
+    CHECK_MSTATUS(MPxNode::addAttribute(m_file_path_attr));
 
     // Exposure Attribute
     //
     // Increase/Decrease the image brightness with EV (exposure
     // values).
     m_exposure_attr = nAttr.create("exposure", "exp", MFnNumericData::kFloat, 0.0f);
-    status = nAttr.setWritable(true);
-    CHECK_MSTATUS_AND_RETURN_IT(status);
-    status = nAttr.setStorable(true);
-    CHECK_MSTATUS_AND_RETURN_IT(status);
-    status = nAttr.setKeyable(true);
-    CHECK_MSTATUS_AND_RETURN_IT(status);
-    MPxNode::addAttribute(m_exposure_attr);
-    CHECK_MSTATUS_AND_RETURN_IT(status);
+    CHECK_MSTATUS(nAttr.setWritable(true));
+    CHECK_MSTATUS(nAttr.setStorable(true));
+    CHECK_MSTATUS(nAttr.setKeyable(true));
+    CHECK_MSTATUS(MPxNode::addAttribute(m_exposure_attr));
 
-    // // Time
-    // m_time_attr = uAttr.create("time", "tm", MFnUnitAttribute::kTime, 0.0);
-    // status = uAttr.setStorable(true);
-    // CHECK_MSTATUS_AND_RETURN_IT(status);
-    // status = MPxNode::addAttribute(m_time_attr);
-    // CHECK_MSTATUS_AND_RETURN_IT(status);
+    // Time
+    m_time_attr = uAttr.create("time", "tm", MFnUnitAttribute::kTime, 0.0);
+    CHECK_MSTATUS(uAttr.setStorable(true));
+    CHECK_MSTATUS(MPxNode::addAttribute(m_time_attr));
 
     // Geometry Type Attribute
     //
@@ -201,12 +191,21 @@ MStatus ImagePlaneShape::initialize() {
     // - Flat Plane
     // - Sphere
     // - Input Mesh
+    //
     // // aTransformType = eAttr.create("transformType", "tt", kTranslate);
     // // eAttr.addField("Translate", kTranslate);
     // // eAttr.addField("Rotate", kRotate);
     // // eAttr.addField("Scale", kScale);
     // // eAttr.addField("Shear", kShear);
     // // MPxNode::addAttribute(aTransformType);
+
+    // Camera Plane Depth Attribute
+
+    // Camera Plane Resolution Attribute
+
+    // Override Screen Depth Attribute
+
+    // Screen Depth Attribute
 
     return MS::kSuccess;
 }

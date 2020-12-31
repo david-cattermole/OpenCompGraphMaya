@@ -14,9 +14,10 @@ library (currently in development).
 | Node Type     | Description                                      | Status              |
 |---------------|--------------------------------------------------|---------------------|
 | ocgImagePlane | Displays the output of OCG to the Maya Viewport. | In progress         |
-| ocgReadImage  | Reads an image from disk.                        | Not implemented yet |
-| ocgWriteImage | Write an image to disk.                          | Not implemented yet |
-| ocgGrade      | Perform colour grading to an image.              | Not implemented yet |
+| ocgImageRead  | Reads an image from disk.                        | In progress         |
+| ocgImageWrite | Write an image to disk.                          | Not implemented yet |
+| ocgImageMerge | Merge two images together.                       | Not implemented yet |
+| ocgColorGrade | Perform colour grading to an image.              | In progress         |
 | ocgNull       | An empty image operation - null operation.       | Not implemented yet |
 | ocgSwitch     | Switch between multiple node inputs.             | Not implemented yet |
 |               |                                                  |                     |

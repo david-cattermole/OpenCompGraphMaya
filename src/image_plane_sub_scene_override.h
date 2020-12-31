@@ -89,6 +89,7 @@ private:
             MHWRender::MShaderInstance* shader,
             MHWRender::MTexture *texture,
             MString file_path,
+            float time,
             float exposure);
 
     // Internal state.
@@ -99,6 +100,7 @@ private:
     // Cached attribute values
     float m_size;
     MString m_file_path;
+    float m_time;
     float m_exposure;
 
     struct InstanceInfo {

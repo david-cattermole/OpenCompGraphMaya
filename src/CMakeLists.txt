@@ -26,6 +26,9 @@ add_subdirectory(OpenCompGraph)
 set(SOURCE_FILES
   image_plane_shape.cpp
   image_plane_sub_scene_override.cpp
+  image_read_node.cpp
+  color_grade_node.cpp
+  graph_maya_data.cpp
   plugin_main.cpp
   )
 
