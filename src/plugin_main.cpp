@@ -35,7 +35,10 @@
 #include <color_grade_node.h>
 #include <image_read_node.h>
 #include <graph_maya_data.h>
+#include <opencompgraph.h>
 
+namespace ocg = open_comp_graph;
+namespace ocgm = open_comp_graph_maya;
 
 #define REGISTER_NODE(plugin, name, id, creator, initialize, stat) \
     stat = plugin.registerNode(name, id, creator, initialize);     \
@@ -68,9 +71,6 @@
         return (stat);                                      \
     }
 
-
-namespace ocgm = open_comp_graph_maya;
-
 #undef PLUGIN_COMPANY  // Maya API defines this, we override it.
 #define PLUGIN_COMPANY PROJECT_NAME
 #define PLUGIN_VERSION PROJECT_VERSION
@@ -79,6 +79,7 @@ namespace ocgm = open_comp_graph_maya;
 MStatus initializePlugin(MObject obj) {
     MStatus status;
     MFnPlugin plugin(obj, PLUGIN_COMPANY, PLUGIN_VERSION, "Any");
+    ocg::log::initialize();
 
     // Register data types first, so the nodes and commands below can
     // reference them.
