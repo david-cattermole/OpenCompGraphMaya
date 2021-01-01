@@ -814,17 +814,15 @@ ImagePlaneSubSceneOverride::set_shader_texture(
         float multiply = std::pow(2.0, exposure);  // Exposure Value
 
         auto graph = ocg::Graph();
-        auto read_node = ocg::Node(ocg::NodeType::kReadImage, "read1");
-        auto grade_node = ocg::Node(ocg::NodeType::kGrade, "grade1");
-        read_node.set_attr_str("file_path", file_path_str);
-        read_node.set_attr_f32("time", time);
-        grade_node.set_attr_f32("multiply", multiply);
-        auto read_node_id = graph.add_node(read_node);
-        auto grade_node_id = graph.add_node(grade_node);
-        graph.connect(read_node_id, grade_node_id, 0);
+        auto read_node = graph.create_node(ocg::NodeType::kReadImage, "read1");
+        auto grade_node = graph.create_node(ocg::NodeType::kGrade, "grade1");
+        graph.set_node_attr_str(read_node, "file_path", file_path_str);
+        graph.set_node_attr_f32(read_node, "time", time);
+        graph.set_node_attr_f32(grade_node, "multiply", multiply);
+        graph.connect(read_node, grade_node, 0);
 
         auto cache = std::make_shared<ocg::Cache>();
-        auto exec_status = graph.execute(grade_node_id, cache);
+        auto exec_status = graph.execute(grade_node, cache);
         if (exec_status == ocg::ExecuteStatus::kSuccess) {
             auto stream_data = graph.output_stream();
             auto pixel_buffer = stream_data.pixel_buffer();

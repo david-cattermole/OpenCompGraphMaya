@@ -39,13 +39,13 @@
 #include <cstring>
 #include <cmath>
 
+// OCG
+#include "opencompgraph.h"
+
 // OCG Maya
 #include <opencompgraphmaya/node_type_ids.h>
 #include "graph_maya_data.h"
 #include "image_read_node.h"
-
-// OCG
-#include "opencompgraph.h"
 
 namespace ocg = open_comp_graph;
 
@@ -63,8 +63,9 @@ MObject ImageReadNode::m_time_attr;
 // Output Attributes
 MObject ImageReadNode::m_out_stream_attr;
 
-ImageReadNode::ImageReadNode() : m_ocg_node_hash(0),
-                                 m_ocg_node_id(0) {}
+ImageReadNode::ImageReadNode()
+        : m_ocg_node(ocg::Node(ocg::NodeType::kNull, 0)),
+          m_ocg_node_hash(0) {}
 
 ImageReadNode::~ImageReadNode() {}
 
@@ -98,34 +99,33 @@ MStatus ImageReadNode::compute(const MPlug &plug, MDataBlock &data) {
             static_cast<GraphMayaData*>(fn_plugin_data.data(&status));
         if (enable) {
             // Modify the OCG Graph, and initialize the node values.
-            bool exists = shared_graph->node_with_hash_exists(m_ocg_node_hash);
+            bool exists = shared_graph->node_exists(m_ocg_node);
             if (!exists) {
-                auto new_read_node = ocg::Node(
-                    ocg::NodeType::kGrade,
+                m_ocg_node = shared_graph->create_node(
+                    ocg::NodeType::kReadImage,
                     m_ocg_node_hash);
-                m_ocg_node_id = shared_graph->add_node(new_read_node);
             }
-            auto read_node = shared_graph->node_with_hash(m_ocg_node_hash);
-            if (read_node) {
-                read_node->set_attr_i32("enable", static_cast<int32_t>(enable));
+            if (m_ocg_node.get_id() != 0) {
+                shared_graph->set_node_attr_i32(
+                    m_ocg_node, "enable", static_cast<int32_t>(enable));
 
                 // K1 Attribute
                 MDataHandle k1_handle = data.inputValue(m_k1_attr, &status);
                 CHECK_MSTATUS_AND_RETURN_IT(status);
                 float k1 = k1_handle.asFloat();
-                read_node->set_attr_f32("multiply", k1);
+                shared_graph->set_node_attr_f32(m_ocg_node, "multiply", k1);
 
                 // K2 Attribute
                 MDataHandle k2_handle = data.inputValue(m_k2_attr, &status);
                 CHECK_MSTATUS_AND_RETURN_IT(status);
                 float k2 = k2_handle.asFloat();
-                read_node->set_attr_f32("k2", k2);
+                shared_graph->set_node_attr_f32(m_ocg_node, "k2", k2);
 
                 // Time Attribute
                 MDataHandle time_handle = data.inputValue(m_time_attr, &status);
                 CHECK_MSTATUS_AND_RETURN_IT(status);
                 float time = time_handle.asFloat();
-                read_node->set_attr_f32("time", time);
+                shared_graph->set_node_attr_f32(m_ocg_node, "time", time);
             }
         }
         new_data->set_graph(shared_graph);

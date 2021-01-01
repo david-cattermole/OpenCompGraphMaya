@@ -65,8 +65,8 @@ public:
     static MObject m_out_stream_attr;
 
 private:
+    ocg::Node m_ocg_node;
     uint64_t m_ocg_node_hash;
-    uint64_t m_ocg_node_id;
 };
 
 } // namespace open_comp_graph_maya

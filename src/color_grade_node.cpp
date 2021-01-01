@@ -63,8 +63,9 @@ MObject ColorGradeNode::m_k2_attr;
 // Output Attributes
 MObject ColorGradeNode::m_out_stream_attr;
 
-ColorGradeNode::ColorGradeNode() : m_ocg_node_hash(0),
-                                   m_ocg_node_id(0) {}
+ColorGradeNode::ColorGradeNode()
+    : m_ocg_node(ocg::Node(ocg::NodeType::kNull, 0)),
+      m_ocg_node_hash(0) {}
 
 ColorGradeNode::~ColorGradeNode() {}
 
@@ -109,28 +110,27 @@ MStatus ColorGradeNode::compute(const MPlug &plug, MDataBlock &data) {
             static_cast<GraphMayaData*>(fn_plugin_data.data(&status));
         if (enable) {
             // Modify the OCG Graph, and initialize the node values.
-            bool exists = shared_graph->node_with_hash_exists(m_ocg_node_hash);
+            bool exists = shared_graph->node_exists(m_ocg_node);
             if (!exists) {
-                auto new_grade_node = ocg::Node(
+                m_ocg_node = shared_graph->create_node(
                     ocg::NodeType::kGrade,
                     m_ocg_node_hash);
-                m_ocg_node_id = shared_graph->add_node(new_grade_node);
             }
-            auto grade_node = shared_graph->node_with_hash(m_ocg_node_hash);
-            if (grade_node) {
-                grade_node->set_attr_i32("enable", static_cast<int32_t>(enable));
+            if (m_ocg_node.get_id() != 0) {
+                shared_graph->set_node_attr_i32(
+                    m_ocg_node, "enable", static_cast<int32_t>(enable));
 
                 // K1 Attribute
                 MDataHandle k1_handle = data.inputValue(m_k1_attr, &status);
                 CHECK_MSTATUS_AND_RETURN_IT(status);
                 float k1 = k1_handle.asFloat();
-                grade_node->set_attr_f32("multiply", k1);
+                shared_graph->set_node_attr_f32(m_ocg_node, "multiply", k1);
 
                 // K2 Attribute
                 MDataHandle k2_handle = data.inputValue(m_k2_attr, &status);
                 CHECK_MSTATUS_AND_RETURN_IT(status);
                 float k2 = k2_handle.asFloat();
-                grade_node->set_attr_f32("k2", k2);
+                shared_graph->set_node_attr_f32(m_ocg_node, "k2", k2);
             }
         }
         new_data->set_graph(shared_graph);
