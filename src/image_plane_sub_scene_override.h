@@ -41,6 +41,12 @@
 
 // STL
 #include <map>
+#include <memory>
+
+// OCG
+#include "opencompgraph.h"
+
+namespace ocg = open_comp_graph;
 
 namespace open_comp_graph_maya{
 
@@ -110,20 +116,22 @@ private:
     MStatus set_shader_texture(
             MHWRender::MShaderInstance* shader,
             MHWRender::MTexture *texture,
-            MString file_path,
-            float time,
-            float exposure);
+            MObject in_stream);
 
     // Internal state.
     MObject m_locator_node;
     bool m_is_instance_mode;
     bool m_are_ui_drawables_dirty;
 
+    // OCG Internal state.
+    std::shared_ptr<ocg::Cache> m_ocg_cache;
+
     // Cached attribute values
     float m_size;
-    MString m_file_path;
-    float m_time;
-    float m_exposure;
+    // MString m_file_path;
+    // float m_time;
+    // float m_exposure;
+    MObject m_in_stream;
 
     struct InstanceInfo {
         MMatrix m_matrix;
