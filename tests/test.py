@@ -11,7 +11,13 @@ import maya.cmds
 def _get_random_file_path():
     file_path1 = "C:/Users/catte/dev/OpenCompGraphMaya/src/OpenCompGraph/tests/data/checker_8bit_rgba_3840x2160.png"
     file_path2 = "C:/Users/catte/dev/OpenCompGraphMaya/src/OpenCompGraph/tests/data/oiio-images/tahoe-gps.jpg"
-    file_path = random.choice([file_path1, file_path2])
+    file_path3 = "C:/Users/catte/dev/robotArm/imageSequence/robotArm.1001.png"
+    file_paths = [
+        file_path1,
+        file_path2,
+        file_path3,
+    ]
+    file_path = random.choice(file_paths)
     return os.path.abspath(file_path)
 
 
