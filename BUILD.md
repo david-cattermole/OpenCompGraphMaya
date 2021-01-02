@@ -6,6 +6,7 @@ It is provided for basic information and will be finished at a later date.
 On Windows (in a Visual Studio 20XX "Cross Tools" Command Prompt):
 ```
 $ cd path/to/folder
+$ cargo install cxxbridge-cmd --git "https://github.com/david-cattermole/cxx.git" --rev "363c18b2982329d6e4fbc2a6e5f324f4fef03661" --force
 $ git clone --recursive https://github.com/david-cattermole/OpenCompGraphMaya.git
 $ cd OpenCompGraphMaya
 $ build_OpenCompGraphMaya_windows64_maya2018.bat
