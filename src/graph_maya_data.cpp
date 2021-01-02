@@ -20,11 +20,15 @@
  * Holds OCG Stream Data in the Maya DG.
  */
 
-#include <opencompgraphmaya/node_type_ids.h>
-#include "graph_maya_data.h"
+// Maya
+#include <maya/MStreamUtils.h>
 
 // OCG
 #include "opencompgraph.h"
+
+// OCG Maya
+#include <opencompgraphmaya/node_type_ids.h>
+#include "graph_maya_data.h"
 
 namespace ocg = open_comp_graph;
 
@@ -38,7 +42,9 @@ void* GraphMayaData::creator() {
     return new GraphMayaData;
 }
 
-GraphMayaData::GraphMayaData() : m_graph(), MPxData() {}
+GraphMayaData::GraphMayaData() : m_graph(),
+                                 m_ocg_node(ocg::NodeType::kNull, 0),
+                                 MPxData() {}
 
 GraphMayaData::~GraphMayaData() {}
 
@@ -54,8 +60,17 @@ void GraphMayaData::set_graph(std::shared_ptr<ocg::Graph> value) {
     m_graph = value;
 }
 
+ocg::Node GraphMayaData::get_node() const {
+    return m_ocg_node;
+}
+
+void GraphMayaData::set_node(ocg::Node value) {
+    m_ocg_node = value;
+}
+
 void GraphMayaData::copy(const MPxData& other) {
     m_graph = static_cast<const GraphMayaData&>(other).m_graph;
+    m_ocg_node = static_cast<const GraphMayaData&>(other).m_ocg_node;
 }
 
 MTypeId GraphMayaData::typeId() const {

@@ -58,6 +58,9 @@ public:
     bool is_valid_graph() const;
     void set_graph(std::shared_ptr<ocg::Graph> value);
 
+    ocg::Node get_node() const;
+    void set_node(ocg::Node value);
+
     static MString typeName();
 
     static const MString m_type_name;
@@ -66,8 +69,7 @@ public:
 
 private:
     std::shared_ptr<ocg::Graph> m_graph;
-    // uint32_t m_ocg_node_hash;
-
+    ocg::Node m_ocg_node;
 };
 
 } // namespace open_comp_graph_maya
