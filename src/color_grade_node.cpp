@@ -26,7 +26,6 @@
 #include <maya/MDataHandle.h>
 #include <maya/MFnNumericAttribute.h>
 #include <maya/MFnTypedAttribute.h>
-#include <maya/MFnCompoundAttribute.h>
 #include <maya/MFnNumericData.h>
 #include <maya/MString.h>
 #include <maya/MTypeId.h>
@@ -34,18 +33,19 @@
 #include <maya/MFnStringData.h>
 #include <maya/MFnDependencyNode.h>
 #include <maya/MUuid.h>
+#include <maya/MStreamUtils.h>
 
 // STL
 #include <cstring>
 #include <cmath>
 
+// OCG
+#include "opencompgraph.h"
+
 // OCG Maya
 #include <opencompgraphmaya/node_type_ids.h>
 #include "graph_maya_data.h"
 #include "color_grade_node.h"
-
-// OCG
-#include "opencompgraph.h"
 
 namespace ocg = open_comp_graph;
 
@@ -56,9 +56,7 @@ MTypeId ColorGradeNode::m_id(OCGM_COLOR_GRADE_TYPE_ID);
 // Input Attributes
 MObject ColorGradeNode::m_in_stream_attr;
 MObject ColorGradeNode::m_enable_attr;
-MObject ColorGradeNode::m_file_path_attr;
-MObject ColorGradeNode::m_k1_attr;
-MObject ColorGradeNode::m_k2_attr;
+MObject ColorGradeNode::m_multiply_attr;
 
 // Output Attributes
 MObject ColorGradeNode::m_out_stream_attr;
@@ -83,7 +81,8 @@ MStatus ColorGradeNode::compute(const MPlug &plug, MDataBlock &data) {
 
     if (plug == m_out_stream_attr) {
         // Enable Attribute toggle
-        MDataHandle enable_handle = data.inputValue(m_enable_attr, &status);
+        MDataHandle enable_handle = data.inputValue(
+                ColorGradeNode::m_enable_attr, &status);
         CHECK_MSTATUS_AND_RETURN_IT(status);
         bool enable = enable_handle.asBool();
 
@@ -99,40 +98,50 @@ MStatus ColorGradeNode::compute(const MPlug &plug, MDataBlock &data) {
         CHECK_MSTATUS_AND_RETURN_IT(status);
         GraphMayaData* input_stream_data =
             static_cast<GraphMayaData*>(in_stream_handle.asPluginData());
-        std::shared_ptr<ocg::Graph> shared_graph;
-        if (input_stream_data != nullptr) {
-            shared_graph = input_stream_data->get_graph();
+        if (input_stream_data == nullptr) {
+            status = MS::kFailure;
+            return status;
         }
+        std::shared_ptr<ocg::Graph> shared_graph = input_stream_data->get_graph();
+        auto input_ocg_node = input_stream_data->get_node();
 
         // Output Stream
         MDataHandle out_stream_handle = data.outputValue(m_out_stream_attr);
         GraphMayaData* new_data =
             static_cast<GraphMayaData*>(fn_plugin_data.data(&status));
-        if (enable) {
+        if (shared_graph) {
             // Modify the OCG Graph, and initialize the node values.
             bool exists = shared_graph->node_exists(m_ocg_node);
+            MStreamUtils::stdErrorStream()
+                    << "ColorGradeNode: node exists: " << exists << '\n';
             if (!exists) {
                 m_ocg_node = shared_graph->create_node(
                     ocg::NodeType::kGrade,
                     m_ocg_node_hash);
             }
+            shared_graph->connect(input_ocg_node, m_ocg_node, 0);
+            MStreamUtils::stdErrorStream()
+                    << "ColorGradeNode: input id: " << input_ocg_node.get_id()
+                    << '\n';
+            MStreamUtils::stdErrorStream()
+                    << "ColorGradeNode: node  id: " << m_ocg_node.get_id()
+                    << '\n';
             if (m_ocg_node.get_id() != 0) {
                 shared_graph->set_node_attr_i32(
                     m_ocg_node, "enable", static_cast<int32_t>(enable));
 
-                // K1 Attribute
-                MDataHandle k1_handle = data.inputValue(m_k1_attr, &status);
+                // Multiply Attribute
+                MDataHandle multiply_handle = data.inputValue(ColorGradeNode::m_multiply_attr, &status);
                 CHECK_MSTATUS_AND_RETURN_IT(status);
-                float k1 = k1_handle.asFloat();
-                shared_graph->set_node_attr_f32(m_ocg_node, "multiply", k1);
-
-                // K2 Attribute
-                MDataHandle k2_handle = data.inputValue(m_k2_attr, &status);
-                CHECK_MSTATUS_AND_RETURN_IT(status);
-                float k2 = k2_handle.asFloat();
-                shared_graph->set_node_attr_f32(m_ocg_node, "k2", k2);
+                float temp = multiply_handle.asFloat();
+                MStreamUtils::stdErrorStream()
+                        << "ColorGradeNode: multiply: " << static_cast<double>(temp) << '\n';
+                shared_graph->set_node_attr_f32(m_ocg_node, "multiply", temp);
             }
         }
+        std::cout << "Graph as string:\n"
+                  << shared_graph->data_debug_string();
+        new_data->set_node(m_ocg_node);
         new_data->set_graph(shared_graph);
         out_stream_handle.setMPxData(new_data);
         out_stream_handle.setClean();
@@ -192,21 +201,13 @@ MStatus ColorGradeNode::initialize() {
     CHECK_MSTATUS(nAttr.setKeyable(true));
     CHECK_MSTATUS(addAttribute(m_enable_attr));
 
-    // K1
-    m_k1_attr = nAttr.create(
-        "k1", "k1",
-        MFnNumericData::kDouble, 0.0);
+    // Multiply
+    m_multiply_attr = nAttr.create(
+        "multiply", "mul",
+        MFnNumericData::kFloat, 1.0);
     CHECK_MSTATUS(nAttr.setStorable(true));
     CHECK_MSTATUS(nAttr.setKeyable(true));
-    CHECK_MSTATUS(addAttribute(m_k1_attr));
-
-    // K2
-    m_k2_attr = nAttr.create(
-        "k2", "k2",
-        MFnNumericData::kDouble, 0.0);
-    CHECK_MSTATUS(nAttr.setStorable(true));
-    CHECK_MSTATUS(nAttr.setKeyable(true));
-    CHECK_MSTATUS(addAttribute(m_k2_attr));
+    CHECK_MSTATUS(addAttribute(m_multiply_attr));
 
     // Out Stream
     m_out_stream_attr = tAttr.create(
@@ -219,9 +220,7 @@ MStatus ColorGradeNode::initialize() {
     CHECK_MSTATUS(addAttribute(m_out_stream_attr));
 
     // Attribute Affects
-    CHECK_MSTATUS(attributeAffects(m_file_path_attr, m_out_stream_attr));
-    CHECK_MSTATUS(attributeAffects(m_k1_attr, m_out_stream_attr));
-    CHECK_MSTATUS(attributeAffects(m_k2_attr, m_out_stream_attr));
+    CHECK_MSTATUS(attributeAffects(m_multiply_attr, m_out_stream_attr));
     CHECK_MSTATUS(attributeAffects(m_enable_attr, m_out_stream_attr));
     CHECK_MSTATUS(attributeAffects(m_in_stream_attr, m_out_stream_attr));
 

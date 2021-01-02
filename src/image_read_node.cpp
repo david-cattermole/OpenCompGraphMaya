@@ -25,8 +25,8 @@
 #include <maya/MDataBlock.h>
 #include <maya/MDataHandle.h>
 #include <maya/MFnNumericAttribute.h>
+#include <maya/MFnUnitAttribute.h>
 #include <maya/MFnTypedAttribute.h>
-#include <maya/MFnCompoundAttribute.h>
 #include <maya/MFnNumericData.h>
 #include <maya/MString.h>
 #include <maya/MTypeId.h>
@@ -34,6 +34,7 @@
 #include <maya/MFnStringData.h>
 #include <maya/MFnDependencyNode.h>
 #include <maya/MUuid.h>
+#include <maya/MStreamUtils.h>
 
 // STL
 #include <cstring>
@@ -56,8 +57,6 @@ MTypeId ImageReadNode::m_id(OCGM_IMAGE_READ_TYPE_ID);
 // Input Attributes
 MObject ImageReadNode::m_enable_attr;
 MObject ImageReadNode::m_file_path_attr;
-MObject ImageReadNode::m_k1_attr;
-MObject ImageReadNode::m_k2_attr;
 MObject ImageReadNode::m_time_attr;
 
 // Output Attributes
@@ -97,29 +96,34 @@ MStatus ImageReadNode::compute(const MPlug &plug, MDataBlock &data) {
         MDataHandle out_stream_handle = data.outputValue(m_out_stream_attr);
         GraphMayaData* new_data =
             static_cast<GraphMayaData*>(fn_plugin_data.data(&status));
-        if (enable) {
+        if (shared_graph) {
+            MStreamUtils::stdErrorStream()
+                    << "ImageReadNode: enabled and has graph" << '\n';
+
             // Modify the OCG Graph, and initialize the node values.
             bool exists = shared_graph->node_exists(m_ocg_node);
+            MStreamUtils::stdErrorStream()
+                    << "ImageReadNode: node exists: " << exists << '\n';
             if (!exists) {
                 m_ocg_node = shared_graph->create_node(
                     ocg::NodeType::kReadImage,
                     m_ocg_node_hash);
             }
+            MStreamUtils::stdErrorStream()
+                    << "ImageReadNode: node id: " << m_ocg_node.get_id()
+                    << '\n';
             if (m_ocg_node.get_id() != 0) {
                 shared_graph->set_node_attr_i32(
                     m_ocg_node, "enable", static_cast<int32_t>(enable));
 
-                // K1 Attribute
-                MDataHandle k1_handle = data.inputValue(m_k1_attr, &status);
+                // File Path Attribute
+                MDataHandle file_path_handle = data.inputValue(m_file_path_attr, &status);
                 CHECK_MSTATUS_AND_RETURN_IT(status);
-                float k1 = k1_handle.asFloat();
-                shared_graph->set_node_attr_f32(m_ocg_node, "multiply", k1);
-
-                // K2 Attribute
-                MDataHandle k2_handle = data.inputValue(m_k2_attr, &status);
-                CHECK_MSTATUS_AND_RETURN_IT(status);
-                float k2 = k2_handle.asFloat();
-                shared_graph->set_node_attr_f32(m_ocg_node, "k2", k2);
+                MString file_path = file_path_handle.asString();
+                shared_graph->set_node_attr_str(m_ocg_node, "file_path", file_path.asChar());
+                MStreamUtils::stdErrorStream()
+                        << "ImageReadNode: file path: " << file_path.asChar()
+                        << '\n';
 
                 // Time Attribute
                 MDataHandle time_handle = data.inputValue(m_time_attr, &status);
@@ -128,6 +132,9 @@ MStatus ImageReadNode::compute(const MPlug &plug, MDataBlock &data) {
                 shared_graph->set_node_attr_f32(m_ocg_node, "time", time);
             }
         }
+        std::cout << "Graph as string:\n"
+                  << shared_graph->data_debug_string();
+        new_data->set_node(m_ocg_node);
         new_data->set_graph(shared_graph);
         out_stream_handle.setMPxData(new_data);
         out_stream_handle.setClean();
@@ -159,8 +166,9 @@ void *ImageReadNode::creator() {
 
 MStatus ImageReadNode::initialize() {
     MStatus status;
+    MFnUnitAttribute    uAttr;
     MFnNumericAttribute nAttr;
-    MFnTypedAttribute tAttr;
+    MFnTypedAttribute   tAttr;
     MTypeId stream_data_type_id(OCGM_GRAPH_DATA_TYPE_ID);
 
     // Create empty string data to be used as attribute default
@@ -184,21 +192,11 @@ MStatus ImageReadNode::initialize() {
     CHECK_MSTATUS(tAttr.setUsedAsFilename(true));
     CHECK_MSTATUS(MPxNode::addAttribute(m_file_path_attr));
 
-    // K1
-    m_k1_attr = nAttr.create(
-        "k1", "k1",
-        MFnNumericData::kDouble, 0.0);
-    CHECK_MSTATUS(nAttr.setStorable(true));
-    CHECK_MSTATUS(nAttr.setKeyable(true));
-    CHECK_MSTATUS(addAttribute(m_k1_attr));
-
-    // K2
-    m_k2_attr = nAttr.create(
-        "k2", "k2",
-        MFnNumericData::kDouble, 0.0);
-    CHECK_MSTATUS(nAttr.setStorable(true));
-    CHECK_MSTATUS(nAttr.setKeyable(true));
-    CHECK_MSTATUS(addAttribute(m_k2_attr));
+    // Time
+    m_time_attr = uAttr.create("time", "tm", MFnUnitAttribute::kTime, 0.0);
+    CHECK_MSTATUS(uAttr.setStorable(true));
+    CHECK_MSTATUS(uAttr.setKeyable(true));
+    CHECK_MSTATUS(MPxNode::addAttribute(m_time_attr));
 
     // Out Stream
     m_out_stream_attr = tAttr.create(
@@ -212,8 +210,7 @@ MStatus ImageReadNode::initialize() {
 
     // Attribute Affects
     CHECK_MSTATUS(attributeAffects(m_file_path_attr, m_out_stream_attr));
-    CHECK_MSTATUS(attributeAffects(m_k1_attr, m_out_stream_attr));
-    CHECK_MSTATUS(attributeAffects(m_k2_attr, m_out_stream_attr));
+    CHECK_MSTATUS(attributeAffects(m_time_attr, m_out_stream_attr));
     CHECK_MSTATUS(attributeAffects(m_enable_attr, m_out_stream_attr));
 
     return MS::kSuccess;

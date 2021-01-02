@@ -37,9 +37,14 @@
 #include <maya/MFnDagNode.h>
 #include <maya/MSelectionContext.h>
 #include <maya/MDagMessage.h>
+#include <maya/MFnPluginData.h>
+
+// OCG
+#include "opencompgraph.h"
 
 // OCG Maya
 #include <opencompgraphmaya/node_type_ids.h>
+#include "graph_maya_data.h"
 #include "image_plane_shape.h"
 
 namespace open_comp_graph_maya {
@@ -50,11 +55,15 @@ MString ImagePlaneShape::m_draw_db_classification("drawdb/subscene/ocgImagePlane
 MString ImagePlaneShape::m_draw_registrant_id("ocgImagePlaneNode_SubSceneOverridePlugin");
 MString ImagePlaneShape::m_selection_type_name("ocgImagePlaneSelection");
 
-// Attributes
+// Input Attributes
+MObject ImagePlaneShape::m_in_stream_attr;
 MObject ImagePlaneShape::m_size_attr;
 MObject ImagePlaneShape::m_file_path_attr;
 MObject ImagePlaneShape::m_time_attr;
 MObject ImagePlaneShape::m_exposure_attr;
+
+// Output Attributes
+MObject ImagePlaneShape::m_out_stream_attr;
 
 // Defines the Node name as a callable static function.
 MString ImagePlaneShape::nodeName() {
@@ -164,16 +173,27 @@ void *ImagePlaneShape::creator() {
 }
 
 MStatus ImagePlaneShape::initialize() {
+    MStatus status;
     MFnUnitAttribute    uAttr;
     MFnTypedAttribute   tAttr;
     MFnNumericAttribute nAttr;
     MFnEnumAttribute    eAttr;
-    MStatus status;
+    MTypeId stream_data_type_id(OCGM_GRAPH_DATA_TYPE_ID);
 
     // Create empty string data to be used as attribute default
     // (string) value.
     MFnStringData empty_string_data;
     MObject empty_string_data_obj = empty_string_data.create("");
+
+    // In Stream
+    m_in_stream_attr = tAttr.create(
+            "inStream", "istm",
+            stream_data_type_id);
+    CHECK_MSTATUS(tAttr.setStorable(false));
+    CHECK_MSTATUS(tAttr.setKeyable(false));
+    CHECK_MSTATUS(tAttr.setReadable(true));
+    CHECK_MSTATUS(tAttr.setWritable(true));
+    CHECK_MSTATUS(addAttribute(m_in_stream_attr));
 
     // Size Attribute
     float size_default = 1.0f;
@@ -228,6 +248,19 @@ MStatus ImagePlaneShape::initialize() {
     // Override Screen Depth Attribute
 
     // Screen Depth Attribute
+
+    // Out Stream
+    m_out_stream_attr = tAttr.create(
+            "outStream", "ostm",
+            stream_data_type_id);
+    CHECK_MSTATUS(tAttr.setStorable(false));
+    CHECK_MSTATUS(tAttr.setKeyable(false));
+    CHECK_MSTATUS(tAttr.setReadable(true));
+    CHECK_MSTATUS(tAttr.setWritable(false));
+    CHECK_MSTATUS(addAttribute(m_out_stream_attr));
+
+    // Attribute Affects
+    CHECK_MSTATUS(attributeAffects(m_in_stream_attr, m_out_stream_attr));
 
     return MS::kSuccess;
 }

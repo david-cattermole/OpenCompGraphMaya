@@ -92,10 +92,12 @@ public:
     static MString nodeName();
 
     // Attribute MObjects
+    static MObject m_in_stream_attr;
     static MObject m_size_attr;
     static MObject m_file_path_attr;
     static MObject m_exposure_attr;
     static MObject m_time_attr;
+    static MObject m_out_stream_attr;
 
     // Node Constants.
     static MTypeId m_id;
