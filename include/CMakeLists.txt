@@ -1,1 +1,1 @@
-add_subdirectory(OpenCompGraphMaya)
+add_subdirectory(opencompgraphmaya)

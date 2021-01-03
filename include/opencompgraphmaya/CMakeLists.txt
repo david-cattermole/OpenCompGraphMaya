@@ -21,6 +21,6 @@
 
 # Create C Header file with some build options baked in.
 configure_file(
-  build_constants.h.in
-  build_constants.h
+  ${CMAKE_CURRENT_SOURCE_DIR}/build_constants.h.in
+  ${CMAKE_CURRENT_SOURCE_DIR}/build_constants.h
   @ONLY)
