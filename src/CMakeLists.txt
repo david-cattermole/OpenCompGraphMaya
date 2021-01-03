@@ -24,12 +24,12 @@ add_subdirectory(OpenCompGraph)
 
 # Source
 set(SOURCE_FILES
-  image_plane_shape.cpp
-  image_plane_sub_scene_override.cpp
-  image_read_node.cpp
-  color_grade_node.cpp
-  graph_maya_data.cpp
-  plugin_main.cpp
+  ${CMAKE_CURRENT_SOURCE_DIR}/image_plane_shape.cpp
+  ${CMAKE_CURRENT_SOURCE_DIR}/image_plane_sub_scene_override.cpp
+  ${CMAKE_CURRENT_SOURCE_DIR}/image_read_node.cpp
+  ${CMAKE_CURRENT_SOURCE_DIR}/color_grade_node.cpp
+  ${CMAKE_CURRENT_SOURCE_DIR}/graph_maya_data.cpp
+  ${CMAKE_CURRENT_SOURCE_DIR}/plugin_main.cpp
   )
 
 # Find external packages
