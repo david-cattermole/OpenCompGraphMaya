@@ -6,7 +6,6 @@ It is provided for basic information and will be finished at a later date.
 On Windows (in a Visual Studio 20XX "Cross Tools" Command Prompt):
 ```
 $ cd path/to/folder
-$ cargo install cxxbridge-cmd --git "https://github.com/david-cattermole/cxx.git" --rev "363c18b2982329d6e4fbc2a6e5f324f4fef03661" --force
 $ git clone --recursive https://github.com/david-cattermole/OpenCompGraphMaya.git
 $ cd OpenCompGraphMaya
 $ build_OpenCompGraphMaya_windows64_maya2018.bat
@@ -16,7 +15,8 @@ $ build_OpenCompGraphMaya_windows64_maya2018.bat
 
 * CMake 3.0+
 * C++11 Compiler (see [Maya Development Build Environment](#maya-development-build-environment))
-* Rust 1.48.0+
+* Rust 1.48.0 or higher stable-branch compilier
+  * CXX 1.0.x
 * Maya 2018+ Development Kit (devkit)
 
 # Maya Development Build Environment
