@@ -491,13 +491,15 @@ void ImagePlaneSubSceneOverride::rebuild_geometry_buffers() {
         per_vertex_pos_count);
     m_position_buffer = new MHWRender::MVertexBuffer(vb_desc);
     if (m_position_buffer) {
-        auto pos_count = ocg::internal::calc_buffer_size_vertex_positions(
-            divisions_x, divisions_y) / per_vertex_pos_count;
+        auto pos_buffer_size = ocg::internal::calc_buffer_size_vertex_positions(
+            divisions_x, divisions_y);
+        auto pos_count = ocg::internal::calc_count_vertex_positions(
+            divisions_x, divisions_y);
         bool write_only = true;  // We don't need the current buffer values
         float *buffer = static_cast<float *>(
             m_position_buffer->acquire(pos_count, write_only));
         if (buffer) {
-            rust::Slice<float> slice{buffer, pos_count * per_vertex_pos_count};
+            rust::Slice<float> slice{buffer, pos_buffer_size};
             ocg::internal::fill_buffer_vertex_positions(
                 divisions_x, divisions_y, slice);
             // for (int i = 0; i < pos_count; ++i) {
@@ -521,13 +523,15 @@ void ImagePlaneSubSceneOverride::rebuild_geometry_buffers() {
         per_vertex_uv_count);
     m_uv_buffer = new MHWRender::MVertexBuffer(uv_desc);
     if (m_uv_buffer) {
-        auto uv_count = ocg::internal::calc_buffer_size_vertex_uvs(
-            divisions_x, divisions_y) / per_vertex_uv_count;
+        auto uv_buffer_size = ocg::internal::calc_buffer_size_vertex_uvs(
+            divisions_x, divisions_y);
+        auto uv_count = ocg::internal::calc_count_vertex_uvs(
+            divisions_x, divisions_y);
         bool write_only = true;  // We don't need the current buffer values
         float *buffer = static_cast<float *>(
             m_uv_buffer->acquire(uv_count, write_only));
         if (buffer) {
-            rust::Slice<float> slice{buffer, uv_count * per_vertex_uv_count};
+            rust::Slice<float> slice{buffer, uv_buffer_size};
             ocg::internal::fill_buffer_vertex_uvs(
                 divisions_x, divisions_y, slice);
             // for (int i = 0; i < uv_count; ++i) {
