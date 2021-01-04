@@ -104,7 +104,6 @@ private:
 
     MHWRender::MVertexBuffer *m_position_buffer;
     MHWRender::MVertexBuffer *m_uv_buffer;
-    MHWRender::MIndexBuffer *m_wire_index_buffer;
     MHWRender::MIndexBuffer *m_shaded_index_buffer;
 
     // Shader compile and release.

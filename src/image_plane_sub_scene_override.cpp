@@ -71,7 +71,6 @@ ImagePlaneSubSceneOverride::ImagePlaneSubSceneOverride(const MObject &obj)
           m_are_ui_drawables_dirty(true),
           m_position_buffer(nullptr),
           m_uv_buffer(nullptr),
-          m_wire_index_buffer(nullptr),
           m_shaded_index_buffer(nullptr),
           m_instance_added_cb_id(0),
           m_instance_removed_cb_id(0),
@@ -234,7 +233,7 @@ void ImagePlaneSubSceneOverride::update(
     if (update_shader) {
         MStreamUtils::stdErrorStream()
             << "ImagePlaneSubSceneOverride: Update shader parameters...\n";
-        // MColor = MHWRender::MGeometryUtilities::wireframeColor(m_instance_dag_paths[0]);
+        // MColor my_color = MHWRender::MGeometryUtilities::wireframeColor(m_instance_dag_paths[0]);
         const float color_values[4] = {1.0f, 1.0f, 1.0f, 1.0f};
         ImagePlaneSubSceneOverride::set_shader_color(m_shader, color_values);
         ImagePlaneSubSceneOverride::set_shader_texture(
@@ -308,12 +307,14 @@ void ImagePlaneSubSceneOverride::update(
     }
 
     bool items_changed = false;
+
     MHWRender::MRenderItem *wire_item = container.find(m_wireframe_render_item_name);
     if (!wire_item) {
         wire_item = MHWRender::MRenderItem::Create(
                 m_wireframe_render_item_name,
                 MHWRender::MRenderItem::DecorationItem,
-                MHWRender::MGeometry::kLines);
+                MHWRender::MGeometry::kLineStrip
+            );
         wire_item->setDrawMode(MHWRender::MGeometry::kWireframe);
         wire_item->depthPriority(MRenderItem::sDormantWireDepthPriority);
         container.add(wire_item);
@@ -326,10 +327,15 @@ void ImagePlaneSubSceneOverride::update(
         shaded_item = MHWRender::MRenderItem::Create(
                 m_shaded_render_item_name,
                 MRenderItem::MaterialSceneItem,
-                MGeometry::kTriangles);
-        shaded_item->setDrawMode(static_cast<MGeometry::DrawMode>(
-                MGeometry::kShaded | MGeometry::kTextured));
-        shaded_item->setExcludedFromPostEffects(false);
+                MHWRender::MGeometry::kTriangles
+            );
+        MGeometry::DrawMode draw_mode =
+            static_cast<MGeometry::DrawMode>(
+                MHWRender::MGeometry::kShaded
+                | MHWRender::MGeometry::kTextured);
+        // MGeometry::DrawMode draw_mode = MHWRender::MGeometry::kAll;
+        shaded_item->setDrawMode(draw_mode);
+        shaded_item->setExcludedFromPostEffects(true);
         shaded_item->castsShadows(true);
         shaded_item->receivesShadows(true);
         shaded_item->depthPriority(MRenderItem::sDormantFilledDepthPriority);
@@ -352,7 +358,7 @@ void ImagePlaneSubSceneOverride::update(
         vertex_buffers.addBuffer("positions", m_position_buffer);
         vertex_buffers.addBuffer("uvs", m_uv_buffer);
         setGeometryForRenderItem(
-                *wire_item, vertex_buffers, *m_wire_index_buffer, bounds);
+                *wire_item, vertex_buffers, *m_shaded_index_buffer, bounds);
         setGeometryForRenderItem(
                 *shaded_item, vertex_buffers, *m_shaded_index_buffer, bounds);
 
@@ -388,8 +394,10 @@ void ImagePlaneSubSceneOverride::update(
             // are set, otherwise it will fail.
             setInstanceTransformArray(*wire_item, instance_matrix_array);
             setInstanceTransformArray(*shaded_item, instance_matrix_array);
-            setExtraInstanceData(*wire_item, m_shader_color_parameter_name, instance_color_array);
-            setExtraInstanceData(*shaded_item, m_shader_color_parameter_name, instance_color_array);
+            setExtraInstanceData(
+                *wire_item, m_shader_color_parameter_name, instance_color_array);
+            setExtraInstanceData(
+                *shaded_item, m_shader_color_parameter_name, instance_color_array);
 
             // Once we change the render items into instance rendering
             // they can't be changed back without being deleted and
@@ -466,32 +474,45 @@ bool ImagePlaneSubSceneOverride::getInstancedSelectionPath(
 void ImagePlaneSubSceneOverride::rebuild_geometry_buffers() {
     ImagePlaneSubSceneOverride::delete_geometry_buffers();
 
+    const size_t divisions_x = 2;
+    const size_t divisions_y = 2;
+    MStreamUtils::stdErrorStream()
+        << "ocgImagePlane: rebuild geometry buffers" << '\n';
+    MStreamUtils::stdErrorStream()
+        << "------------------------------------------------------------------" << '\n';
+
+    const auto per_vertex_pos_count = 3;
+    const auto per_vertex_uv_count = 2;
+
     // VertexBuffer for positions. The index buffers will decide which
     // positions will be selected for each render items.
     const MHWRender::MVertexBufferDescriptor vb_desc(
         "",
         MHWRender::MGeometry::kPosition,
         MHWRender::MGeometry::kFloat,
-        3);
+        per_vertex_pos_count);
     m_position_buffer = new MHWRender::MVertexBuffer(vb_desc);
     if (m_position_buffer) {
+        auto pos_count = ocg::internal::calc_buffer_size_vertex_positions(
+            divisions_x, divisions_y) / per_vertex_pos_count;
         bool write_only = true;  // We don't need the current buffer values
-        float *positions = static_cast<float *>(
-            m_position_buffer->acquire(shape_vertices_count, write_only));
-        if (positions) {
-            int vertices_pointer_offset = 0;
-            for (int current_vertex = 0;
-                 current_vertex < shape_vertices_count;
-                 ++current_vertex) {
-                float x = shape_vertices[current_vertex][0] * m_size;
-                float y = shape_vertices[current_vertex][1] * m_size;
-                float z = shape_vertices[current_vertex][2] * m_size;
-                positions[vertices_pointer_offset++] = x;
-                positions[vertices_pointer_offset++] = y;
-                positions[vertices_pointer_offset++] = z;
-            }
-
-            m_position_buffer->commit(positions);
+        float *buffer = static_cast<float *>(
+            m_position_buffer->acquire(pos_count, write_only));
+        if (buffer) {
+            // Fill buffer;
+            rust::Slice<float> slice{buffer, pos_count * per_vertex_pos_count};
+            ocg::internal::fill_buffer_vertex_positions(
+                divisions_x, divisions_y, slice);
+            // for (int i = 0; i < pos_count; ++i) {
+            //     int index = i * per_vertex_pos_count;
+            //     MStreamUtils::stdErrorStream()
+            //         << "ocgImagePlane: positions (mine)"
+            //         << " " << index + 0 << "=" << buffer[index + 0]
+            //         << " " << index + 1 << "=" << buffer[index + 1]
+            //         << " " << index + 2 << "=" << buffer[index + 2]
+            //         << '\n';
+            // }
+            m_position_buffer->commit(buffer);
         }
     }
 
@@ -500,45 +521,27 @@ void ImagePlaneSubSceneOverride::rebuild_geometry_buffers() {
         "",
         MHWRender::MGeometry::kTexture,
         MHWRender::MGeometry::kFloat,
-        2);
+        per_vertex_uv_count);
     m_uv_buffer = new MHWRender::MVertexBuffer(uv_desc);
     if (m_uv_buffer) {
+        auto uv_count = ocg::internal::calc_buffer_size_vertex_uvs(
+            divisions_x, divisions_y) / per_vertex_uv_count;
         bool write_only = true;  // We don't need the current buffer values
-        float *uvs = static_cast<float *>(
-            m_uv_buffer->acquire(shape_uvs_count, write_only));
-        if (uvs) {
-            int uvs_pointer_offset = 0;
-            for (int current_vertex = 0;
-                 current_vertex < shape_uvs_count;
-                 ++current_vertex) {
-                float x = shape_uvs[current_vertex][0];
-                float y = shape_uvs[current_vertex][1];
-                uvs[uvs_pointer_offset++] = x;
-                uvs[uvs_pointer_offset++] = y;
-            }
-            m_uv_buffer->commit(uvs);
-        }
-    }
-
-    // IndexBuffer for the wireframe item
-    m_wire_index_buffer = new MHWRender::MIndexBuffer(
-        MHWRender::MGeometry::kUnsignedInt32);
-    if (m_wire_index_buffer) {
-        int num_primitive = shape_vertices_count - 1;
-        int num_index = num_primitive * 2;
-
-        bool write_only = true;  // We don't need the current buffer values
-        unsigned int *indices = static_cast<unsigned int *>(
-            m_wire_index_buffer->acquire(num_index, write_only));
-        if (indices) {
-            int primitive_index = 0;
-            for (int i = 0; i < num_index;) {
-                primitive_index = i / 2;
-                indices[i++] = primitive_index;
-                indices[i++] = primitive_index + 1;
-            }
-
-            m_wire_index_buffer->commit(indices);
+        float *buffer = static_cast<float *>(
+            m_uv_buffer->acquire(uv_count, write_only));
+        if (buffer) {
+            rust::Slice<float> slice{buffer, uv_count * per_vertex_uv_count};
+            ocg::internal::fill_buffer_vertex_uvs(
+                divisions_x, divisions_y, slice);
+            // for (int i = 0; i < uv_count; ++i) {
+            //     int index = i * per_vertex_uv_count;
+            //     MStreamUtils::stdErrorStream()
+            //         << "ocgImagePlane: uvs (mine)"
+            //         << " " << index + 0 << "=" << buffer[index + 0]
+            //         << " " << index + 1 << "=" << buffer[index + 1]
+            //         << '\n';
+            // }
+            m_uv_buffer->commit(buffer);
         }
     }
 
@@ -546,35 +549,35 @@ void ImagePlaneSubSceneOverride::rebuild_geometry_buffers() {
     m_shaded_index_buffer = new MHWRender::MIndexBuffer(
         MHWRender::MGeometry::kUnsignedInt32);
     if (m_shaded_index_buffer) {
-        int num_primitive = shape_vertices_count - 2;
-        int num_index = num_primitive * 3;
-
+        auto tri_count = ocg::internal::calc_buffer_size_index_tris(
+            divisions_x, divisions_y);
         bool write_only = true;  // We don't need the current buffer values
-        unsigned int *indices = static_cast<unsigned int *>(
-            m_shaded_index_buffer->acquire(num_index, write_only));
-        if (indices) {
-            int primitive_index = 0;
-            for (int i = 0; i < num_index;) {
-                primitive_index = i / 3;
-                indices[i++] = 0;
-                indices[i++] = primitive_index + 1;
-                indices[i++] = primitive_index + 2;
-            }
-
-            m_shaded_index_buffer->commit(indices);
+        uint32_t *buffer = static_cast<uint32_t *>(
+            m_shaded_index_buffer->acquire(tri_count, write_only));
+        if (buffer) {
+            rust::Slice<uint32_t> slice{buffer, tri_count};
+            ocg::internal::fill_buffer_index_tris(
+                divisions_x, divisions_y, slice);
+            // for (int i = 0; i < tri_count; ++i) {
+            //     MStreamUtils::stdErrorStream()
+            //         << "ocgImagePlane: indices (mine)"
+            //         << " " << i << "=" << buffer[i]
+            //         << '\n';
+            // }
+            m_shaded_index_buffer->commit(buffer);
         }
     }
 }
 
 void ImagePlaneSubSceneOverride::delete_geometry_buffers() {
+    MStreamUtils::stdErrorStream()
+        << "ocgImagePlane: delete geometry buffers" << '\n';
+
     delete m_position_buffer;
     m_position_buffer = nullptr;
 
     delete m_uv_buffer;
     m_uv_buffer = nullptr;
-
-    delete m_wire_index_buffer;
-    m_wire_index_buffer = nullptr;
 
     delete m_shaded_index_buffer;
     m_shaded_index_buffer = nullptr;
