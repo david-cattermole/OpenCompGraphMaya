@@ -29,11 +29,13 @@ set(SOURCE_FILES
   ${CMAKE_CURRENT_SOURCE_DIR}/image_read_node.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/color_grade_node.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/graph_maya_data.cpp
+  ${CMAKE_CURRENT_SOURCE_DIR}/logger.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/plugin_main.cpp
   )
 
 # Find external packages
 find_package(Maya REQUIRED)
+find_package(spdlog REQUIRED)
 
 # # Treat warnings as errors.
 # if(MSVC)
@@ -109,7 +111,6 @@ else ()
   set(CMAKE_CXX_FLAGS_RELEASE "-O3 -fPIC -fno-strict-aliasing -m64")
 endif ()
 
-
 # 'OpenCompGraphMaya' maya plugin library
 if (APPLE)
   add_library(OpenCompGraphMaya MODULE ${SOURCE_FILES})
@@ -117,17 +118,22 @@ else ()
   add_library(OpenCompGraphMaya SHARED ${SOURCE_FILES})
 endif ()
 target_include_directories(OpenCompGraphMaya
-  PRIVATE ../include
-  PRIVATE .
-  PUBLIC ${MAYA_INCLUDE_DIRS}
+  PRIVATE
+        ${CMAKE_CURRENT_SOURCE_DIR}/
+        ${CMAKE_CURRENT_SOURCE_DIR}/../include
+        ${THIRDPARTY_INSTALL_PREFIX}/include
+  PUBLIC
+        ${MAYA_INCLUDE_DIRS}
   )
 target_link_libraries(OpenCompGraphMaya
   PUBLIC
-  ${MAYA_OpenMaya_LIBRARY}
-  ${MAYA_OpenMayaUI_LIBRARY}
-  ${MAYA_OpenMayaRender_LIBRARY}
-  ${MAYA_Foundation_LIBRARY}
-  opencompgraph  # Target the OpenCompGraph git submodule.
+      ${MAYA_OpenMaya_LIBRARY}
+      ${MAYA_OpenMayaUI_LIBRARY}
+      ${MAYA_OpenMayaRender_LIBRARY}
+      ${MAYA_Foundation_LIBRARY}
+  PRIVATE
+      spdlog::spdlog
+      opencompgraph  # Target the OpenCompGraph git submodule.
   )
 
 # On Linux the 'm' library is required.

@@ -34,7 +34,6 @@
 #include <maya/MFnStringData.h>
 #include <maya/MFnDependencyNode.h>
 #include <maya/MUuid.h>
-#include <maya/MStreamUtils.h>
 
 // STL
 #include <cstring>
@@ -45,6 +44,7 @@
 
 // OCG Maya
 #include <opencompgraphmaya/node_type_ids.h>
+#include "logger.h"
 #include "graph_maya_data.h"
 #include "image_read_node.h"
 
@@ -73,6 +73,7 @@ MString ImageReadNode::nodeName() {
 }
 
 MStatus ImageReadNode::compute(const MPlug &plug, MDataBlock &data) {
+    auto log = log::get_logger();
     MStatus status = MS::kUnknownParameter;
 
     if (plug == m_out_stream_attr) {
@@ -97,21 +98,17 @@ MStatus ImageReadNode::compute(const MPlug &plug, MDataBlock &data) {
         GraphMayaData* new_data =
             static_cast<GraphMayaData*>(fn_plugin_data.data(&status));
         if (shared_graph) {
-            MStreamUtils::stdErrorStream()
-                    << "ImageReadNode: enabled and has graph" << '\n';
+            log->debug("ImageReadNode: enabled and has graph");
 
             // Modify the OCG Graph, and initialize the node values.
             bool exists = shared_graph->node_exists(m_ocg_node);
-            MStreamUtils::stdErrorStream()
-                    << "ImageReadNode: node exists: " << exists << '\n';
+            log->debug("ImageReadNode: node exists: {}", exists);
             if (!exists) {
                 m_ocg_node = shared_graph->create_node(
                     ocg::NodeType::kReadImage,
                     m_ocg_node_hash);
             }
-            MStreamUtils::stdErrorStream()
-                    << "ImageReadNode: node id: " << m_ocg_node.get_id()
-                    << '\n';
+            log->debug("ImageReadNode: node id: {}", m_ocg_node.get_id());
             if (m_ocg_node.get_id() != 0) {
                 shared_graph->set_node_attr_i32(
                     m_ocg_node, "enable", static_cast<int32_t>(enable));
@@ -121,9 +118,7 @@ MStatus ImageReadNode::compute(const MPlug &plug, MDataBlock &data) {
                 CHECK_MSTATUS_AND_RETURN_IT(status);
                 MString file_path = file_path_handle.asString();
                 shared_graph->set_node_attr_str(m_ocg_node, "file_path", file_path.asChar());
-                MStreamUtils::stdErrorStream()
-                        << "ImageReadNode: file path: " << file_path.asChar()
-                        << '\n';
+                log->debug("ImageReadNode: file path: {}", file_path.asChar());
 
                 // Time Attribute
                 MDataHandle time_handle = data.inputValue(m_time_attr, &status);
@@ -132,8 +127,8 @@ MStatus ImageReadNode::compute(const MPlug &plug, MDataBlock &data) {
                 shared_graph->set_node_attr_f32(m_ocg_node, "time", time);
             }
         }
-        std::cout << "Graph as string:\n"
-                  << shared_graph->data_debug_string();
+        log->debug("ImageReadNode: Graph as string:\n{}",
+                shared_graph->data_debug_string());
         new_data->set_node(m_ocg_node);
         new_data->set_graph(shared_graph);
         out_stream_handle.setMPxData(new_data);

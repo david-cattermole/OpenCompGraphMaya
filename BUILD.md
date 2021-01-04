@@ -13,11 +13,12 @@ $ build_OpenCompGraphMaya_windows64_maya2018.bat
 
 # Dependencies
 
-* CMake 3.0+
+* [CMake 3.0+](https://cmake.org/)
 * C++11 Compiler (see [Maya Development Build Environment](#maya-development-build-environment))
-* Rust 1.48.0 or higher stable-branch compilier
-  * CXX 1.0.x
+* [Rust 1.48.0 or higher](https://www.rust-lang.org/) (stable-branch)
+  * [cxx 1.0.x](https://github.com/dtolnay/cxx)
 * Maya 2018+ Development Kit (devkit)
+* [spdlog 1.8.2](https://github.com/gabime/spdlog)
 
 # Maya Development Build Environment
 

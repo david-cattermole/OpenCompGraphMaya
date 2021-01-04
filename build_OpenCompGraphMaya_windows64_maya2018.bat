@@ -64,9 +64,16 @@ SET GENERATE_SOLUTION=0
 SET PROJECT_ROOT=%CD%
 ECHO OpenCompGraphMaya Root: %PROJECT_ROOT%
 
+:: Build the third party projects before anything else.
+SET THIRDPARTY_ROOT=%PROJECT_ROOT%\thirdparty\
+PUSHD %THIRDPARTY_ROOT%\
+IF %errorlevel% NEQ 0 goto:eof
+CALL %THIRDPARTY_ROOT%\build_thirdparty_windows64.bat
+POPD
+
 :: Build the OpenCompGraph project.
 SET OCG_ROOT=%PROJECT_ROOT%\src\OpenCompGraph\
-call %OCG_ROOT%\scripts\build_rust_windows64.bat
+CALL %OCG_ROOT%\scripts\build_rust_windows64.bat
 :: Where to find the Rust libraries and headers.
 SET RUST_BUILD_DIR="%OCG_ROOT%\target\release"
 SET RUST_INCLUDE_DIR="%OCG_ROOT%\include"
@@ -99,6 +106,7 @@ REM To Generate a Visual Studio 'Solution' file
         -DRUST_INCLUDE_DIR=%RUST_INCLUDE_DIR% ^
         -DMAYA_LOCATION=%MAYA_LOCATION% ^
         -DMAYA_VERSION=%MAYA_VERSION% ^
+        -Dspdlog_DIR=%PROJECT_ROOT%\thirdparty\install\lib\cmake\spdlog ^
         ..
 
     nmake /F Makefile clean

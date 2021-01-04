@@ -28,6 +28,10 @@
 #include <maya/MObject.h>
 #include <maya/MDrawRegistry.h>
 
+// OCG
+#include <opencompgraph.h>
+
+// OCG Maya
 #include <opencompgraphmaya/build_constants.h>  // Build-Time constant values.
 #include <opencompgraphmaya/node_type_ids.h>
 #include <image_plane_shape.h>
@@ -35,7 +39,7 @@
 #include <color_grade_node.h>
 #include <image_read_node.h>
 #include <graph_maya_data.h>
-#include <opencompgraph.h>
+#include "logger.h"
 
 namespace ocg = open_comp_graph;
 namespace ocgm = open_comp_graph_maya;
@@ -79,7 +83,14 @@ namespace ocgm = open_comp_graph_maya;
 MStatus initializePlugin(MObject obj) {
     MStatus status;
     MFnPlugin plugin(obj, PLUGIN_COMPANY, PLUGIN_VERSION, "Any");
+
+    // Initialize both plug-in and core library loggers.
     ocg::log::initialize();
+    ocgm::log::initialize();
+    // TODO: Parse environment variables and pass the log level.
+    ocgm::log::set_level("debug");
+    auto log = ocgm::log::get_logger();
+    log->info("Initializing OpenCompGraphMaya plug-in...");
 
     // Register data types first, so the nodes and commands below can
     // reference them.
@@ -173,5 +184,7 @@ MStatus uninitializePlugin(MObject obj) {
     DEREGISTER_DATA(plugin,
                     ocgm::GraphMayaData::typeName(),
                     ocgm::GraphMayaData::m_id, status);
+
+    ocgm::log::deinitialize();
     return status;
 }
