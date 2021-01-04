@@ -42,9 +42,7 @@ GLSLShader VS
     {
         gl_Position = gWVPXf * vec4(in_position, 1);
         vsOut.texcoord.x = in_texcoord.x;
-        // Flip Y coordinates because the texture data starts at the
-        // top-left, but our UVs start at bottom-left.
-        vsOut.texcoord.y = 1.0 + (in_texcoord.y * -1.0);
+        vsOut.texcoord.y = in_texcoord.y;
     }
 }
 
