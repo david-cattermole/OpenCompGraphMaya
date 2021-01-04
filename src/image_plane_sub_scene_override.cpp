@@ -675,7 +675,7 @@ ImagePlaneSubSceneOverride::compile_shaders() {
             "ocgImagePlane failed to compile shader.");
         bool display_line_number = true;
         bool filter_source = true;
-        uint32_t num_lines = 2;
+        uint32_t num_lines = 3;
         MGlobal::displayError(error_message);
         MGlobal::displayError(shader_manager->getLastError());
         MGlobal::displayError(shader_manager->getLastErrorSource(
