@@ -88,7 +88,7 @@ MStatus initializePlugin(MObject obj) {
     ocg::log::initialize();
     ocgm::log::initialize();
     // TODO: Parse environment variables and pass the log level.
-    ocgm::log::set_level("debug");
+    ocgm::log::set_level("warn");
     auto log = ocgm::log::get_logger();
     log->info("Initializing OpenCompGraphMaya plug-in...");
 

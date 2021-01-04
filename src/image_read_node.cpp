@@ -127,8 +127,9 @@ MStatus ImageReadNode::compute(const MPlug &plug, MDataBlock &data) {
                 shared_graph->set_node_attr_f32(m_ocg_node, "time", time);
             }
         }
-        log->debug("ImageReadNode: Graph as string:\n{}",
-                shared_graph->data_debug_string());
+        log->debug(
+            "ImageReadNode: Graph as string:\n{}",
+            shared_graph->data_debug_string());
         new_data->set_node(m_ocg_node);
         new_data->set_graph(shared_graph);
         out_stream_handle.setMPxData(new_data);

@@ -33,7 +33,6 @@
 #include <maya/MFnStringData.h>
 #include <maya/MFnDependencyNode.h>
 #include <maya/MUuid.h>
-#include <maya/MStreamUtils.h>
 
 // STL
 #include <cstring>
@@ -44,6 +43,7 @@
 
 // OCG Maya
 #include <opencompgraphmaya/node_type_ids.h>
+#include "logger.h"
 #include "graph_maya_data.h"
 #include "color_grade_node.h"
 
@@ -72,6 +72,7 @@ MString ColorGradeNode::nodeName() {
 }
 
 MStatus ColorGradeNode::compute(const MPlug &plug, MDataBlock &data) {
+    auto log = log::get_logger();
     MStatus status = MS::kUnknownParameter;
     if (m_ocg_node_hash == 0) {
         // No OCG hash has been created yet, this node is not ready
@@ -112,20 +113,16 @@ MStatus ColorGradeNode::compute(const MPlug &plug, MDataBlock &data) {
         if (shared_graph) {
             // Modify the OCG Graph, and initialize the node values.
             bool exists = shared_graph->node_exists(m_ocg_node);
-            MStreamUtils::stdErrorStream()
-                    << "ColorGradeNode: node exists: " << exists << '\n';
+            log->debug("ColorGradeNode: node exists: {}", exists);
             if (!exists) {
                 m_ocg_node = shared_graph->create_node(
                     ocg::NodeType::kGrade,
                     m_ocg_node_hash);
             }
             shared_graph->connect(input_ocg_node, m_ocg_node, 0);
-            MStreamUtils::stdErrorStream()
-                    << "ColorGradeNode: input id: " << input_ocg_node.get_id()
-                    << '\n';
-            MStreamUtils::stdErrorStream()
-                    << "ColorGradeNode: node  id: " << m_ocg_node.get_id()
-                    << '\n';
+
+            log->debug("ColorGradeNode: input id: {}", input_ocg_node.get_id());
+            log->debug("ColorGradeNode: node id: {}", m_ocg_node.get_id());
             if (m_ocg_node.get_id() != 0) {
                 shared_graph->set_node_attr_i32(
                     m_ocg_node, "enable", static_cast<int32_t>(enable));
@@ -134,13 +131,15 @@ MStatus ColorGradeNode::compute(const MPlug &plug, MDataBlock &data) {
                 MDataHandle multiply_handle = data.inputValue(ColorGradeNode::m_multiply_attr, &status);
                 CHECK_MSTATUS_AND_RETURN_IT(status);
                 float temp = multiply_handle.asFloat();
-                MStreamUtils::stdErrorStream()
-                        << "ColorGradeNode: multiply: " << static_cast<double>(temp) << '\n';
+                log->debug("ColorGradeNode: multiply: {}", static_cast<double>(temp));
                 shared_graph->set_node_attr_f32(m_ocg_node, "multiply", temp);
+
+                // float multiply = std::pow(2.0, exposure);  // Exposure Value
             }
         }
-        std::cout << "Graph as string:\n"
-                  << shared_graph->data_debug_string();
+        log->debug(
+            "ColorGraphNode: Graph as string:\n{}",
+            shared_graph->data_debug_string());
         new_data->set_node(m_ocg_node);
         new_data->set_graph(shared_graph);
         out_stream_handle.setMPxData(new_data);
