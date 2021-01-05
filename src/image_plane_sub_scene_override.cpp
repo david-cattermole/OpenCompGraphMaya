@@ -617,23 +617,20 @@ ImagePlaneSubSceneOverride::compile_shaders() {
     MHWRender::MRenderer *renderer = MHWRender::MRenderer::theRenderer();
     if (!renderer) {
         log->error("ocgImagePlane failed to get renderer.");
-        status = MS::kFailure;
-        return status;
+        return MS::kFailure;
     }
 
     // If not core profile: ogsfx is not available save effect name
     // and leave.
     if (renderer->drawAPI() != MHWRender::kOpenGLCoreProfile) {
         log->warn("ocgImagePlane is only supported with OpenGL Core Profile!");
-        status = MS::kFailure;
-        return status;
+        return MS::kFailure;
     }
 
     const MHWRender::MShaderManager *shader_manager = renderer->getShaderManager();
     if (!shader_manager) {
         log->error("ocgImagePlane failed get shader manager.");
-        status = MS::kFailure;
-        return status;
+        return MS::kFailure;
     }
 
     // In core profile, there used to be the problem where the shader
@@ -684,8 +681,7 @@ ImagePlaneSubSceneOverride::compile_shaders() {
     }
     if (technique_names.length() == 0) {
         log->error("ocgImagePlane: shader contains no techniques.");
-        status = MS::kFailure;
-        return status;
+        return MS::kFailure;
     }
 
     // Compile shader.
@@ -709,8 +705,7 @@ ImagePlaneSubSceneOverride::compile_shaders() {
         log->error(shader_manager->getLastError().asChar());
         log->error(shader_manager->getLastErrorSource(
                        display_line_number, filter_source, num_lines).asChar());
-        status = MS::kFailure;
-        return status;
+        return MS::kFailure;
     }
     MStringArray parameter_list;
     m_shader->parameterList(parameter_list);
@@ -749,16 +744,14 @@ ImagePlaneSubSceneOverride::set_shader_texture(
     MHWRender::MRenderer *renderer = MHWRender::MRenderer::theRenderer();
     if (!renderer) {
         log->error("ocgImagePlane: Failed to get renderer.");
-        status = MS::kFailure;
-        return status;
+        return MS::kFailure
     }
 
     MHWRender::MTextureManager* texture_manager =
         renderer->getTextureManager();
     if (!texture_manager) {
         log->error("ocgImagePlane: Failed to get texture manager.");
-        status = MS::kFailure;
-        return status;
+        return MS::kFailure;
     }
 
     // Upload Texture data to the GPU using Maya's API.
@@ -786,8 +779,7 @@ ImagePlaneSubSceneOverride::set_shader_texture(
             shared_graph->data_debug_string());
         if (exec_status != ocg::ExecuteStatus::kSuccess) {
             log->error("ocgImagePlane: Failed to execute OCG node network!");
-            status = MS::kFailure;
-            return status;
+            return MS::kFailure;
         }
 
         // Get the computed data from the ocg::Graph.
@@ -826,8 +818,7 @@ ImagePlaneSubSceneOverride::set_shader_texture(
 
     if (!texture) {
         log->error("ocgImagePlane: Failed to acquire texture.");
-        status = MS::kFailure;
-        return status;
+        return MS::kFailure;
     }
 
     // Set the shader's texture parameter to use our uploaded texture.
@@ -854,8 +845,7 @@ ImagePlaneSubSceneOverride::set_shader_texture(
             *sampler);
     } else {
         log->error("ocgImagePlane: Failed to get texture sampler.");
-        status = MS::kFailure;
-        return status;
+        return MS::kFailure;
     }
     return status;
 }
@@ -869,21 +859,18 @@ ImagePlaneSubSceneOverride::release_shaders() {
     MHWRender::MRenderer *renderer = MHWRender::MRenderer::theRenderer();
     if (!renderer) {
         log->error("ocgImagePlane: Failed to get renderer.");
-        status = MS::kFailure;
-        return status;
+        return MS::kFailure;
     }
 
     const MHWRender::MShaderManager *shader_manager = renderer->getShaderManager();
     if (!shader_manager) {
         log->error("ocgImagePlane: Failed to get shader manager.");
-        status = MS::kFailure;
-        return status;
+        return MS::kFailure;
     }
 
     if (!m_shader) {
         log->error("ocgImagePlane: Failed to release shader.");
-        status = MS::kFailure;
-        return status;
+        return MS::kFailure;
     }
 
     shader_manager->releaseShader(m_shader);
