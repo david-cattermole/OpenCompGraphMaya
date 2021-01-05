@@ -13,11 +13,14 @@ def _get_random_file_path():
     file_path2 = "C:/Users/catte/dev/OpenCompGraphMaya/src/OpenCompGraph/tests/data/oiio-images/tahoe-gps.jpg"
     file_path3 = "C:/Users/catte/dev/robotArm/imageSequence/robotArm.1001.png"
     file_path4 = "C:/Users/catte/dev/OpenCompGraphMaya/src/OpenCompGraph/tests/data/DSC05345.jpg"
+    file_path5 = "C:/Users/catte/dev/OpenCompGraphMaya/src/OpenCompGraph/tests/data/vancouver.0001.jpg"
+
     file_paths = [
         file_path1,
         file_path2,
         file_path3,
         file_path4,
+        file_path5,
     ]
     file_path = random.choice(file_paths)
     return os.path.abspath(file_path)
