@@ -772,7 +772,7 @@ ImagePlaneSubSceneOverride::set_shader_texture(
             static_cast<uint64_t>(exec_status));
         auto input_node_status = shared_graph->node_status(input_stream_ocg_node);
         log->debug(
-            "ocgImagePlane: input node status=",
+            "ocgImagePlane: input node status={}",
             static_cast<uint64_t>(input_node_status));
         log->debug(
             "ColorGraphNode: Graph as string:\n{}",
