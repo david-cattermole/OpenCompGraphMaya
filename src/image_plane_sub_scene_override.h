@@ -99,7 +99,7 @@ private:
     ImagePlaneSubSceneOverride(const MObject &obj);
 
     // Create and delete VertexBuffers and Index Buffers, etc.
-    void rebuild_geometry_buffers();
+    void rebuild_geometry_buffers(const size_t divisions_x, const size_t divisions_y);
     void delete_geometry_buffers();
 
     MHWRender::MVertexBuffer *m_position_buffer;
@@ -115,7 +115,8 @@ private:
     MStatus set_shader_texture(
             MHWRender::MShaderInstance* shader,
             MHWRender::MTexture *texture,
-            MObject in_stream);
+            std::shared_ptr<ocg::Graph> shared_graph,
+            ocg::Node input_stream_ocg_node);
 
     // Internal state.
     MObject m_locator_node;
@@ -123,14 +124,19 @@ private:
     bool m_are_ui_drawables_dirty;
 
     // OCG Internal state.
+    //
+    // TODO: Remove this from the node. All nodes should share the
+    // same cache.
     std::shared_ptr<ocg::Cache> m_ocg_cache;
 
     // Cached attribute values
-    float m_size;
-    // MString m_file_path;
-    // float m_time;
-    // float m_exposure;
+    float m_card_size_x;
+    // float m_card_size_y;
+    uint32_t m_card_res_x;
+    // float m_card_res_y;
+    float m_time;
     MObject m_in_stream;
+    ocg::Node m_in_stream_node;
 
     struct InstanceInfo {
         MMatrix m_matrix;

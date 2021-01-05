@@ -57,10 +57,11 @@ MString ImagePlaneShape::m_selection_type_name("ocgImagePlaneSelection");
 
 // Input Attributes
 MObject ImagePlaneShape::m_in_stream_attr;
-MObject ImagePlaneShape::m_size_attr;
-MObject ImagePlaneShape::m_file_path_attr;
+MObject ImagePlaneShape::m_card_size_x_attr;
+MObject ImagePlaneShape::m_card_size_y_attr;
+MObject ImagePlaneShape::m_card_res_x_attr;
+MObject ImagePlaneShape::m_card_res_y_attr;
 MObject ImagePlaneShape::m_time_attr;
-MObject ImagePlaneShape::m_exposure_attr;
 
 // Output Attributes
 MObject ImagePlaneShape::m_out_stream_attr;
@@ -85,7 +86,7 @@ void ImagePlaneShape::draw(M3dView &view, const MDagPath &path,
                            M3dView::DisplayStatus status) {
     // Get the size
     MObject thisNode = thisMObject();
-    MPlug plug(thisNode, m_size_attr);
+    MPlug plug(thisNode, m_card_size_x_attr);
     MDistance sizeVal;
     plug.getValue(sizeVal);
 
@@ -147,20 +148,20 @@ bool ImagePlaneShape::isBounded() const {
 }
 
 MBoundingBox ImagePlaneShape::boundingBox() const {
-    // Get the size
     MObject this_node = thisMObject();
-    MPlug plug(this_node, m_size_attr);
-    MDistance size_value;
-    plug.getValue(size_value);
+    MPlug card_size_x_plug(this_node, m_card_size_x_attr);
+    MPlug card_size_y_plug(this_node, m_card_size_y_attr);
+    MDistance card_size_x_value;
+    MDistance card_size_y_value;
+    card_size_x_plug.getValue(card_size_x_value);
+    card_size_y_plug.getValue(card_size_y_value);
 
-    double multiplier = size_value.asCentimeters();
+    double multiplier_x = card_size_x_value.asCentimeters();
+    double multiplier_y = card_size_y_value.asCentimeters();
 
-    MPoint corner1(-1.0, -1.0, -1.0);
-    MPoint corner2(1.0, 1.0, 1.0);
-
-    corner1 = corner1 * multiplier;
-    corner2 = corner2 * multiplier;
-
+    // TODO: Replace this with a call to the OCG library.
+    MPoint corner1(-1.0 * multiplier_x, -1.0 * multiplier_y, 0.0);
+    MPoint corner2(1.0 * multiplier_x, 1.0 * multiplier_y, 0.0);
     return MBoundingBox(corner1, corner2);
 }
 
@@ -195,52 +196,73 @@ MStatus ImagePlaneShape::initialize() {
     CHECK_MSTATUS(tAttr.setWritable(true));
     CHECK_MSTATUS(addAttribute(m_in_stream_attr));
 
-    // Size Attribute
-    float size_default = 1.0f;
-    m_size_attr = uAttr.create("size", "sz", MFnUnitAttribute::kDistance);
-    CHECK_MSTATUS(uAttr.setDefault(size_default));
-    CHECK_MSTATUS(MPxNode::addAttribute(m_size_attr));
-
-    // File Path Attribute
-    m_file_path_attr = tAttr.create(
-            "filePath", "fp",
-        MFnData::kString, empty_string_data_obj);
-    CHECK_MSTATUS(tAttr.setStorable(true));
-    CHECK_MSTATUS(tAttr.setUsedAsFilename(true));
-    CHECK_MSTATUS(MPxNode::addAttribute(m_file_path_attr));
-
-    // Exposure Attribute
-    //
-    // Increase/Decrease the image brightness with EV (exposure
-    // values).
-    m_exposure_attr = nAttr.create("exposure", "exp", MFnNumericData::kFloat, 0.0f);
-    CHECK_MSTATUS(nAttr.setWritable(true));
-    CHECK_MSTATUS(nAttr.setStorable(true));
-    CHECK_MSTATUS(nAttr.setKeyable(true));
-    CHECK_MSTATUS(MPxNode::addAttribute(m_exposure_attr));
-
-    // Time
-    m_time_attr = uAttr.create("time", "tm", MFnUnitAttribute::kTime, 0.0);
-    CHECK_MSTATUS(uAttr.setStorable(true));
-    CHECK_MSTATUS(MPxNode::addAttribute(m_time_attr));
-
     // Geometry Type Attribute
     //
     // The type of geometry that will draw the image.
     //
     // Possible values:
     // - Camera Plane
-    // - Flat Plane
+    // - Card / Flat Plane
     // - Sphere
-    // - Input Mesh
+    // - Custom Mesh
     //
     // // aTransformType = eAttr.create("transformType", "tt", kTranslate);
-    // // eAttr.addField("Translate", kTranslate);
-    // // eAttr.addField("Rotate", kRotate);
-    // // eAttr.addField("Scale", kScale);
-    // // eAttr.addField("Shear", kShear);
+    // // eAttr.addField("Camera Plane", kTranslate);
+    // // eAttr.addField("Card", kRotate);
+    // // eAttr.addField("Sphere", kScale);
+    // // eAttr.addField("Custom Mesh", kShear);
     // // MPxNode::addAttribute(aTransformType);
 
+    // Card Size Attribute
+    float card_size_x_min = 0.0f;
+    float card_size_x_default = 1.0f;
+    m_card_size_x_attr = uAttr.create(
+        "cardSizeX", "cszx",
+        MFnUnitAttribute::kDistance);
+    CHECK_MSTATUS(uAttr.setMin(card_size_x_min));
+    CHECK_MSTATUS(uAttr.setDefault(card_size_x_default));
+    CHECK_MSTATUS(MPxNode::addAttribute(m_card_size_x_attr));
+
+    // Card Size Attribute
+    float card_size_y_default = 1.0f;
+    float card_size_y_min = 0.0f;
+    m_card_size_y_attr = uAttr.create(
+        "cardSizeY", "cszy",
+        MFnUnitAttribute::kDistance);
+    CHECK_MSTATUS(uAttr.setMin(card_size_y_min));
+    CHECK_MSTATUS(uAttr.setDefault(card_size_y_default));
+    CHECK_MSTATUS(MPxNode::addAttribute(m_card_size_y_attr));
+    
+    // Card Resolution X
+    uint32_t card_res_x_min = 2;
+    uint32_t card_res_x_soft_max = 128;
+    uint32_t card_res_x_max = 2048;
+    uint32_t card_res_x_default = 32;
+    m_card_res_x_attr = nAttr.create(
+        "cardResolutionX", "crzx",
+        MFnNumericData::kInt, card_res_x_default);
+    CHECK_MSTATUS(nAttr.setStorable(true));
+    CHECK_MSTATUS(nAttr.setKeyable(false));
+    CHECK_MSTATUS(nAttr.setMin(card_res_x_min));
+    CHECK_MSTATUS(nAttr.setMax(card_res_x_max));
+    CHECK_MSTATUS(nAttr.setSoftMax(card_res_x_soft_max));
+    CHECK_MSTATUS(addAttribute(m_card_res_x_attr));
+
+    // Card Resolution Y
+    uint32_t card_res_y_min = 2;
+    uint32_t card_res_y_soft_max = 128;
+    uint32_t card_res_y_max = 2048;
+    uint32_t card_res_y_default = 32;
+    m_card_res_y_attr = nAttr.create(
+        "cardResolutionY", "crzy",
+        MFnNumericData::kInt, card_res_y_default);
+    CHECK_MSTATUS(nAttr.setStorable(true));
+    CHECK_MSTATUS(nAttr.setKeyable(false));
+    CHECK_MSTATUS(nAttr.setMin(card_res_y_min));
+    CHECK_MSTATUS(nAttr.setMax(card_res_y_max));
+    CHECK_MSTATUS(nAttr.setSoftMax(card_res_y_soft_max));
+    CHECK_MSTATUS(addAttribute(m_card_res_y_attr));
+    
     // Camera Plane Depth Attribute
 
     // Camera Plane Resolution Attribute
@@ -248,6 +270,11 @@ MStatus ImagePlaneShape::initialize() {
     // Override Screen Depth Attribute
 
     // Screen Depth Attribute
+    
+    // Time
+    m_time_attr = uAttr.create("time", "tm", MFnUnitAttribute::kTime, 0.0);
+    CHECK_MSTATUS(uAttr.setStorable(true));
+    CHECK_MSTATUS(MPxNode::addAttribute(m_time_attr));
 
     // Out Stream
     m_out_stream_attr = tAttr.create(

@@ -47,31 +47,6 @@
 
 namespace open_comp_graph_maya{
 
-// Shape Data
-static const float shape_vertices[6][3] = {
-    // First Triangle - counter clockwise direction.
-    {-1.0, -1.0, 0.0}, // Lower left
-    {1.0, 1.0, 0.0},   // Upper right
-    {-1.0, 1.0, 0.0},  // Upper left
-
-    // Second Triangle - counter clockwise direction.
-    {-1.0, -1.0, 0.0}, // Lower left
-    {1.0, -1.0, 0.0},  // Lower Right
-    {1.0, 1.0, 0.0}};  // Upper right
-static const int shape_vertices_count = 6;
-
-static const float shape_uvs[6][2] = {
-   // First Triangle - counter clockwise direction.
-   {0.0, 0.0}, // Lower left
-   {1.0, 1.0}, // Upper right
-   {0.0, 1.0}, // Upper left
-
-   // Second Triangle - counter clockwise direction.
-   {0.0, 0.0},  // Lower left
-   {1.0, 0.0},  // Lower Right
-   {1.0, 1.0}}; // Upper right
-static const int shape_uvs_count = 6;
-
 class ImagePlaneShape : public MPxLocatorNode {
 public:
     ImagePlaneShape();
@@ -93,9 +68,10 @@ public:
 
     // Attribute MObjects
     static MObject m_in_stream_attr;
-    static MObject m_size_attr;
-    static MObject m_file_path_attr;
-    static MObject m_exposure_attr;
+    static MObject m_card_size_x_attr;
+    static MObject m_card_size_y_attr;
+    static MObject m_card_res_x_attr;
+    static MObject m_card_res_y_attr;
     static MObject m_time_attr;
     static MObject m_out_stream_attr;
 

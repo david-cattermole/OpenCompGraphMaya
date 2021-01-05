@@ -66,7 +66,9 @@ MString ImagePlaneSubSceneOverride::m_shaded_render_item_name = "ocgImagePlaneSh
 ImagePlaneSubSceneOverride::ImagePlaneSubSceneOverride(const MObject &obj)
         : MHWRender::MPxSubSceneOverride(obj),
           m_locator_node(obj),
-          m_size(0.0f),
+          m_card_size_x(0.0f),
+          m_card_res_x(16),
+          m_time(0.0f),
           m_is_instance_mode(false),
           m_are_ui_drawables_dirty(true),
           m_position_buffer(nullptr),
@@ -76,7 +78,8 @@ ImagePlaneSubSceneOverride::ImagePlaneSubSceneOverride(const MObject &obj)
           m_instance_removed_cb_id(0),
           m_shader(nullptr),
           m_texture(nullptr),
-          m_ocg_cache(std::make_shared<ocg::Cache>()){
+          m_ocg_cache(std::make_shared<ocg::Cache>()),
+          m_in_stream_node(ocg::Node(ocg::NodeType::kNull, 0)) {
     MDagPath dag_path;
     if (MDagPath::getAPathTo(obj, dag_path)) {
         m_instance_added_cb_id = MDagMessage::addInstanceAddedDagPathCallback(
@@ -137,76 +140,87 @@ void ImagePlaneSubSceneOverride::update(
     uint32_t shader_values_changed = 0;
     uint32_t geometry_values_changed = 0;
 
-    // Get size attribute value.
-    MPlug size_plug(ImagePlaneSubSceneOverride::m_locator_node,
-                    ImagePlaneShape::m_size_attr);
-    if (!size_plug.isNull()) {
-        float new_size = 1.0f;
-        MDistance size_value;
-        if (size_plug.getValue(size_value)) {
-            new_size = static_cast<float>(size_value.asCentimeters());
+    // Get card_size_x attribute value.
+    MPlug card_size_x_plug(ImagePlaneSubSceneOverride::m_locator_node,
+                           ImagePlaneShape::m_card_size_x_attr);
+    if (!card_size_x_plug.isNull()) {
+        float new_card_size_x = 0.0f;
+        MDistance card_size_x_value;
+        if (card_size_x_plug.getValue(card_size_x_value)) {
+            new_card_size_x = static_cast<float>(card_size_x_value.asCentimeters());
         }
-        bool size_has_changed = m_size != new_size;
-        attr_values_changed += static_cast<uint32_t>(size_has_changed);
-        geometry_values_changed += static_cast<uint32_t>(size_has_changed);
-        if (size_has_changed) {
-            m_size = new_size;
+        bool card_size_x_has_changed = m_card_size_x != new_card_size_x;
+        attr_values_changed += static_cast<uint32_t>(card_size_x_has_changed);
+        geometry_values_changed += static_cast<uint32_t>(card_size_x_has_changed);
+        if (card_size_x_has_changed) {
+            m_card_size_x = new_card_size_x;
         }
     }
 
-    // // Get file path attribute value.
-    // MPlug file_path_plug(ImagePlaneSubSceneOverride::m_locator_node,
-    //                      ImagePlaneShape::m_file_path_attr);
-    // if (!file_path_plug.isNull()) {
-    //     MString new_file_path = file_path_plug.asString(&status);
-    //     CHECK_MSTATUS(status);
-    //     bool file_path_has_changed = m_file_path != new_file_path;
-    //     attr_values_changed += static_cast<uint32_t>(file_path_has_changed);
-    //     shader_values_changed += static_cast<uint32_t>(file_path_has_changed);
-    //     if (file_path_has_changed) {
-    //         m_file_path = new_file_path;
-    //     }
-    // }
+    // Get Card Resolution X attribute value.
+    MPlug card_res_x_plug(ImagePlaneSubSceneOverride::m_locator_node,
+                          ImagePlaneShape::m_card_res_x_attr);
+    if (!card_res_x_plug.isNull()) {
+        uint32_t new_card_res_x = card_res_x_plug.asInt(&status);
+        CHECK_MSTATUS(status);
+        bool card_res_x_has_changed = m_card_res_x != new_card_res_x;
+        attr_values_changed += static_cast<uint32_t>(card_res_x_has_changed);
+        geometry_values_changed += static_cast<uint32_t>(card_res_x_has_changed);
+        if (card_res_x_has_changed) {
+            m_card_res_x = new_card_res_x;
+        }
+    }
 
-    // // Get time attribute value.
-    // MPlug time_plug(ImagePlaneSubSceneOverride::m_locator_node,
-    //                 ImagePlaneShape::m_time_attr);
-    // if (!time_plug.isNull()) {
-    //     float new_time = time_plug.asFloat(&status);
-    //     CHECK_MSTATUS(status);
-    //     bool time_has_changed = m_time != new_time;
-    //     attr_values_changed += static_cast<uint32_t>(time_has_changed);
-    //     shader_values_changed += static_cast<uint32_t>(time_has_changed);
-    //     if (time_has_changed) {
-    //         m_time = new_time;
-    //     }
-    // }
-
-    // // Get exposure attribute value.
-    // MPlug exposure_plug(ImagePlaneSubSceneOverride::m_locator_node,
-    //                     ImagePlaneShape::m_exposure_attr);
-    // if (!exposure_plug.isNull()) {
-    //     float new_exposure = exposure_plug.asFloat(&status);
-    //     CHECK_MSTATUS(status);
-    //     bool exposure_has_changed = m_exposure != new_exposure;
-    //     attr_values_changed += static_cast<uint32_t>(exposure_has_changed);
-    //     shader_values_changed += static_cast<uint32_t>(exposure_has_changed);
-    //     if (exposure_has_changed) {
-    //         m_exposure = new_exposure;
-    //     }
-    // }
+    // Get time attribute value.
+    MPlug time_plug(ImagePlaneSubSceneOverride::m_locator_node,
+                    ImagePlaneShape::m_time_attr);
+    if (!time_plug.isNull()) {
+        float new_time = time_plug.asFloat(&status);
+        CHECK_MSTATUS(status);
+        bool time_has_changed = m_time != new_time;
+        attr_values_changed += static_cast<uint32_t>(time_has_changed);
+        shader_values_changed += static_cast<uint32_t>(time_has_changed);
+        if (time_has_changed) {
+            m_time = new_time;
+        }
+    }
 
     // Get input OCG Stream data.
+    std::shared_ptr<ocg::Graph> shared_graph;
     MPlug in_stream_plug(ImagePlaneSubSceneOverride::m_locator_node,
                          ImagePlaneShape::m_in_stream_attr);
     if (!in_stream_plug.isNull()) {
         MObject new_in_stream = in_stream_plug.asMObject(&status);
         CHECK_MSTATUS(status);
-        bool in_stream_has_changed = true; // TODO: Compute this properly.
+        if (new_in_stream.isNull()) {
+            log->error("ImagePlaneSubSceneOverride: Input stream is not valid.");
+            return;
+        }
+
+        // Convert Maya controlled data into the OCG custom MPxData class.
+        // We are ensured this is valid from Maya. The MObject is a smart
+        // pointer and we check the object is valid before-hand too.
+        MFnPluginData fn_plugin_data(new_in_stream);
+        GraphMayaData* input_stream_data =
+            static_cast<GraphMayaData*>(fn_plugin_data.data(&status));
+        CHECK_MSTATUS(status);
+        if (input_stream_data == nullptr) {
+            log->debug("ImagePlaneSubSceneOverride: Input stream data is not valid.");
+            return;
+        }
+        log->debug("ImagePlaneSubSceneOverride: input graph is valid.");
+        shared_graph = input_stream_data->get_graph();
+        ocg::Node new_in_stream_node = input_stream_data->get_node();
+        log->debug(
+            "ImagePlaneSubSceneOverride: input node id: {}",
+            new_in_stream_node.get_id());
+
+        bool in_stream_has_changed = shared_graph->state() != ocg::GraphState::kClean;
         attr_values_changed += static_cast<uint32_t>(in_stream_has_changed);
         shader_values_changed += static_cast<uint32_t>(in_stream_has_changed);
         if (in_stream_has_changed) {
             m_in_stream = new_in_stream;
+            m_in_stream_node = new_in_stream_node;
         }
     }
 
@@ -220,7 +234,11 @@ void ImagePlaneSubSceneOverride::update(
         update_shader = true;
     }
     if (update_geometry) {
-        ImagePlaneSubSceneOverride::rebuild_geometry_buffers();
+        // TODO: Split out the difference between topology and vertex
+        // data changing. We can update the vertex buffer without
+        // needing to change the index buffers.
+        ImagePlaneSubSceneOverride::rebuild_geometry_buffers(
+            m_card_res_x, m_card_res_x);
     }
 
     // Compile and update shader.
@@ -234,8 +252,10 @@ void ImagePlaneSubSceneOverride::update(
         // MColor my_color = MHWRender::MGeometryUtilities::wireframeColor(m_instance_dag_paths[0]);
         const float color_values[4] = {1.0f, 1.0f, 1.0f, 1.0f};
         ImagePlaneSubSceneOverride::set_shader_color(m_shader, color_values);
+        // TODO: Set transform matrix.
+        // TODO: Set color matrix.
         ImagePlaneSubSceneOverride::set_shader_texture(
-            m_shader, m_texture, m_in_stream);
+            m_shader, m_texture, shared_graph, m_in_stream_node);
     }
 
     bool any_instance_changed = false;
@@ -342,6 +362,7 @@ void ImagePlaneSubSceneOverride::update(
     }
 
     if (items_changed || any_instance_changed) {
+        // TODO: Create custom solid-color shader for wireframes.
         wire_item->setShader(m_shader);
         shaded_item->setShader(m_shader);
     }
@@ -469,12 +490,12 @@ bool ImagePlaneSubSceneOverride::getInstancedSelectionPath(
         dag_path);
 }
 
-void ImagePlaneSubSceneOverride::rebuild_geometry_buffers() {
+void ImagePlaneSubSceneOverride::rebuild_geometry_buffers(
+    const size_t divisions_x,
+    const size_t divisions_y) {
     auto log = log::get_logger();
     ImagePlaneSubSceneOverride::delete_geometry_buffers();
 
-    const size_t divisions_x = 2;
-    const size_t divisions_y = 2;
     log->debug("ocgImagePlane: rebuild geometry buffers");
     log->debug("ocgImagePlane: divisions: {}x{}",
                divisions_x, divisions_y);
@@ -720,7 +741,8 @@ MStatus
 ImagePlaneSubSceneOverride::set_shader_texture(
         MHWRender::MShaderInstance* shader,
         MHWRender::MTexture *texture,
-        MObject in_stream) {
+        std::shared_ptr<ocg::Graph> shared_graph,
+        ocg::Node input_stream_ocg_node) {
     auto log = log::get_logger();
     MStatus status = MS::kSuccess;
 
@@ -739,101 +761,11 @@ ImagePlaneSubSceneOverride::set_shader_texture(
         return status;
     }
 
-    if (m_in_stream.isNull()) {
-        log->error("ocgImagePlane: Input stream is not valid.");
-        status = MS::kFailure;
-        return status;
-    }
-
-    // Convert Maya controlled data into the OCG custom MPxData class.
-    // We are ensured this is valid from Maya. The MObject is a smart
-    // pointer and we check the object is valid before-hand too.
-    MFnPluginData fn_plugin_data(in_stream);
-    GraphMayaData* input_stream_data =
-        static_cast<GraphMayaData*>(fn_plugin_data.data(&status));
-    CHECK_MSTATUS(status);
-    if (input_stream_data == nullptr) {
-        MString error_message = MString(
-            "ocgImagePlane: Input stream data is not valid.");
-        MGlobal::displayError(error_message);
-        status = MS::kFailure;
-        return status;
-    }
-    log->debug(
-        "ImagePlaneSubSceneOverride: input graph is valid: {}",
-        input_stream_data->is_valid_graph());
-    std::shared_ptr<ocg::Graph> shared_graph = input_stream_data->get_graph();
-    ocg::Node input_stream_ocg_node = input_stream_data->get_node();
-    log->debug(
-        "ImagePlaneSubSceneOverride: input node id: {}",
-        input_stream_ocg_node.get_id());
-
-    // MTextureManager Caching Behaviour
-    //
-    // When using the MTextureManager::acquire* methods a cache is
-    // used to look up existing textures.
-    //
-    // If the texure name provided is an empty string then the texture
-    // will not be cached as part of the internal texture caching
-    // system. Thus each such call to this method will create a new
-    // texture.
-    //
-    // If a non-empty texture name is specified then the caching
-    // system will attempt to return any previously cached texture
-    // with that name.
-    //
-    // The renderer will add 1 reference to this texture on
-    // creation. If the texture has already been acquired then no new
-    // texture will be created, and a new reference will be added. To
-    // release the reference, call releaseTexture().
-    //
-    // If no pre-existing cached texture exists, then a new texture is
-    // created by tiling a set of images on disk. The images are
-    // specified by a set of file names and their tile position. The
-    // input images must be 2D textures.
-    //
-
-    // MString textureLocation("C:/Users/user/dev/OpenCompGraphMaya/src/OpenCompGraph/tests/data");
-    // texture_manager->addImagePath(textureLocation);
-    // // Load texture onto shader, using Maya's image loading libraries.
-    // int mipmapLevels = 1;  // 1 = Only one mip-map level, don't create more.
-    // bool useExposureControl = true;
-    // MString textureName("checker_8bit_rgba_8x8.png");
-    // const MString contextNodeFullName("ocgImagePlane1");
-    // MHWRender::MTexture* texture =
-    //     texture_manager->acquireTexture(
-    //         textureName,
-    //         contextNodeFullName,
-    //         mipmapLevels,
-    //         useExposureControl);
-
     // Upload Texture data to the GPU using Maya's API.
+    //
+    // NOTE: We do not use Maya's MTextureManager class for any caching,
+    // we want to use our own custom caching.
     if (!texture) {
-        // First, search the texture cache to see if another instance
-        // of this override has already generated the texture. We can
-        // reuse it to save GPU memory since the noise data is
-        // constant.
-        // // texture = texture_manager->findTexture(m_texture_name);
-
-        // // Not in cache, so we need to actually build the texture.
-        // if (!texture) {
-
-        // // Create a 2D texture with the hard-coded data.
-        // //
-        // // See:
-        // // http://help.autodesk.com/view/MAYAUL/2018/ENU/?guid=__cpp_ref_class_m_h_w_render_1_1_texture_description_html
-        // MHWRender::MTextureDescription texture_description;
-        // texture_description.setToDefault2DTexture();
-        // texture_description.fWidth = 4;
-        // texture_description.fHeight = 4;
-        // texture_description.fFormat = MHWRender::kR32G32B32_FLOAT;
-        // texture_description.fMipmaps = 1;
-        // texture = texture_manager->acquireTexture(
-        //         m_texture_name,
-        //         texture_description,
-        //         (const void*)&(color_bars_f32_8x8_[0]),
-        //         false);
-
         bool exists = shared_graph->node_exists(input_stream_ocg_node);
         log->debug(
             "ocgImagePlane: input node id={} node type={} exists={}",
@@ -860,6 +792,8 @@ ImagePlaneSubSceneOverride::set_shader_texture(
 
         // Get the computed data from the ocg::Graph.
         auto stream_data = shared_graph->output_stream();
+        auto display_window = stream_data.display_window();
+        auto data_window = stream_data.data_window();
         auto pixel_buffer = stream_data.pixel_buffer();
         auto pixel_width = stream_data.pixel_width();
         auto pixel_height = stream_data.pixel_height();
@@ -867,10 +801,12 @@ ImagePlaneSubSceneOverride::set_shader_texture(
         log->debug("pixels: {}x{} c={}",
                    pixel_width,  pixel_height,
                    static_cast<uint32_t>(pixel_num_channels));
-        // auto buffer = static_cast<const void*>(color_bars_f32_8x8_[0]),
         auto buffer = static_cast<const void*>(pixel_buffer.data());
 
         // Upload Texture via Maya.
+        //
+        // See for details of values:
+        // http://help.autodesk.com/view/MAYAUL/2018/ENU/?guid=__cpp_ref_class_m_h_w_render_1_1_texture_description_html
         MHWRender::MTextureDescription texture_description;
         texture_description.setToDefault2DTexture();
         texture_description.fWidth = pixel_width;
@@ -886,7 +822,6 @@ ImagePlaneSubSceneOverride::set_shader_texture(
             texture_description,
             buffer,
             false);
-        // }
     }
 
     if (!texture) {
