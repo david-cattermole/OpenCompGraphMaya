@@ -743,7 +743,7 @@ ImagePlaneSubSceneOverride::set_shader_texture(
     MHWRender::MRenderer *renderer = MHWRender::MRenderer::theRenderer();
     if (!renderer) {
         log->error("ocgImagePlane: Failed to get renderer.");
-        return MS::kFailure
+        return MS::kFailure;
     }
 
     MHWRender::MTextureManager* texture_manager =
