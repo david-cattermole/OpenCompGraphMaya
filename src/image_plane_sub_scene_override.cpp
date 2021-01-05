@@ -26,6 +26,7 @@
 #include <maya/MTypeId.h>
 #include <maya/MPlug.h>
 #include <maya/MColor.h>
+#include <maya/MFloatMatrix.h>
 #include <maya/MDistance.h>
 #include <maya/MFnDagNode.h>
 #include <maya/MFnPluginData.h>
@@ -57,8 +58,11 @@ namespace ocg = open_comp_graph;
 namespace open_comp_graph_maya {
 
 MString ImagePlaneSubSceneOverride::m_shader_color_parameter_name = "gSolidColor";
-MString ImagePlaneSubSceneOverride::m_shader_texture_parameter_name = "gTexture";
-MString ImagePlaneSubSceneOverride::m_shader_texture_sampler_parameter_name = "gTextureSampler";
+MString ImagePlaneSubSceneOverride::m_shader_geometry_transform_parameter_name = "gGeometryTransform";
+MString ImagePlaneSubSceneOverride::m_shader_image_transform_parameter_name = "gImageTransform";
+MString ImagePlaneSubSceneOverride::m_shader_image_color_matrix_parameter_name = "gImageColorMatrix";
+MString ImagePlaneSubSceneOverride::m_shader_image_texture_parameter_name = "gImageTexture";
+MString ImagePlaneSubSceneOverride::m_shader_image_texture_sampler_parameter_name = "gImageTextureSampler";
 MString ImagePlaneSubSceneOverride::m_wireframe_render_item_name = "ocgImagePlaneWireframe";
 MString ImagePlaneSubSceneOverride::m_shaded_render_item_name = "ocgImagePlaneShadedTriangles";
 
@@ -76,7 +80,6 @@ ImagePlaneSubSceneOverride::ImagePlaneSubSceneOverride(const MObject &obj)
           m_instance_added_cb_id(0),
           m_instance_removed_cb_id(0),
           m_shader(nullptr),
-          m_texture(nullptr),
           m_ocg_cache(std::make_shared<ocg::Cache>()),
           m_in_stream_node(ocg::Node(ocg::NodeType::kNull, 0)) {
     MDagPath dag_path;
@@ -90,7 +93,7 @@ ImagePlaneSubSceneOverride::ImagePlaneSubSceneOverride(const MObject &obj)
 }
 
 ImagePlaneSubSceneOverride::~ImagePlaneSubSceneOverride() {
-    ImagePlaneSubSceneOverride::release_shaders();
+    ImagePlaneSubSceneOverride::release_shaders(m_shader);
     ImagePlaneSubSceneOverride::delete_geometry_buffers();
 
     // Remove callbacks related to instances.
@@ -249,11 +252,77 @@ void ImagePlaneSubSceneOverride::update(
         log->debug("ImagePlaneSubSceneOverride: Update shader parameters...");
         // MColor my_color = MHWRender::MGeometryUtilities::wireframeColor(m_instance_dag_paths[0]);
         const float color_values[4] = {1.0f, 1.0f, 1.0f, 1.0f};
-        ImagePlaneSubSceneOverride::set_shader_color(m_shader, color_values);
-        // TODO: Set transform matrix.
-        // TODO: Set color matrix.
-        ImagePlaneSubSceneOverride::set_shader_texture(
-            m_shader, m_texture, shared_graph, m_in_stream_node);
+        status = set_shader_color(
+            m_shader, m_shader_color_parameter_name, color_values);
+        CHECK_MSTATUS(status);
+
+        // TODO: Replaced with proper values.
+        const float identity_matrix_values[4][4] = {
+            {1.0, 0.0, 0.0, 0.0},
+            {0.0, 1.0, 0.0, 0.0},
+            {0.0, 0.0, 1.0, 0.0},
+            {0.0, 0.0, 0.0, 1.0},
+        };
+
+        // Set the transform matrix parameter expected to move the
+        // geometry buffer into the correct place
+        MFloatMatrix geom_matrix(identity_matrix_values);
+        status = set_shader_float_matrix4x4(
+            m_shader, m_shader_geometry_transform_parameter_name, geom_matrix);
+        CHECK_MSTATUS(status);
+
+        auto exec_status = evalutate_ocg_graph(
+            m_in_stream_node,
+            shared_graph,
+            m_ocg_cache);
+        if (exec_status == ocg::ExecuteStatus::kSuccess) {
+            auto stream_data = shared_graph->output_stream();
+            // auto display_window = stream_data.display_window();
+            // auto data_window = stream_data.data_window();
+            // auto transform_matrix = stream_data.transform_matrix();
+
+            // Set the transform matrix parameter expected to move the
+            // geometry buffer into the correct place.
+            MFloatMatrix image_transform(identity_matrix_values);
+            status = set_shader_float_matrix4x4(
+                m_shader,
+                m_shader_image_transform_parameter_name,
+                image_transform);
+            CHECK_MSTATUS(status);
+
+            // Set the matrix parameter expected to adjust the colors
+            // of the image texture.
+            auto color_matrix = stream_data.color_matrix();
+            const float color_matrix_values[4][4] = {
+                {color_matrix.m00, color_matrix.m01, color_matrix.m02, color_matrix.m03},
+                {color_matrix.m10, color_matrix.m11, color_matrix.m12, color_matrix.m13},
+                {color_matrix.m20, color_matrix.m21, color_matrix.m22, color_matrix.m23},
+                {color_matrix.m30, color_matrix.m31, color_matrix.m32, color_matrix.m33},
+            };
+            MFloatMatrix image_color_matrix(color_matrix_values);
+            status = set_shader_float_matrix4x4(
+                m_shader,
+                m_shader_image_color_matrix_parameter_name,
+                image_color_matrix);
+            CHECK_MSTATUS(status);
+
+            MHWRender::MSamplerStateDesc sampler_description;
+            sampler_description.filter = MSamplerState::TextureFilter::kMinMagMipPoint;
+            sampler_description.addressU = MSamplerState::TextureAddress::kTexClamp;
+            sampler_description.addressV = MSamplerState::TextureAddress::kTexClamp;
+            status = set_shader_texture_sampler(
+                m_shader,
+                m_shader_image_texture_sampler_parameter_name,
+                sampler_description
+            );
+            CHECK_MSTATUS(status);
+
+            status = set_shader_texture_with_stream_data(
+                m_shader,
+                m_shader_image_texture_parameter_name,
+                std::move(stream_data));
+            CHECK_MSTATUS(status);
+        }
     }
 
     bool any_instance_changed = false;
@@ -715,13 +784,14 @@ ImagePlaneSubSceneOverride::compile_shaders() {
     return status;
 }
 
-/// Set a color parameter.
+// Set a color parameter.
 MStatus
 ImagePlaneSubSceneOverride::set_shader_color(
         MHWRender::MShaderInstance* shader,
+        const MString parameter_name,
         const float color_values[4]) {
     MStatus status = shader->setParameter(
-        m_shader_color_parameter_name,
+        parameter_name,
         color_values);
     if (status != MStatus::kSuccess) {
         auto log = log::get_logger();
@@ -730,12 +800,62 @@ ImagePlaneSubSceneOverride::set_shader_color(
     return status;
 }
 
+
+// Set the named matrix parameter on the shader.
 MStatus
-ImagePlaneSubSceneOverride::set_shader_texture(
+ImagePlaneSubSceneOverride::set_shader_float_matrix4x4(
         MHWRender::MShaderInstance* shader,
-        MHWRender::MTexture *texture,
+        const MString parameter_name,
+        const MFloatMatrix matrix) {
+    MStatus status = shader->setParameter(
+            parameter_name,
+            matrix);
+    if (status != MStatus::kSuccess) {
+        auto log = log::get_logger();
+        log->error("ocgImagePlane: Failed to set Matrix 4x4 parameter!");
+    }
+    return status;
+}
+
+
+// Trigger a Graph evaluation and return the computed data.
+ocg::ExecuteStatus
+ImagePlaneSubSceneOverride::evalutate_ocg_graph(
+        ocg::Node stream_ocg_node,
         std::shared_ptr<ocg::Graph> shared_graph,
-        ocg::Node input_stream_ocg_node) {
+        std::shared_ptr<ocg::Cache> shared_cache) {
+    auto log = log::get_logger();
+
+    bool exists = shared_graph->node_exists(stream_ocg_node);
+    // log->debug(
+    //     "ocgImagePlane: input node id={} node type={} exists={}",
+    //     stream_ocg_node.get_id(),
+    //     static_cast<uint64_t>(stream_ocg_node.get_node_type()),
+    //     exists);
+
+    auto exec_status = shared_graph->execute(stream_ocg_node, shared_cache);
+    // log->debug(
+    //     "ocgImagePlane: execute status={}",
+    //     static_cast<uint64_t>(exec_status));
+
+    // auto input_node_status = shared_graph->node_status(stream_ocg_node);
+    // log->debug(
+    //     "ocgImagePlane: input node status={}",
+    //     static_cast<uint64_t>(input_node_status));
+    // log->debug(
+    //     "ColorGraphNode: Graph as string:\n{}",
+    //     shared_graph->data_debug_string());
+    if (exec_status != ocg::ExecuteStatus::kSuccess) {
+        log->error("ocgImagePlane: Failed to execute OCG node network!");
+    }
+    return exec_status;
+}
+
+MStatus
+ImagePlaneSubSceneOverride::set_shader_texture_with_stream_data(
+        MHWRender::MShaderInstance* shader,
+        const MString parameter_name,
+        ocg::StreamData stream_data) {
     auto log = log::get_logger();
     MStatus status = MS::kSuccess;
 
@@ -752,67 +872,37 @@ ImagePlaneSubSceneOverride::set_shader_texture(
         return MS::kFailure;
     }
 
+    auto pixel_buffer = stream_data.pixel_buffer();
+    auto pixel_width = stream_data.pixel_width();
+    auto pixel_height = stream_data.pixel_height();
+    auto pixel_num_channels = stream_data.pixel_num_channels();
+    log->debug("pixels: {}x{} c={}",
+               pixel_width,  pixel_height,
+               static_cast<uint32_t>(pixel_num_channels));
+    auto buffer = static_cast<const void*>(pixel_buffer.data());
+
     // Upload Texture data to the GPU using Maya's API.
-    if (!texture) {
-        bool exists = shared_graph->node_exists(input_stream_ocg_node);
-        log->debug(
-            "ocgImagePlane: input node id={} node type={} exists={}",
-            input_stream_ocg_node.get_id(),
-            static_cast<uint64_t>(input_stream_ocg_node.get_node_type()),
-            exists);
-
-        auto exec_status = shared_graph->execute(input_stream_ocg_node, m_ocg_cache);
-        log->debug(
-            "ocgImagePlane: execute status={}",
-            static_cast<uint64_t>(exec_status));
-        auto input_node_status = shared_graph->node_status(input_stream_ocg_node);
-        log->debug(
-            "ocgImagePlane: input node status={}",
-            static_cast<uint64_t>(input_node_status));
-        log->debug(
-            "ColorGraphNode: Graph as string:\n{}",
-            shared_graph->data_debug_string());
-        if (exec_status != ocg::ExecuteStatus::kSuccess) {
-            log->error("ocgImagePlane: Failed to execute OCG node network!");
-            return MS::kFailure;
-        }
-
-        // Get the computed data from the ocg::Graph.
-        auto stream_data = shared_graph->output_stream();
-        auto display_window = stream_data.display_window();
-        auto data_window = stream_data.data_window();
-        auto pixel_buffer = stream_data.pixel_buffer();
-        auto pixel_width = stream_data.pixel_width();
-        auto pixel_height = stream_data.pixel_height();
-        auto pixel_num_channels = stream_data.pixel_num_channels();
-        log->debug("pixels: {}x{} c={}",
-                   pixel_width,  pixel_height,
-                   static_cast<uint32_t>(pixel_num_channels));
-        auto buffer = static_cast<const void*>(pixel_buffer.data());
-
-        // Upload Texture via Maya.
-        //
-        // See for details of values:
-        // http://help.autodesk.com/view/MAYAUL/2018/ENU/?guid=__cpp_ref_class_m_h_w_render_1_1_texture_description_html
-        MHWRender::MTextureDescription texture_description;
-        texture_description.setToDefault2DTexture();
-        texture_description.fWidth = pixel_width;
-        texture_description.fHeight = pixel_height;
-        if (pixel_num_channels == 3) {
-            texture_description.fFormat = MHWRender::kR32G32B32_FLOAT;
-        } else {
-            texture_description.fFormat = MHWRender::kR32G32B32A32_FLOAT;
-        }
-        texture_description.fMipmaps = 1;
-        // Using an empty texture name by-passes the MTextureManager's
-        // inbuilt caching system - or values are not remembered by
-        // Maya, we must store a cache.
-        texture = texture_manager->acquireTexture(
-            /* textureName */ "",
-            texture_description,
-            buffer,
-            false);
+    //
+    // See for details of values:
+    // http://help.autodesk.com/view/MAYAUL/2018/ENU/?guid=__cpp_ref_class_m_h_w_render_1_1_texture_description_html
+    MHWRender::MTextureDescription texture_description;
+    texture_description.setToDefault2DTexture();
+    texture_description.fWidth = pixel_width;
+    texture_description.fHeight = pixel_height;
+    if (pixel_num_channels == 3) {
+        texture_description.fFormat = MHWRender::kR32G32B32_FLOAT;
+    } else {
+        texture_description.fFormat = MHWRender::kR32G32B32A32_FLOAT;
     }
+    texture_description.fMipmaps = 1;
+    // Using an empty texture name by-passes the MTextureManager's
+    // inbuilt caching system - or values are not remembered by
+    // Maya, we must store a cache.
+    MTexture *texture = texture_manager->acquireTexture(
+        /*textureName=*/ "",
+        texture_description,
+        buffer,
+        /*generateMipMaps=*/ false);
 
     if (!texture) {
         log->error("ocgImagePlane: Failed to acquire texture.");
@@ -823,33 +913,33 @@ ImagePlaneSubSceneOverride::set_shader_texture(
     log->debug("ocgImagePlane: Setting texture parameter...");
     MHWRender::MTextureAssignment texture_resource;
     texture_resource.texture = texture;
-    shader->setParameter(
-        m_shader_texture_parameter_name,
-        texture_resource);
+    shader->setParameter(parameter_name, texture_resource);
     // Release our reference now that it is set on the shader
     texture_manager->releaseTexture(texture);
+    return status;
+}
 
-    // Acquire and bind the default texture sampler.
-    MHWRender::MSamplerStateDesc sampler_desc;
-    sampler_desc.filter = MHWRender::MSamplerState::kMinMagMipPoint;
-    sampler_desc.addressU = MHWRender::MSamplerState::kTexClamp;
-    sampler_desc.addressV = MHWRender::MSamplerState::kTexClamp;
+// Acquire and bind the default texture sampler.
+MStatus
+ImagePlaneSubSceneOverride::set_shader_texture_sampler(
+        MHWRender::MShaderInstance* shader,
+        const MString parameter_name,
+        MHWRender::MSamplerStateDesc sampler_description) {
+    auto log = log::get_logger();
     const MHWRender::MSamplerState* sampler =
-        MHWRender::MStateManager::acquireSamplerState(sampler_desc);
+        MHWRender::MStateManager::acquireSamplerState(sampler_description);
     if (sampler) {
         log->debug("ocgImagePlane: Setting texture sampler parameter...");
-        shader->setParameter(
-            m_shader_texture_sampler_parameter_name,
-            *sampler);
+        shader->setParameter(parameter_name, *sampler);
     } else {
         log->error("ocgImagePlane: Failed to get texture sampler.");
         return MS::kFailure;
     }
-    return status;
+    return MS::kSuccess;
 }
 
 MStatus
-ImagePlaneSubSceneOverride::release_shaders() {
+ImagePlaneSubSceneOverride::release_shaders(MShaderInstance *shader) {
     auto log = log::get_logger();
     MStatus status = MS::kSuccess;
     log->debug("ocgImagePlane: Releasing shader...");
@@ -866,12 +956,12 @@ ImagePlaneSubSceneOverride::release_shaders() {
         return MS::kFailure;
     }
 
-    if (!m_shader) {
+    if (!shader) {
         log->error("ocgImagePlane: Failed to release shader.");
         return MS::kFailure;
     }
 
-    shader_manager->releaseShader(m_shader);
+    shader_manager->releaseShader(shader);
     return status;
 }
 

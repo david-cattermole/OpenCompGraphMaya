@@ -28,6 +28,7 @@
 #include <maya/MTypeId.h>
 #include <maya/MPlug.h>
 #include <maya/MColor.h>
+#include <maya/MFloatMatrix.h>
 #include <maya/MDistance.h>
 #include <maya/MGlobal.h>
 #include <maya/MFnDagNode.h>
@@ -106,17 +107,30 @@ private:
     MHWRender::MVertexBuffer *m_uv_buffer;
     MHWRender::MIndexBuffer *m_shaded_index_buffer;
 
+    ocg::ExecuteStatus evalutate_ocg_graph(
+        ocg::Node stream_ocg_node,
+        std::shared_ptr<ocg::Graph> shared_graph,
+        std::shared_ptr<ocg::Cache> shared_cache);
+
     // Shader compile and release.
     MStatus compile_shaders();
-    MStatus release_shaders();
+    MStatus release_shaders(MShaderInstance *shader);
     MStatus set_shader_color(
-            MHWRender::MShaderInstance* shader,
-            const float color_values[4]);
-    MStatus set_shader_texture(
-            MHWRender::MShaderInstance* shader,
-            MHWRender::MTexture *texture,
-            std::shared_ptr<ocg::Graph> shared_graph,
-            ocg::Node input_stream_ocg_node);
+        MHWRender::MShaderInstance* shader,
+        const MString parameter_name,
+        const float color_values[4]);
+    MStatus set_shader_float_matrix4x4(
+        MHWRender::MShaderInstance* shader,
+        const MString parameter_name,
+        const MFloatMatrix matrix);
+    MStatus set_shader_texture_sampler(
+        MHWRender::MShaderInstance* shader,
+        const MString sampler_parameter_name,
+        MHWRender::MSamplerStateDesc sampler_description);
+    MStatus set_shader_texture_with_stream_data(
+        MHWRender::MShaderInstance* shader,
+        const MString texture_parameter_name,
+        ocg::StreamData stream_data);
 
     // Internal state.
     MObject m_locator_node;
@@ -159,14 +173,18 @@ private:
     MCallbackId m_instance_removed_cb_id;
     MDagPathArray m_instance_dag_paths;
 
-    // Shaders and Textures
+    // Shaders
     MHWRender::MShaderInstance *m_shader;
-    MHWRender::MTexture *m_texture;
 
     // Shader Constants
     static MString m_shader_color_parameter_name;
-    static MString m_shader_texture_parameter_name;
-    static MString m_shader_texture_sampler_parameter_name;
+    static MString m_shader_geometry_transform_parameter_name;
+    static MString m_shader_image_transform_parameter_name;
+    static MString m_shader_image_color_matrix_parameter_name;
+    static MString m_shader_image_texture_parameter_name;
+    static MString m_shader_image_texture_sampler_parameter_name;
+
+    // Viewport 2.0 render item names
     static MString m_wireframe_render_item_name;
     static MString m_shaded_render_item_name;
 };

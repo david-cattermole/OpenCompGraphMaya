@@ -1,24 +1,34 @@
 // World-view-projection transformation.
 uniform mat4 gWVPXf : WorldViewProjection;
 
-// The solid color uniform, its default value and several extra parameters
+// The solid color uniform, its default value and several extra
+// parameters
 uniform vec4 gSolidColor : DIFFUSE = {1, 0, 0, 1};
 
-uniform texture2D gTexture
+// Matrix used to multiply colours, to perform color (linear)
+// grading/correction.
+uniform float4x4 gImageColorMatrix < string UIWidget = "None"; >;
+
+// The main image texture displaying RGBA values to the user.
+uniform texture2D gImageTexture
 <
     string ResourceName = "";
     string ResourceType = "2D";
 >;
 
-uniform sampler2D gTextureSampler = sampler_state
+uniform sampler2D gImageTextureSampler = sampler_state
 {
-    Texture = <gTexture>;
+    Texture = <gImageTexture>;
     TEXTURE_MIN_FILTER = NEAREST;
     TEXTURE_MAG_FILTER = NEAREST;
     TEXTURE_WRAP_S = CLAMP_TO_EDGE;
     TEXTURE_WRAP_T = CLAMP_TO_EDGE;
     TEXTURE_WRAP_R = CLAMP_TO_EDGE;
 };
+
+// Transforms to be applied to the vertices in various ways.
+uniform float4x4 gImageTransform < string UIWidget = "None"; >;
+uniform float4x4 gGeometryTransform < string UIWidget = "None"; >;
 
 attribute vs_input
 {
@@ -40,7 +50,7 @@ GLSLShader VS
 {
     void main()
     {
-        gl_Position = gWVPXf * vec4(in_position, 1);
+        gl_Position = gWVPXf * gGeometryTransform * gImageTransform * vec4(in_position, 1);
         vsOut.texcoord.x = in_texcoord.x;
         vsOut.texcoord.y = in_texcoord.y;
     }
@@ -50,7 +60,8 @@ GLSLShader PS
 {
     void main()
     {
-        out_color = gSolidColor * texture2D(gTextureSampler, psIn.texcoord);
+        vec4 tex_color = texture2D(gImageTextureSampler, psIn.texcoord);
+        out_color = gSolidColor * gImageColorMatrix * tex_color;
     }
 }
 
