@@ -201,11 +201,14 @@ MStatus ColorGradeNode::initialize() {
     CHECK_MSTATUS(addAttribute(m_enable_attr));
 
     // Multiply
+    float multiply_min = 0.0f;
+    float multiply_default = 1.0f;
     m_multiply_attr = nAttr.create(
         "multiply", "mul",
-        MFnNumericData::kFloat, 1.0);
+        MFnNumericData::kFloat, multiply_default);
     CHECK_MSTATUS(nAttr.setStorable(true));
     CHECK_MSTATUS(nAttr.setKeyable(true));
+    CHECK_MSTATUS(nAttr.setMin(multiply_min));
     CHECK_MSTATUS(addAttribute(m_multiply_attr));
 
     // Out Stream
