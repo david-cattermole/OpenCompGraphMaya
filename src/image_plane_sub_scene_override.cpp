@@ -218,7 +218,6 @@ void ImagePlaneSubSceneOverride::update(
         attr_values_changed += static_cast<uint32_t>(in_stream_has_changed);
         shader_values_changed += static_cast<uint32_t>(in_stream_has_changed);
         if (in_stream_has_changed) {
-            m_in_stream = new_in_stream;
             m_in_stream_node = new_in_stream_node;
         }
     }

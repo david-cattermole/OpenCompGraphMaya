@@ -135,7 +135,6 @@ private:
     uint32_t m_card_res_x;
     // float m_card_res_y;
     float m_time;
-    MObject m_in_stream;
     ocg::Node m_in_stream_node;
 
     struct InstanceInfo {
