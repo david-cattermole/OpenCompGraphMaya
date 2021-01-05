@@ -165,7 +165,6 @@ private:
     MHWRender::MTexture *m_texture;
 
     // Shader Constants
-    static MString m_texture_name;
     static MString m_shader_color_parameter_name;
     static MString m_shader_texture_parameter_name;
     static MString m_shader_texture_sampler_parameter_name;

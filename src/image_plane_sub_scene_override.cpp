@@ -56,7 +56,6 @@ namespace ocg = open_comp_graph;
 
 namespace open_comp_graph_maya {
 
-MString ImagePlaneSubSceneOverride::m_texture_name = "";
 MString ImagePlaneSubSceneOverride::m_shader_color_parameter_name = "gSolidColor";
 MString ImagePlaneSubSceneOverride::m_shader_texture_parameter_name = "gTexture";
 MString ImagePlaneSubSceneOverride::m_shader_texture_sampler_parameter_name = "gTextureSampler";
@@ -755,9 +754,6 @@ ImagePlaneSubSceneOverride::set_shader_texture(
     }
 
     // Upload Texture data to the GPU using Maya's API.
-    //
-    // NOTE: We do not use Maya's MTextureManager class for any caching,
-    // we want to use our own custom caching.
     if (!texture) {
         bool exists = shared_graph->node_exists(input_stream_ocg_node);
         log->debug(
@@ -809,8 +805,11 @@ ImagePlaneSubSceneOverride::set_shader_texture(
             texture_description.fFormat = MHWRender::kR32G32B32A32_FLOAT;
         }
         texture_description.fMipmaps = 1;
+        // Using an empty texture name by-passes the MTextureManager's
+        // inbuilt caching system - or values are not remembered by
+        // Maya, we must store a cache.
         texture = texture_manager->acquireTexture(
-            m_texture_name,
+            /* textureName */ "",
             texture_description,
             buffer,
             false);
