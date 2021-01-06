@@ -114,7 +114,7 @@ private:
         std::shared_ptr<ocg::Cache> shared_cache);
 
     // Shader compile and release.
-    MStatus compile_shaders();
+    MStatus compile_shaders(const MString shader_file_name);
     MStatus release_shaders(MShaderInstance *shader);
     MStatus set_shader_color(
         MHWRender::MShaderInstance* shader,

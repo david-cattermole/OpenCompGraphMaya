@@ -244,7 +244,7 @@ void SubSceneOverride::update(
     }
 
     // Compile and update shader.
-    status = SubSceneOverride::compile_shaders();
+    status = SubSceneOverride::compile_shaders("ocgImagePlane");
     if (!m_shader) {
         log->error("SubSceneOverride: Failed to get a shader.");
         return;
@@ -672,7 +672,7 @@ void SubSceneOverride::delete_geometry_buffers() {
 }
 
 MStatus
-SubSceneOverride::compile_shaders() {
+SubSceneOverride::compile_shaders(const MString shader_file_name) {
     auto log = log::get_logger();
     MStatus status = MS::kSuccess;
     if (m_shader != nullptr) {
@@ -731,7 +731,6 @@ SubSceneOverride::compile_shaders() {
     shader_manager->addShaderPath(shader_location);
 
     // Shader compiling options.
-    const MString effects_file_name("ocgImagePlane");
     MShaderCompileMacro *macros = nullptr;
     unsigned int number_of_macros = 0;
     bool use_effect_cache = true;
@@ -740,7 +739,7 @@ SubSceneOverride::compile_shaders() {
     log->debug("ocgImagePlane: Get techniques...");
     MStringArray technique_names;
     shader_manager->getEffectsTechniques(
-        effects_file_name,
+        shader_file_name,
         technique_names,
         macros, number_of_macros,
         use_effect_cache);
@@ -756,7 +755,7 @@ SubSceneOverride::compile_shaders() {
     log->debug("ocgImagePlane: Compiling shader...");
     const MString technique_name(technique_names[0]);  // pick first technique.
     m_shader = shader_manager->getEffectsFileShader(
-        effects_file_name, technique_name,
+        shader_file_name, technique_name,
         macros, number_of_macros,
         use_effect_cache);
     if (!m_shader) {
