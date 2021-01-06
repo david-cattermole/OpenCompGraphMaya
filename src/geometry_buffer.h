@@ -20,6 +20,9 @@
  * General geometry buffer related functions.
  */
 
+#ifndef OPENCOMPGRAPHMAYA_GEOMETRY_BUFFER_H
+#define OPENCOMPGRAPHMAYA_GEOMETRY_BUFFER_H
+
 // Maya Viewport 2.0
 #include <maya/MHWGeometry.h>
 
@@ -40,3 +43,5 @@ MHWRender::MIndexBuffer* build_index_buffer_triangles(
 
 } // namespace geometry_buffer
 } // namespace open_comp_graph_maya
+
+#endif // OPENCOMPGRAPHMAYA_GEOMETRY_BUFFER_H
