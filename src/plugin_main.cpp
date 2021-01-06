@@ -117,12 +117,12 @@ MStatus initializePlugin(MObject obj) {
 
     // Image Plane Shape Node
     status = plugin.registerNode(
-        ocgm::ImagePlaneShape::nodeName(),
-        ocgm::ImagePlaneShape::m_id,
-        &ocgm::ImagePlaneShape::creator,
-        &ocgm::ImagePlaneShape::initialize,
+        ocgm::image_plane::ShapeNode::nodeName(),
+        ocgm::image_plane::ShapeNode::m_id,
+        &ocgm::image_plane::ShapeNode::creator,
+        &ocgm::image_plane::ShapeNode::initialize,
         MPxNode::kLocatorNode,
-        &ocgm::ImagePlaneShape::m_draw_db_classification);
+        &ocgm::image_plane::ShapeNode::m_draw_db_classification);
     if (!status) {
         status.perror("registerNode");
         return status;
@@ -130,9 +130,9 @@ MStatus initializePlugin(MObject obj) {
 
     // Image Plane (Viewport 2.0)
     status = MHWRender::MDrawRegistry::registerSubSceneOverrideCreator(
-        ocgm::ImagePlaneShape::m_draw_db_classification,
-        ocgm::ImagePlaneShape::m_draw_registrant_id,
-        ocgm::ImagePlaneSubSceneOverride::Creator);
+        ocgm::image_plane::ShapeNode::m_draw_db_classification,
+        ocgm::image_plane::ShapeNode::m_draw_registrant_id,
+        ocgm::image_plane::SubSceneOverride::Creator);
     if (!status) {
         status.perror("registerSubSceneOverrideCreator");
         return status;
@@ -141,9 +141,9 @@ MStatus initializePlugin(MObject obj) {
     // Register a custom selection mask with priority 2 (same as
     // locators by default).
     MSelectionMask::registerSelectionType(
-        ocgm::ImagePlaneShape::m_selection_type_name, 2);
+        ocgm::image_plane::ShapeNode::m_selection_type_name, 2);
     MString mel_cmd = "selectType -byName \"";
-    mel_cmd += ocgm::ImagePlaneShape::m_selection_type_name;
+    mel_cmd += ocgm::image_plane::ShapeNode::m_selection_type_name;
     mel_cmd += "\" 1";
     status = MGlobal::executeCommand(mel_cmd);
 
@@ -156,14 +156,14 @@ MStatus uninitializePlugin(MObject obj) {
     MFnPlugin plugin(obj);
 
     status = MHWRender::MDrawRegistry::deregisterSubSceneOverrideCreator(
-        ocgm::ImagePlaneShape::m_draw_db_classification,
-        ocgm::ImagePlaneShape::m_draw_registrant_id);
+        ocgm::image_plane::ShapeNode::m_draw_db_classification,
+        ocgm::image_plane::ShapeNode::m_draw_registrant_id);
     if (!status) {
         status.perror("deregisterSubSceneOverrideCreator");
         return status;
     }
 
-    status = plugin.deregisterNode(ocgm::ImagePlaneShape::m_id);
+    status = plugin.deregisterNode(ocgm::image_plane::ShapeNode::m_id);
     if (!status) {
         status.perror("deregisterNode");
         return status;
@@ -171,7 +171,7 @@ MStatus uninitializePlugin(MObject obj) {
 
     // Deregister custom selection mask
     MSelectionMask::deregisterSelectionType(
-        ocgm::ImagePlaneShape::m_selection_type_name);
+        ocgm::image_plane::ShapeNode::m_selection_type_name);
 
     DEREGISTER_NODE(plugin, ocgm::ImageReadNode::nodeName(),
                     ocgm::ImageReadNode::m_id, status);

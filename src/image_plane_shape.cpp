@@ -48,40 +48,41 @@
 #include "image_plane_shape.h"
 
 namespace open_comp_graph_maya {
+namespace image_plane {
 
 // Constants for the shape node.
-MTypeId ImagePlaneShape::m_id(OCGM_IMAGE_PLANE_SHAPE_TYPE_ID);
-MString ImagePlaneShape::m_draw_db_classification("drawdb/subscene/ocgImagePlane_SubSceneOverride");
-MString ImagePlaneShape::m_draw_registrant_id("ocgImagePlaneNode_SubSceneOverridePlugin");
-MString ImagePlaneShape::m_selection_type_name("ocgImagePlaneSelection");
+MTypeId ShapeNode::m_id(OCGM_IMAGE_PLANE_SHAPE_TYPE_ID);
+MString ShapeNode::m_draw_db_classification("drawdb/subscene/ocgImagePlane_SubSceneOverride");
+MString ShapeNode::m_draw_registrant_id("ocgImagePlaneNode_SubSceneOverridePlugin");
+MString ShapeNode::m_selection_type_name("ocgImagePlaneSelection");
 
 // Input Attributes
-MObject ImagePlaneShape::m_in_stream_attr;
-MObject ImagePlaneShape::m_card_size_x_attr;
-MObject ImagePlaneShape::m_card_size_y_attr;
-MObject ImagePlaneShape::m_card_res_x_attr;
-MObject ImagePlaneShape::m_card_res_y_attr;
-MObject ImagePlaneShape::m_time_attr;
+MObject ShapeNode::m_in_stream_attr;
+MObject ShapeNode::m_card_size_x_attr;
+MObject ShapeNode::m_card_size_y_attr;
+MObject ShapeNode::m_card_res_x_attr;
+MObject ShapeNode::m_card_res_y_attr;
+MObject ShapeNode::m_time_attr;
 
 // Output Attributes
-MObject ImagePlaneShape::m_out_stream_attr;
+MObject ShapeNode::m_out_stream_attr;
 
 // Defines the Node name as a callable static function.
-MString ImagePlaneShape::nodeName() {
+MString ShapeNode::nodeName() {
     return MString("ocgImagePlane");
 }
 
-ImagePlaneShape::ImagePlaneShape() {}
+ShapeNode::ShapeNode() {}
 
-ImagePlaneShape::~ImagePlaneShape() {}
+ShapeNode::~ShapeNode() {}
 
-MStatus ImagePlaneShape::compute(const MPlug & /*plug*/, MDataBlock & /*data*/ ) {
+MStatus ShapeNode::compute(const MPlug & /*plug*/, MDataBlock & /*data*/ ) {
     return MS::kUnknownParameter;
 }
 
 // Called by legacy default viewport
 /*
-void ImagePlaneShape::draw(M3dView &view, const MDagPath &path,
+void ShapeNode::draw(M3dView &view, const MDagPath &path,
                            M3dView::DisplayStyle style,
                            M3dView::DisplayStatus status) {
     // Get the size
@@ -132,7 +133,7 @@ void ImagePlaneShape::draw(M3dView &view, const MDagPath &path,
     }
     glEnd();
 
-    // Draw the name of the ImagePlaneShape
+    // Draw the name of the ShapeNode
     view.setDrawColor(MColor(0.1f, 0.8f, 0.8f, 1.0f));
     view.drawText(
         MString("Open Comp Graph Maya"),
@@ -143,11 +144,11 @@ void ImagePlaneShape::draw(M3dView &view, const MDagPath &path,
 }
 */
 
-bool ImagePlaneShape::isBounded() const {
+bool ShapeNode::isBounded() const {
     return true;
 }
 
-MBoundingBox ImagePlaneShape::boundingBox() const {
+MBoundingBox ShapeNode::boundingBox() const {
     MObject this_node = thisMObject();
     MPlug card_size_x_plug(this_node, m_card_size_x_attr);
     MPlug card_size_y_plug(this_node, m_card_size_y_attr);
@@ -165,15 +166,15 @@ MBoundingBox ImagePlaneShape::boundingBox() const {
     return MBoundingBox(corner1, corner2);
 }
 
-MSelectionMask ImagePlaneShape::getShapeSelectionMask() const {
+MSelectionMask ShapeNode::getShapeSelectionMask() const {
     return MSelectionMask("ocgImagePlaneSelection");
 }
 
-void *ImagePlaneShape::creator() {
-    return new ImagePlaneShape();
+void *ShapeNode::creator() {
+    return new ShapeNode();
 }
 
-MStatus ImagePlaneShape::initialize() {
+MStatus ShapeNode::initialize() {
     MStatus status;
     MFnUnitAttribute    uAttr;
     MFnTypedAttribute   tAttr;
@@ -232,7 +233,7 @@ MStatus ImagePlaneShape::initialize() {
     CHECK_MSTATUS(uAttr.setMin(card_size_y_min));
     CHECK_MSTATUS(uAttr.setDefault(card_size_y_default));
     CHECK_MSTATUS(MPxNode::addAttribute(m_card_size_y_attr));
-    
+
     // Card Resolution X
     uint32_t card_res_x_min = 2;
     uint32_t card_res_x_soft_max = 128;
@@ -262,7 +263,7 @@ MStatus ImagePlaneShape::initialize() {
     CHECK_MSTATUS(nAttr.setMax(card_res_y_max));
     CHECK_MSTATUS(nAttr.setSoftMax(card_res_y_soft_max));
     CHECK_MSTATUS(addAttribute(m_card_res_y_attr));
-    
+
     // Camera Plane Depth Attribute
 
     // Camera Plane Resolution Attribute
@@ -270,7 +271,7 @@ MStatus ImagePlaneShape::initialize() {
     // Override Screen Depth Attribute
 
     // Screen Depth Attribute
-    
+
     // Time
     m_time_attr = uAttr.create("time", "tm", MFnUnitAttribute::kTime, 0.0);
     CHECK_MSTATUS(uAttr.setStorable(true));
@@ -292,4 +293,5 @@ MStatus ImagePlaneShape::initialize() {
     return MS::kSuccess;
 }
 
+} // namespace image_plane
 } // namespace open_comp_graph_maya

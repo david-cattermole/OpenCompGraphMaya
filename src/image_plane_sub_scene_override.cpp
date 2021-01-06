@@ -56,17 +56,18 @@
 namespace ocg = open_comp_graph;
 
 namespace open_comp_graph_maya {
+namespace image_plane {
 
-MString ImagePlaneSubSceneOverride::m_shader_color_parameter_name = "gSolidColor";
-MString ImagePlaneSubSceneOverride::m_shader_geometry_transform_parameter_name = "gGeometryTransform";
-MString ImagePlaneSubSceneOverride::m_shader_image_transform_parameter_name = "gImageTransform";
-MString ImagePlaneSubSceneOverride::m_shader_image_color_matrix_parameter_name = "gImageColorMatrix";
-MString ImagePlaneSubSceneOverride::m_shader_image_texture_parameter_name = "gImageTexture";
-MString ImagePlaneSubSceneOverride::m_shader_image_texture_sampler_parameter_name = "gImageTextureSampler";
-MString ImagePlaneSubSceneOverride::m_wireframe_render_item_name = "ocgImagePlaneWireframe";
-MString ImagePlaneSubSceneOverride::m_shaded_render_item_name = "ocgImagePlaneShadedTriangles";
+MString SubSceneOverride::m_shader_color_parameter_name = "gSolidColor";
+MString SubSceneOverride::m_shader_geometry_transform_parameter_name = "gGeometryTransform";
+MString SubSceneOverride::m_shader_image_transform_parameter_name = "gImageTransform";
+MString SubSceneOverride::m_shader_image_color_matrix_parameter_name = "gImageColorMatrix";
+MString SubSceneOverride::m_shader_image_texture_parameter_name = "gImageTexture";
+MString SubSceneOverride::m_shader_image_texture_sampler_parameter_name = "gImageTextureSampler";
+MString SubSceneOverride::m_wireframe_render_item_name = "ocgImagePlaneWireframe";
+MString SubSceneOverride::m_shaded_render_item_name = "ocgImagePlaneShadedTriangles";
 
-ImagePlaneSubSceneOverride::ImagePlaneSubSceneOverride(const MObject &obj)
+SubSceneOverride::SubSceneOverride(const MObject &obj)
         : MHWRender::MPxSubSceneOverride(obj),
           m_locator_node(obj),
           m_card_size_x(0.0f),
@@ -92,9 +93,9 @@ ImagePlaneSubSceneOverride::ImagePlaneSubSceneOverride(const MObject &obj)
     }
 }
 
-ImagePlaneSubSceneOverride::~ImagePlaneSubSceneOverride() {
-    ImagePlaneSubSceneOverride::release_shaders(m_shader);
-    ImagePlaneSubSceneOverride::delete_geometry_buffers();
+SubSceneOverride::~SubSceneOverride() {
+    SubSceneOverride::release_shaders(m_shader);
+    SubSceneOverride::delete_geometry_buffers();
 
     // Remove callbacks related to instances.
     if (m_instance_added_cb_id != 0) {
@@ -109,17 +110,17 @@ ImagePlaneSubSceneOverride::~ImagePlaneSubSceneOverride() {
 }
 
 /* static */
-void ImagePlaneSubSceneOverride::InstanceChangedCallback(
+void SubSceneOverride::InstanceChangedCallback(
     MDagPath &/*child*/,
     MDagPath &/*parent*/,
     void *clientData) {
-    ImagePlaneSubSceneOverride *ovr = static_cast<ImagePlaneSubSceneOverride *>(clientData);
+    SubSceneOverride *ovr = static_cast<SubSceneOverride *>(clientData);
     if (ovr) {
         ovr->m_instance_dag_paths.clear();
     }
 }
 
-void ImagePlaneSubSceneOverride::update(
+void SubSceneOverride::update(
     MHWRender::MSubSceneContainer &container,
     const MHWRender::MFrameContext &/*frame_context*/) {
     auto log = log::get_logger();
@@ -128,7 +129,7 @@ void ImagePlaneSubSceneOverride::update(
     std::uint32_t num_instances = m_instance_dag_paths.length();
     if (num_instances == 0) {
         if (!MDagPath::getAllPathsTo(m_locator_node, m_instance_dag_paths)) {
-            log->error("ImagePlaneSubSceneOverride: Failed to get all DAG paths.");
+            log->error("SubSceneOverride: Failed to get all DAG paths.");
             return;
         }
         num_instances = m_instance_dag_paths.length();
@@ -143,8 +144,8 @@ void ImagePlaneSubSceneOverride::update(
     uint32_t geometry_values_changed = 0;
 
     // Get card_size_x attribute value.
-    MPlug card_size_x_plug(ImagePlaneSubSceneOverride::m_locator_node,
-                           ImagePlaneShape::m_card_size_x_attr);
+    MPlug card_size_x_plug(SubSceneOverride::m_locator_node,
+                           ShapeNode::m_card_size_x_attr);
     if (!card_size_x_plug.isNull()) {
         float new_card_size_x = 0.0f;
         MDistance card_size_x_value;
@@ -160,8 +161,8 @@ void ImagePlaneSubSceneOverride::update(
     }
 
     // Get Card Resolution X attribute value.
-    MPlug card_res_x_plug(ImagePlaneSubSceneOverride::m_locator_node,
-                          ImagePlaneShape::m_card_res_x_attr);
+    MPlug card_res_x_plug(SubSceneOverride::m_locator_node,
+                          ShapeNode::m_card_res_x_attr);
     if (!card_res_x_plug.isNull()) {
         uint32_t new_card_res_x = card_res_x_plug.asInt(&status);
         CHECK_MSTATUS(status);
@@ -174,8 +175,8 @@ void ImagePlaneSubSceneOverride::update(
     }
 
     // Get time attribute value.
-    MPlug time_plug(ImagePlaneSubSceneOverride::m_locator_node,
-                    ImagePlaneShape::m_time_attr);
+    MPlug time_plug(SubSceneOverride::m_locator_node,
+                    ShapeNode::m_time_attr);
     if (!time_plug.isNull()) {
         float new_time = time_plug.asFloat(&status);
         CHECK_MSTATUS(status);
@@ -189,13 +190,13 @@ void ImagePlaneSubSceneOverride::update(
 
     // Get input OCG Stream data.
     std::shared_ptr<ocg::Graph> shared_graph;
-    MPlug in_stream_plug(ImagePlaneSubSceneOverride::m_locator_node,
-                         ImagePlaneShape::m_in_stream_attr);
+    MPlug in_stream_plug(SubSceneOverride::m_locator_node,
+                         ShapeNode::m_in_stream_attr);
     if (!in_stream_plug.isNull()) {
         MObject new_in_stream = in_stream_plug.asMObject(&status);
         CHECK_MSTATUS(status);
         if (new_in_stream.isNull()) {
-            log->error("ImagePlaneSubSceneOverride: Input stream is not valid.");
+            log->error("SubSceneOverride: Input stream is not valid.");
             return;
         }
 
@@ -207,14 +208,14 @@ void ImagePlaneSubSceneOverride::update(
             static_cast<GraphMayaData*>(fn_plugin_data.data(&status));
         CHECK_MSTATUS(status);
         if (input_stream_data == nullptr) {
-            log->debug("ImagePlaneSubSceneOverride: Input stream data is not valid.");
+            log->debug("SubSceneOverride: Input stream data is not valid.");
             return;
         }
-        log->debug("ImagePlaneSubSceneOverride: input graph is valid.");
+        log->debug("SubSceneOverride: input graph is valid.");
         shared_graph = input_stream_data->get_graph();
         ocg::Node new_in_stream_node = input_stream_data->get_node();
         log->debug(
-            "ImagePlaneSubSceneOverride: input node id: {}",
+            "SubSceneOverride: input node id: {}",
             new_in_stream_node.get_id());
 
         bool in_stream_has_changed = shared_graph->state() != ocg::GraphState::kClean;
@@ -238,18 +239,18 @@ void ImagePlaneSubSceneOverride::update(
         // TODO: Split out the difference between topology and vertex
         // data changing. We can update the vertex buffer without
         // needing to change the index buffers.
-        ImagePlaneSubSceneOverride::rebuild_geometry_buffers(
+        SubSceneOverride::rebuild_geometry_buffers(
             m_card_res_x, m_card_res_x);
     }
 
     // Compile and update shader.
-    status = ImagePlaneSubSceneOverride::compile_shaders();
+    status = SubSceneOverride::compile_shaders();
     if (!m_shader) {
-        log->error("ImagePlaneSubSceneOverride: Failed to get a shader.");
+        log->error("SubSceneOverride: Failed to get a shader.");
         return;
     }
     if (update_shader) {
-        log->debug("ImagePlaneSubSceneOverride: Update shader parameters...");
+        log->debug("SubSceneOverride: Update shader parameters...");
         // MColor my_color = MHWRender::MGeometryUtilities::wireframeColor(m_instance_dag_paths[0]);
         const float color_values[4] = {1.0f, 1.0f, 1.0f, 1.0f};
         status = set_shader_color(
@@ -437,7 +438,7 @@ void ImagePlaneSubSceneOverride::update(
     if (items_changed || update_geometry) {
         MFnDagNode node(m_locator_node, &status);
 
-        ImagePlaneShape *fp = status ? dynamic_cast<ImagePlaneShape *>(node.userNode()) : nullptr;
+        ShapeNode *fp = status ? dynamic_cast<ShapeNode *>(node.userNode()) : nullptr;
         MBoundingBox *bounds = fp ? new MBoundingBox(fp->boundingBox()) : nullptr;
 
         MHWRender::MVertexBufferArray vertex_buffers;
@@ -495,7 +496,7 @@ void ImagePlaneSubSceneOverride::update(
     }
 }
 
-void ImagePlaneSubSceneOverride::addUIDrawables(
+void SubSceneOverride::addUIDrawables(
     MHWRender::MUIDrawManager &draw_manager,
     const MHWRender::MFrameContext &/*frame_context*/) {
     MPoint pos(0.0, 0.0, 0.0);
@@ -526,7 +527,7 @@ void ImagePlaneSubSceneOverride::addUIDrawables(
 }
 
 // NOTE: This will be unneeded in Maya 2019+.
-bool ImagePlaneSubSceneOverride::getSelectionPath(
+bool SubSceneOverride::getSelectionPath(
     const MHWRender::MRenderItem &/*render_item*/,
     MDagPath &dag_path) const {
     if (m_instance_dag_paths.length() == 0) return false;
@@ -535,7 +536,7 @@ bool ImagePlaneSubSceneOverride::getSelectionPath(
     return MDagPath::getAPathTo(m_instance_dag_paths[0].transform(), dag_path);
 }
 
-bool ImagePlaneSubSceneOverride::getInstancedSelectionPath(
+bool SubSceneOverride::getInstancedSelectionPath(
     const MHWRender::MRenderItem &/*render_item*/,
     const MHWRender::MIntersection &intersection,
     MDagPath &dag_path) const {
@@ -557,11 +558,11 @@ bool ImagePlaneSubSceneOverride::getInstancedSelectionPath(
         dag_path);
 }
 
-void ImagePlaneSubSceneOverride::rebuild_geometry_buffers(
+void SubSceneOverride::rebuild_geometry_buffers(
     const size_t divisions_x,
     const size_t divisions_y) {
     auto log = log::get_logger();
-    ImagePlaneSubSceneOverride::delete_geometry_buffers();
+    SubSceneOverride::delete_geometry_buffers();
 
     log->debug("ocgImagePlane: rebuild geometry buffers");
     log->debug("ocgImagePlane: divisions: {}x{}",
@@ -656,7 +657,7 @@ void ImagePlaneSubSceneOverride::rebuild_geometry_buffers(
     }
 }
 
-void ImagePlaneSubSceneOverride::delete_geometry_buffers() {
+void SubSceneOverride::delete_geometry_buffers() {
     auto log = log::get_logger();
     log->debug("ocgImagePlane: delete geometry buffers");
 
@@ -671,7 +672,7 @@ void ImagePlaneSubSceneOverride::delete_geometry_buffers() {
 }
 
 MStatus
-ImagePlaneSubSceneOverride::compile_shaders() {
+SubSceneOverride::compile_shaders() {
     auto log = log::get_logger();
     MStatus status = MS::kSuccess;
     if (m_shader != nullptr) {
@@ -786,7 +787,7 @@ ImagePlaneSubSceneOverride::compile_shaders() {
 
 // Set a color parameter.
 MStatus
-ImagePlaneSubSceneOverride::set_shader_color(
+SubSceneOverride::set_shader_color(
         MHWRender::MShaderInstance* shader,
         const MString parameter_name,
         const float color_values[4]) {
@@ -803,7 +804,7 @@ ImagePlaneSubSceneOverride::set_shader_color(
 
 // Set the named matrix parameter on the shader.
 MStatus
-ImagePlaneSubSceneOverride::set_shader_float_matrix4x4(
+SubSceneOverride::set_shader_float_matrix4x4(
         MHWRender::MShaderInstance* shader,
         const MString parameter_name,
         const MFloatMatrix matrix) {
@@ -817,10 +818,9 @@ ImagePlaneSubSceneOverride::set_shader_float_matrix4x4(
     return status;
 }
 
-
 // Trigger a Graph evaluation and return the computed data.
 ocg::ExecuteStatus
-ImagePlaneSubSceneOverride::evalutate_ocg_graph(
+SubSceneOverride::evalutate_ocg_graph(
         ocg::Node stream_ocg_node,
         std::shared_ptr<ocg::Graph> shared_graph,
         std::shared_ptr<ocg::Cache> shared_cache) {
@@ -852,7 +852,7 @@ ImagePlaneSubSceneOverride::evalutate_ocg_graph(
 }
 
 MStatus
-ImagePlaneSubSceneOverride::set_shader_texture_with_stream_data(
+SubSceneOverride::set_shader_texture_with_stream_data(
         MHWRender::MShaderInstance* shader,
         const MString parameter_name,
         ocg::StreamData stream_data) {
@@ -921,7 +921,7 @@ ImagePlaneSubSceneOverride::set_shader_texture_with_stream_data(
 
 // Acquire and bind the default texture sampler.
 MStatus
-ImagePlaneSubSceneOverride::set_shader_texture_sampler(
+SubSceneOverride::set_shader_texture_sampler(
         MHWRender::MShaderInstance* shader,
         const MString parameter_name,
         MHWRender::MSamplerStateDesc sampler_description) {
@@ -939,7 +939,7 @@ ImagePlaneSubSceneOverride::set_shader_texture_sampler(
 }
 
 MStatus
-ImagePlaneSubSceneOverride::release_shaders(MShaderInstance *shader) {
+SubSceneOverride::release_shaders(MShaderInstance *shader) {
     auto log = log::get_logger();
     MStatus status = MS::kSuccess;
     log->debug("ocgImagePlane: Releasing shader...");
@@ -965,5 +965,5 @@ ImagePlaneSubSceneOverride::release_shaders(MShaderInstance *shader) {
     return status;
 }
 
-
+} // namespace image_plane
 } // namespace open_comp_graph_maya

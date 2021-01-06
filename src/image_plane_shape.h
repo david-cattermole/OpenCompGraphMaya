@@ -45,12 +45,13 @@
 #include <maya/MHWGeometry.h>
 #include <maya/MHWGeometryUtilities.h>
 
-namespace open_comp_graph_maya{
+namespace open_comp_graph_maya {
+namespace image_plane {
 
-class ImagePlaneShape : public MPxLocatorNode {
+class ShapeNode : public MPxLocatorNode {
 public:
-    ImagePlaneShape();
-    ~ImagePlaneShape() override;
+    ShapeNode();
+    ~ShapeNode() override;
 
     MStatus compute(const MPlug &plug, MDataBlock &data) override;
 
@@ -82,6 +83,7 @@ public:
     static MString m_selection_type_name;
 };
 
+} // namespace image_plane
 } // namespace open_comp_graph_maya
 
 #endif // OPENCOMPGRAPHMAYA_IMAGE_PLANE_SHAPE_H

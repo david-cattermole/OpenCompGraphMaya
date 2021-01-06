@@ -49,16 +49,17 @@
 
 namespace ocg = open_comp_graph;
 
-namespace open_comp_graph_maya{
+namespace open_comp_graph_maya {
+namespace image_plane {
 
-class ImagePlaneSubSceneOverride : public MHWRender::MPxSubSceneOverride {
+class SubSceneOverride : public MHWRender::MPxSubSceneOverride {
 public:
 
     static MHWRender::MPxSubSceneOverride *Creator(const MObject &obj) {
-        return new ImagePlaneSubSceneOverride(obj);
+        return new SubSceneOverride(obj);
     }
 
-    ~ImagePlaneSubSceneOverride() override;
+    ~SubSceneOverride() override;
 
     MHWRender::DrawAPI supportedDrawAPIs() const override {
         return MHWRender::kAllDevices;
@@ -97,7 +98,7 @@ public:
 
 private:
 
-    ImagePlaneSubSceneOverride(const MObject &obj);
+    SubSceneOverride(const MObject &obj);
 
     // Create and delete VertexBuffers and Index Buffers, etc.
     void rebuild_geometry_buffers(const size_t divisions_x, const size_t divisions_y);
@@ -189,6 +190,7 @@ private:
     static MString m_shaded_render_item_name;
 };
 
+} // namespace image_plane
 } // namespace open_comp_graph_maya
 
 #endif // OPENCOMPGRAPHMAYA_IMAGE_PLANE_SUB_SCENE_OVERRIDE_H
