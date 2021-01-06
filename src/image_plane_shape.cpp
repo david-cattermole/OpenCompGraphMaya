@@ -69,7 +69,7 @@ MObject ShapeNode::m_out_stream_attr;
 
 // Defines the Node name as a callable static function.
 MString ShapeNode::nodeName() {
-    return MString("ocgImagePlane");
+    return MString(OCGM_IMAGE_PLANE_SHAPE_TYPE_NAME);
 }
 
 ShapeNode::ShapeNode() {}

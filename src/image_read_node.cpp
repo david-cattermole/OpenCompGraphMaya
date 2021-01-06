@@ -69,7 +69,7 @@ ImageReadNode::ImageReadNode()
 ImageReadNode::~ImageReadNode() {}
 
 MString ImageReadNode::nodeName() {
-    return MString("ocgImageRead");
+    return MString(OCGM_IMAGE_READ_TYPE_NAME);
 }
 
 MStatus ImageReadNode::compute(const MPlug &plug, MDataBlock &data) {

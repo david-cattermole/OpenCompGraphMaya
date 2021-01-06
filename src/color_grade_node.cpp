@@ -68,7 +68,7 @@ ColorGradeNode::ColorGradeNode()
 ColorGradeNode::~ColorGradeNode() {}
 
 MString ColorGradeNode::nodeName() {
-    return MString("ocgColorGrade");
+    return MString(OCGM_COLOR_GRADE_TYPE_NAME);
 }
 
 MStatus ColorGradeNode::compute(const MPlug &plug, MDataBlock &data) {
