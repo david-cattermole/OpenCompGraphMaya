@@ -75,9 +75,6 @@ SubSceneOverride::SubSceneOverride(const MObject &obj)
           m_time(0.0f),
           m_is_instance_mode(false),
           m_are_ui_drawables_dirty(true),
-          m_position_buffer(nullptr),
-          m_uv_buffer(nullptr),
-          m_shaded_index_buffer(nullptr),
           m_instance_added_cb_id(0),
           m_instance_removed_cb_id(0),
           m_shader(nullptr),
@@ -95,7 +92,7 @@ SubSceneOverride::SubSceneOverride(const MObject &obj)
 
 SubSceneOverride::~SubSceneOverride() {
     SubSceneOverride::release_shaders(m_shader);
-    SubSceneOverride::delete_geometry_buffers();
+    SubSceneOverride::geometry_buffers.clear();
 
     // Remove callbacks related to instances.
     if (m_instance_added_cb_id != 0) {
@@ -239,8 +236,9 @@ void SubSceneOverride::update(
         // TODO: Split out the difference between topology and vertex
         // data changing. We can update the vertex buffer without
         // needing to change the index buffers.
-        SubSceneOverride::rebuild_geometry_buffers(
-            m_card_res_x, m_card_res_x);
+        SubSceneOverride::geometry_buffers.set_divisions_x(m_card_res_x);
+        SubSceneOverride::geometry_buffers.set_divisions_y(m_card_res_x);
+        SubSceneOverride::geometry_buffers.rebuild();
     }
 
     // Compile and update shader.
@@ -441,13 +439,17 @@ void SubSceneOverride::update(
         ShapeNode *fp = status ? dynamic_cast<ShapeNode *>(node.userNode()) : nullptr;
         MBoundingBox *bounds = fp ? new MBoundingBox(fp->boundingBox()) : nullptr;
 
+        auto position_buffer = this->geometry_buffers.vertex_positions();
+        auto uv_buffer = this->geometry_buffers.vertex_uvs();
+        auto shaded_index_buffer = this->geometry_buffers.index_triangles();
+
         MHWRender::MVertexBufferArray vertex_buffers;
-        vertex_buffers.addBuffer("positions", m_position_buffer);
-        vertex_buffers.addBuffer("uvs", m_uv_buffer);
+        vertex_buffers.addBuffer("positions", position_buffer);
+        vertex_buffers.addBuffer("uvs", uv_buffer);
         setGeometryForRenderItem(
-                *wire_item, vertex_buffers, *m_shaded_index_buffer, bounds);
+                *wire_item, vertex_buffers, *shaded_index_buffer, bounds);
         setGeometryForRenderItem(
-                *shaded_item, vertex_buffers, *m_shaded_index_buffer, bounds);
+                *shaded_item, vertex_buffers, *shaded_index_buffer, bounds);
 
         delete bounds;
     }
@@ -558,118 +560,6 @@ bool SubSceneOverride::getInstancedSelectionPath(
         dag_path);
 }
 
-void SubSceneOverride::rebuild_geometry_buffers(
-    const size_t divisions_x,
-    const size_t divisions_y) {
-    auto log = log::get_logger();
-    SubSceneOverride::delete_geometry_buffers();
-
-    log->debug("ocgImagePlane: rebuild geometry buffers");
-    log->debug("ocgImagePlane: divisions: {}x{}",
-               divisions_x, divisions_y);
-
-    const auto per_vertex_pos_count = 3;
-    const auto per_vertex_uv_count = 2;
-
-    // VertexBuffer for positions. The index buffers will decide which
-    // positions will be selected for each render items.
-    const MHWRender::MVertexBufferDescriptor vb_desc(
-        "",
-        MHWRender::MGeometry::kPosition,
-        MHWRender::MGeometry::kFloat,
-        per_vertex_pos_count);
-    m_position_buffer = new MHWRender::MVertexBuffer(vb_desc);
-    if (m_position_buffer) {
-        auto pos_buffer_size = ocg::internal::calc_buffer_size_vertex_positions(
-            divisions_x, divisions_y);
-        auto pos_count = ocg::internal::calc_count_vertex_positions(
-            divisions_x, divisions_y);
-        bool write_only = true;  // We don't need the current buffer values
-        float *buffer = static_cast<float *>(
-            m_position_buffer->acquire(pos_count, write_only));
-        if (buffer) {
-            rust::Slice<float> slice{buffer, pos_buffer_size};
-            ocg::internal::fill_buffer_vertex_positions(
-                divisions_x, divisions_y, slice);
-            // for (int i = 0; i < pos_count; ++i) {
-            //     int index = i * per_vertex_pos_count;
-            //     log->debug(
-            //         "ocgImagePlane: positions: {}={} {}={}",
-            //         index + 0, buffer[index + 0],
-            //         index + 1, buffer[index + 1],
-            //         index + 2, buffer[index + 2]
-            //     );
-            // }
-            m_position_buffer->commit(buffer);
-        }
-    }
-
-    // UV Vertex Buffer
-    const MHWRender::MVertexBufferDescriptor uv_desc(
-        "",
-        MHWRender::MGeometry::kTexture,
-        MHWRender::MGeometry::kFloat,
-        per_vertex_uv_count);
-    m_uv_buffer = new MHWRender::MVertexBuffer(uv_desc);
-    if (m_uv_buffer) {
-        auto uv_buffer_size = ocg::internal::calc_buffer_size_vertex_uvs(
-            divisions_x, divisions_y);
-        auto uv_count = ocg::internal::calc_count_vertex_uvs(
-            divisions_x, divisions_y);
-        bool write_only = true;  // We don't need the current buffer values
-        float *buffer = static_cast<float *>(
-            m_uv_buffer->acquire(uv_count, write_only));
-        if (buffer) {
-            rust::Slice<float> slice{buffer, uv_buffer_size};
-            ocg::internal::fill_buffer_vertex_uvs(
-                divisions_x, divisions_y, slice);
-            // for (int i = 0; i < uv_count; ++i) {
-            //     int index = i * per_vertex_uv_count;
-            //     log->debug(
-            //         "ocgImagePlane: uvs: {}={} {}={}",
-            //         index + 0, buffer[index + 0],
-            //         index + 1, buffer[index + 1]
-            //     );
-            // }
-            m_uv_buffer->commit(buffer);
-        }
-    }
-
-    // IndexBuffer for the shaded item
-    m_shaded_index_buffer = new MHWRender::MIndexBuffer(
-        MHWRender::MGeometry::kUnsignedInt32);
-    if (m_shaded_index_buffer) {
-        auto tri_count = ocg::internal::calc_buffer_size_index_tris(
-            divisions_x, divisions_y);
-        bool write_only = true;  // We don't need the current buffer values
-        uint32_t *buffer = static_cast<uint32_t *>(
-            m_shaded_index_buffer->acquire(tri_count, write_only));
-        if (buffer) {
-            rust::Slice<uint32_t> slice{buffer, tri_count};
-            ocg::internal::fill_buffer_index_tris(
-                divisions_x, divisions_y, slice);
-            // for (int i = 0; i < tri_count; ++i) {
-            //     log->debug("ocgImagePlane: indices {}={}",
-            //                i, buffer[i]);
-            // }
-            m_shaded_index_buffer->commit(buffer);
-        }
-    }
-}
-
-void SubSceneOverride::delete_geometry_buffers() {
-    auto log = log::get_logger();
-    log->debug("ocgImagePlane: delete geometry buffers");
-
-    delete m_position_buffer;
-    m_position_buffer = nullptr;
-
-    delete m_uv_buffer;
-    m_uv_buffer = nullptr;
-
-    delete m_shaded_index_buffer;
-    m_shaded_index_buffer = nullptr;
-}
 
 MStatus
 SubSceneOverride::compile_shaders(const MString shader_file_name) {

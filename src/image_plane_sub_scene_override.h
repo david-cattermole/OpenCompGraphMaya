@@ -45,7 +45,11 @@
 #include <memory>
 
 // OCG
-#include "opencompgraph.h"
+#include <opencompgraph.h>
+
+// OCG Maya
+#include "image_plane_geometry_buffer.h"
+
 
 namespace ocg = open_comp_graph;
 
@@ -100,13 +104,7 @@ private:
 
     SubSceneOverride(const MObject &obj);
 
-    // Create and delete VertexBuffers and Index Buffers, etc.
-    void rebuild_geometry_buffers(const size_t divisions_x, const size_t divisions_y);
-    void delete_geometry_buffers();
-
-    MHWRender::MVertexBuffer *m_position_buffer;
-    MHWRender::MVertexBuffer *m_uv_buffer;
-    MHWRender::MIndexBuffer *m_shaded_index_buffer;
+    GeometryBuffer geometry_buffers;
 
     ocg::ExecuteStatus evalutate_ocg_graph(
         ocg::Node stream_ocg_node,

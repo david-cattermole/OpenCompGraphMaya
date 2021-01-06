@@ -26,9 +26,11 @@ add_subdirectory(OpenCompGraph)
 set(SOURCE_FILES
   ${CMAKE_CURRENT_SOURCE_DIR}/image_plane_shape.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/image_plane_sub_scene_override.cpp
+  ${CMAKE_CURRENT_SOURCE_DIR}/image_plane_geometry_buffer.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/image_read_node.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/color_grade_node.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/graph_maya_data.cpp
+  ${CMAKE_CURRENT_SOURCE_DIR}/geometry_buffer.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/logger.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/plugin_main.cpp
   )
