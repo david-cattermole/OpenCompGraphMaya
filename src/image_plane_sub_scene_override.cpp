@@ -41,6 +41,7 @@
 
 // STL
 #include <memory>
+#include <tuple>
 #include <cstdlib>
 
 // OCG
@@ -57,6 +58,100 @@ namespace ocg = open_comp_graph;
 
 namespace open_comp_graph_maya {
 namespace image_plane {
+
+namespace {
+
+// Get distance attribute value.
+std::tuple<float, bool> get_plug_value_distance_float(MPlug plug, float old_value) {
+    bool has_changed = false;
+    float value = old_value;
+    if (!plug.isNull()) {
+        float new_value = 0.0;
+        MDistance temp_value;
+        if (plug.getValue(temp_value)) {
+            new_value = static_cast<float>(temp_value.asCentimeters());
+        }
+        has_changed = old_value != new_value;
+        if (has_changed) {
+            value = new_value;
+        }
+    }
+    return std::make_tuple(value, has_changed);
+}
+
+// Get unsigned integer attribute value.
+std::tuple<uint32_t, bool> get_plug_value_uint32(MPlug plug, uint32_t old_value) {
+    MStatus status;
+    bool has_changed = false;
+    uint32_t value = old_value;
+    if (!plug.isNull()) {
+        uint32_t new_value = plug.asInt(&status);
+        CHECK_MSTATUS(status);
+        has_changed = old_value != new_value;
+        if (has_changed) {
+            value = new_value;
+        }
+    }
+    return std::make_tuple(value, has_changed);
+}
+
+// Get floating point attribute value.
+std::tuple<float, bool> get_plug_value_float(MPlug plug, float old_value) {
+    MStatus status;
+    bool has_changed = false;
+    float value = old_value;
+    if (!plug.isNull()) {
+        uint32_t new_value = plug.asFloat(&status);
+        CHECK_MSTATUS(status);
+        has_changed = old_value != new_value;
+        if (has_changed) {
+            value = new_value;
+        }
+    }
+    return std::make_tuple(value, has_changed);
+}
+
+// Get the ocgStreamData type from the given plug.
+std::tuple<std::shared_ptr<ocg::Graph>, ocg::Node, bool>
+get_plug_value_stream(MPlug plug, ocg::Node old_value) {
+    MStatus status;
+    auto log = log::get_logger();
+
+    std::shared_ptr<ocg::Graph> shared_graph;
+    bool has_changed = false;
+    ocg::Node value = old_value;
+    if (!plug.isNull()) {
+        MObject new_object = plug.asMObject(&status);
+        CHECK_MSTATUS(status);
+        if (new_object.isNull()) {
+            log->error("Input stream is not valid.");
+            return std::make_tuple(shared_graph, value, has_changed);
+        }
+
+        // Convert Maya controlled data into the OCG custom MPxData class.
+        // We are ensured this is valid from Maya. The MObject is a smart
+        // pointer and we check the object is valid before-hand too.
+        MFnPluginData fn_plugin_data(new_object);
+        GraphMayaData* input_stream_data =
+            static_cast<GraphMayaData*>(fn_plugin_data.data(&status));
+        CHECK_MSTATUS(status);
+        if (input_stream_data == nullptr) {
+            log->error("Input stream data is not valid.");
+            return std::make_tuple(shared_graph, value, has_changed);
+        }
+        shared_graph = input_stream_data->get_graph();
+        ocg::Node new_node = input_stream_data->get_node();
+        log->debug("input node id: {}", new_node.get_id());
+
+        has_changed = shared_graph->state() != ocg::GraphState::kClean;
+        if (has_changed) {
+            value = new_node;
+        }
+    }
+    return std::make_tuple(shared_graph, value, has_changed);
+}
+
+} // anonymous namespace
 
 MString SubSceneOverride::m_shader_color_parameter_name = "gSolidColor";
 MString SubSceneOverride::m_shader_geometry_transform_parameter_name = "gGeometryTransform";
@@ -134,92 +229,48 @@ void SubSceneOverride::update(
         return;
     }
 
+    bool card_size_x_has_changed = false;
+    bool card_size_y_has_changed = false;
+    MPlug card_size_x_plug(m_locator_node, ShapeNode::m_card_size_x_attr);
+    MPlug card_size_y_plug(m_locator_node, ShapeNode::m_card_size_y_attr);
+    std::tie(m_card_size_x, card_size_x_has_changed) =
+        get_plug_value_distance_float(card_size_x_plug, m_card_size_x);
+    std::tie(m_card_size_y, card_size_y_has_changed) =
+        get_plug_value_distance_float(card_size_y_plug, m_card_size_y);
+
+    bool card_res_x_has_changed = false;
+    bool card_res_y_has_changed = false;
+    MPlug card_res_x_plug(m_locator_node, ShapeNode::m_card_res_x_attr);
+    MPlug card_res_y_plug(m_locator_node, ShapeNode::m_card_res_x_attr);
+    std::tie(m_card_res_x, card_res_x_has_changed) =
+        get_plug_value_uint32(card_res_x_plug, m_card_res_x);
+    std::tie(m_card_res_y, card_res_y_has_changed) =
+        get_plug_value_uint32(card_res_y_plug, m_card_res_y);
+
+    bool time_has_changed = false;
+    MPlug time_plug(m_locator_node, ShapeNode::m_time_attr);
+    std::tie(m_time, time_has_changed) =
+        get_plug_value_float(time_plug, m_time);
+
+    bool in_stream_has_changed = false;
+    std::shared_ptr<ocg::Graph> shared_graph;
+    MPlug in_stream_plug(m_locator_node, ShapeNode::m_in_stream_attr);
+    std::tie(shared_graph, m_in_stream_node, in_stream_has_changed) =
+        get_plug_value_stream(in_stream_plug, m_in_stream_node);
+
     uint32_t attr_values_changed = 0;
     uint32_t shader_values_changed = 0;
     uint32_t geometry_values_changed = 0;
-
-    // Get card_size_x attribute value.
-    MPlug card_size_x_plug(SubSceneOverride::m_locator_node,
-                           ShapeNode::m_card_size_x_attr);
-    if (!card_size_x_plug.isNull()) {
-        float new_card_size_x = 0.0f;
-        MDistance card_size_x_value;
-        if (card_size_x_plug.getValue(card_size_x_value)) {
-            new_card_size_x = static_cast<float>(card_size_x_value.asCentimeters());
-        }
-        bool card_size_x_has_changed = m_card_size_x != new_card_size_x;
-        attr_values_changed += static_cast<uint32_t>(card_size_x_has_changed);
-        geometry_values_changed += static_cast<uint32_t>(card_size_x_has_changed);
-        if (card_size_x_has_changed) {
-            m_card_size_x = new_card_size_x;
-        }
-    }
-
-    // Get Card Resolution X attribute value.
-    MPlug card_res_x_plug(SubSceneOverride::m_locator_node,
-                          ShapeNode::m_card_res_x_attr);
-    if (!card_res_x_plug.isNull()) {
-        uint32_t new_card_res_x = card_res_x_plug.asInt(&status);
-        CHECK_MSTATUS(status);
-        bool card_res_x_has_changed = m_card_res_x != new_card_res_x;
-        attr_values_changed += static_cast<uint32_t>(card_res_x_has_changed);
-        geometry_values_changed += static_cast<uint32_t>(card_res_x_has_changed);
-        if (card_res_x_has_changed) {
-            m_card_res_x = new_card_res_x;
-        }
-    }
-
-    // Get time attribute value.
-    MPlug time_plug(SubSceneOverride::m_locator_node,
-                    ShapeNode::m_time_attr);
-    if (!time_plug.isNull()) {
-        float new_time = time_plug.asFloat(&status);
-        CHECK_MSTATUS(status);
-        bool time_has_changed = m_time != new_time;
-        attr_values_changed += static_cast<uint32_t>(time_has_changed);
-        shader_values_changed += static_cast<uint32_t>(time_has_changed);
-        if (time_has_changed) {
-            m_time = new_time;
-        }
-    }
-
-    // Get input OCG Stream data.
-    std::shared_ptr<ocg::Graph> shared_graph;
-    MPlug in_stream_plug(SubSceneOverride::m_locator_node,
-                         ShapeNode::m_in_stream_attr);
-    if (!in_stream_plug.isNull()) {
-        MObject new_in_stream = in_stream_plug.asMObject(&status);
-        CHECK_MSTATUS(status);
-        if (new_in_stream.isNull()) {
-            log->error("SubSceneOverride: Input stream is not valid.");
-            return;
-        }
-
-        // Convert Maya controlled data into the OCG custom MPxData class.
-        // We are ensured this is valid from Maya. The MObject is a smart
-        // pointer and we check the object is valid before-hand too.
-        MFnPluginData fn_plugin_data(new_in_stream);
-        GraphMayaData* input_stream_data =
-            static_cast<GraphMayaData*>(fn_plugin_data.data(&status));
-        CHECK_MSTATUS(status);
-        if (input_stream_data == nullptr) {
-            log->debug("SubSceneOverride: Input stream data is not valid.");
-            return;
-        }
-        log->debug("SubSceneOverride: input graph is valid.");
-        shared_graph = input_stream_data->get_graph();
-        ocg::Node new_in_stream_node = input_stream_data->get_node();
-        log->debug(
-            "SubSceneOverride: input node id: {}",
-            new_in_stream_node.get_id());
-
-        bool in_stream_has_changed = shared_graph->state() != ocg::GraphState::kClean;
-        attr_values_changed += static_cast<uint32_t>(in_stream_has_changed);
-        shader_values_changed += static_cast<uint32_t>(in_stream_has_changed);
-        if (in_stream_has_changed) {
-            m_in_stream_node = new_in_stream_node;
-        }
-    }
+    attr_values_changed += static_cast<uint32_t>(card_size_x_has_changed);
+    attr_values_changed += static_cast<uint32_t>(card_res_x_has_changed);
+    attr_values_changed += static_cast<uint32_t>(card_res_y_has_changed);
+    attr_values_changed += static_cast<uint32_t>(time_has_changed);
+    attr_values_changed += static_cast<uint32_t>(in_stream_has_changed);
+    geometry_values_changed += static_cast<uint32_t>(card_size_x_has_changed);
+    geometry_values_changed += static_cast<uint32_t>(card_res_x_has_changed);
+    geometry_values_changed += static_cast<uint32_t>(card_res_y_has_changed);
+    shader_values_changed += static_cast<uint32_t>(time_has_changed);
+    shader_values_changed += static_cast<uint32_t>(in_stream_has_changed);
 
     // Have the attribute values changed?
     bool update_geometry = container.count() == 0;

@@ -136,9 +136,9 @@ private:
 
     // Cached attribute values
     float m_card_size_x;
-    // float m_card_size_y;
+    float m_card_size_y;
     uint32_t m_card_res_x;
-    // float m_card_res_y;
+    uint32_t m_card_res_y;
     float m_time;
     ocg::Node m_in_stream_node;
 
