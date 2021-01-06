@@ -140,12 +140,14 @@ get_plug_value_stream(MPlug plug, ocg::Node old_value) {
             return std::make_tuple(shared_graph, value, has_changed);
         }
         shared_graph = input_stream_data->get_graph();
-        ocg::Node new_node = input_stream_data->get_node();
-        log->debug("input node id: {}", new_node.get_id());
+        ocg::Node new_value = input_stream_data->get_node();
+        log->debug("input node id: {}", new_value.get_id());
 
-        has_changed = shared_graph->state() != ocg::GraphState::kClean;
+        has_changed =
+            (shared_graph->state() != ocg::GraphState::kClean)
+            || (old_value.get_id() != new_value.get_id());
         if (has_changed) {
-            value = new_node;
+            value = new_value;
         }
     }
     return std::make_tuple(shared_graph, value, has_changed);
