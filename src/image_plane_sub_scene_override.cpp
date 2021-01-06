@@ -262,11 +262,13 @@ void SubSceneOverride::update(
     uint32_t shader_values_changed = 0;
     uint32_t geometry_values_changed = 0;
     attr_values_changed += static_cast<uint32_t>(card_size_x_has_changed);
+    attr_values_changed += static_cast<uint32_t>(card_size_y_has_changed);
     attr_values_changed += static_cast<uint32_t>(card_res_x_has_changed);
     attr_values_changed += static_cast<uint32_t>(card_res_y_has_changed);
     attr_values_changed += static_cast<uint32_t>(time_has_changed);
     attr_values_changed += static_cast<uint32_t>(in_stream_has_changed);
     geometry_values_changed += static_cast<uint32_t>(card_size_x_has_changed);
+    geometry_values_changed += static_cast<uint32_t>(card_size_y_has_changed);
     geometry_values_changed += static_cast<uint32_t>(card_res_x_has_changed);
     geometry_values_changed += static_cast<uint32_t>(card_res_y_has_changed);
     shader_values_changed += static_cast<uint32_t>(time_has_changed);
