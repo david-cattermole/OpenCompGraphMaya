@@ -25,6 +25,7 @@ add_subdirectory(OpenCompGraph)
 # Source
 set(SOURCE_FILES
   ${CMAKE_CURRENT_SOURCE_DIR}/image_plane_shape.cpp
+  ${CMAKE_CURRENT_SOURCE_DIR}/image_plane_shader.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/image_plane_sub_scene_override.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/image_plane_geometry_buffer.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/image_read_node.cpp

@@ -49,6 +49,7 @@
 
 // OCG Maya
 #include "image_plane_geometry_buffer.h"
+#include "image_plane_shader.h"
 
 
 namespace ocg = open_comp_graph;
@@ -111,25 +112,16 @@ private:
         std::shared_ptr<ocg::Graph> shared_graph,
         std::shared_ptr<ocg::Cache> shared_cache);
 
-    // Shader compile and release.
-    MStatus compile_shaders(const MString shader_file_name);
-    MStatus release_shaders(MShaderInstance *shader);
-    MStatus set_shader_color(
-        MHWRender::MShaderInstance* shader,
-        const MString parameter_name,
-        const float color_values[4]);
-    MStatus set_shader_float_matrix4x4(
-        MHWRender::MShaderInstance* shader,
-        const MString parameter_name,
-        const MFloatMatrix matrix);
-    MStatus set_shader_texture_sampler(
-        MHWRender::MShaderInstance* shader,
-        const MString sampler_parameter_name,
-        MHWRender::MSamplerStateDesc sampler_description);
-    MStatus set_shader_texture_with_stream_data(
-        MHWRender::MShaderInstance* shader,
-        const MString texture_parameter_name,
-        ocg::StreamData stream_data);
+    // Shaders
+    Shader m_shader;
+
+    // Shader Constants
+    static MString m_shader_color_parameter_name;
+    static MString m_shader_geometry_transform_parameter_name;
+    static MString m_shader_image_transform_parameter_name;
+    static MString m_shader_image_color_matrix_parameter_name;
+    static MString m_shader_image_texture_parameter_name;
+    static MString m_shader_image_texture_sampler_parameter_name;
 
     // Internal state.
     MObject m_locator_node;
@@ -150,6 +142,8 @@ private:
     float m_time;
     ocg::Node m_in_stream_node;
 
+    // Data kept for instances of this node (multiple DAG paths all
+    // referring back to this single node).
     struct InstanceInfo {
         MMatrix m_matrix;
         MColor m_color;
@@ -171,17 +165,6 @@ private:
     MCallbackId m_instance_added_cb_id;
     MCallbackId m_instance_removed_cb_id;
     MDagPathArray m_instance_dag_paths;
-
-    // Shaders
-    MHWRender::MShaderInstance *m_shader;
-
-    // Shader Constants
-    static MString m_shader_color_parameter_name;
-    static MString m_shader_geometry_transform_parameter_name;
-    static MString m_shader_image_transform_parameter_name;
-    static MString m_shader_image_color_matrix_parameter_name;
-    static MString m_shader_image_texture_parameter_name;
-    static MString m_shader_image_texture_sampler_parameter_name;
 
     // Viewport 2.0 render item names
     static MString m_wireframe_render_item_name;
