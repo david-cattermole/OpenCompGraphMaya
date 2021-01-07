@@ -72,8 +72,7 @@ MHWRender::MVertexBuffer* build_vertex_buffer_positions(
             //     log->debug(
             //         "ocgImagePlane: positions: {}={} {}={}",
             //         index + 0, buffer[index + 0],
-            //         index + 1, buffer[index + 1],
-            //         index + 2, buffer[index + 2]
+            //         index + 1, buffer[index + 1]
             //     );
             // }
             vertex_buffer->commit(buffer);
