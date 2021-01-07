@@ -17,7 +17,7 @@
  * along with OpenCompGraphMaya.  If not, see <https://www.gnu.org/licenses/>.
  * ====================================================================
  *
- * OCG node to read an image from disk.
+ * Adjust the color of an image stream.
  */
 
 #ifndef OPENCOMPGRAPHMAYA_COLOR_GRADE_NODE_H

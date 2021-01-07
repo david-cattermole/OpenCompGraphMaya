@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020 David Cattermole.
+ * Copyright (C) 2020, 2021 David Cattermole.
  *
  * This file is part of OpenCompGraphMaya.
  *

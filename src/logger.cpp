@@ -17,7 +17,8 @@
  * along with OpenCompGraphMaya.  If not, see <https://www.gnu.org/licenses/>.
  * ====================================================================
  *
- *
+ * Integrate the spdlog utility with Maya's output streams
+ * (MStreamUtils).
  */
 
 // STL
