@@ -122,7 +122,6 @@ get_plug_value_stream(MPlug plug, ocg::Node old_value) {
     ocg::Node value = old_value;
     if (!plug.isNull()) {
         MObject new_object = plug.asMObject(&status);
-        CHECK_MSTATUS(status);
         if (new_object.isNull() || (status != MS::kSuccess)) {
             log->warn("Input stream is not valid - maybe connect a node?");
             return std::make_tuple(shared_graph, value, has_changed);
