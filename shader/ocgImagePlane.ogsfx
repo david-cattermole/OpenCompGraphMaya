@@ -5,7 +5,7 @@ uniform mat4 gWVPXf : WorldViewProjection;
 // parameters
 uniform vec4 gSolidColor : DIFFUSE = {1, 1, 1, 1};
 
-// Matrix used to multiply colours, to perform color (linear)
+// Matrix used to multiply colors, to perform color (linear)
 // grading/correction.
 uniform float4x4 gImageColorMatrix < string UIWidget = "None"; >;
 
