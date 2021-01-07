@@ -153,7 +153,7 @@ get_plug_value_stream(MPlug plug, ocg::Node old_value) {
     return std::make_tuple(shared_graph, value, has_changed);
 }
 
-} // anonymous namespace
+} // namespace anonymous
 
 MString SubSceneOverride::m_shader_color_parameter_name = "gSolidColor";
 MString SubSceneOverride::m_shader_geometry_transform_parameter_name = "gGeometryTransform";
@@ -187,7 +187,7 @@ SubSceneOverride::SubSceneOverride(const MObject &obj)
 }
 
 SubSceneOverride::~SubSceneOverride() {
-    SubSceneOverride::geometry_buffers.clear();
+    SubSceneOverride::m_geometry.clear_all();
 
     // Remove callbacks related to instances.
     if (m_instance_added_cb_id != 0) {
@@ -231,6 +231,20 @@ void SubSceneOverride::update(
         return;
     }
 
+    ocg::Node new_stream_node = m_in_stream_node;
+    bool in_stream_has_changed = false;
+    std::shared_ptr<ocg::Graph> shared_graph;
+    MPlug in_stream_plug(m_locator_node, ShapeNode::m_in_stream_attr);
+    std::tie(shared_graph, new_stream_node, in_stream_has_changed) =
+        get_plug_value_stream(in_stream_plug, m_in_stream_node);
+    if (!shared_graph) {
+        log->warn("OCG Graph is not valid.");
+        return;
+    }
+    // Only update the internal class variable once we are sure the
+    // input data is valid..
+    m_in_stream_node = new_stream_node;
+
     bool card_size_x_has_changed = false;
     bool card_size_y_has_changed = false;
     MPlug card_size_x_plug(m_locator_node, ShapeNode::m_card_size_x_attr);
@@ -254,44 +268,88 @@ void SubSceneOverride::update(
     std::tie(m_time, time_has_changed) =
         get_plug_value_float(time_plug, m_time);
 
-    bool in_stream_has_changed = false;
-    std::shared_ptr<ocg::Graph> shared_graph;
-    MPlug in_stream_plug(m_locator_node, ShapeNode::m_in_stream_attr);
-    std::tie(shared_graph, m_in_stream_node, in_stream_has_changed) =
-        get_plug_value_stream(in_stream_plug, m_in_stream_node);
-
-    uint32_t attr_values_changed = 0;
+    uint32_t stream_values_changed = 0;
     uint32_t shader_values_changed = 0;
-    uint32_t geometry_values_changed = 0;
-    attr_values_changed += static_cast<uint32_t>(card_size_x_has_changed);
-    attr_values_changed += static_cast<uint32_t>(card_size_y_has_changed);
-    attr_values_changed += static_cast<uint32_t>(card_res_x_has_changed);
-    attr_values_changed += static_cast<uint32_t>(card_res_y_has_changed);
-    attr_values_changed += static_cast<uint32_t>(time_has_changed);
-    attr_values_changed += static_cast<uint32_t>(in_stream_has_changed);
-    geometry_values_changed += static_cast<uint32_t>(card_size_x_has_changed);
-    geometry_values_changed += static_cast<uint32_t>(card_size_y_has_changed);
-    geometry_values_changed += static_cast<uint32_t>(card_res_x_has_changed);
-    geometry_values_changed += static_cast<uint32_t>(card_res_y_has_changed);
+    uint32_t topology_values_changed = 0;
+    uint32_t vertex_values_changed = 0;
+    shader_values_changed += static_cast<uint32_t>(card_size_x_has_changed);
+    shader_values_changed += static_cast<uint32_t>(card_size_y_has_changed);
+    topology_values_changed += static_cast<uint32_t>(card_res_x_has_changed);
+    topology_values_changed += static_cast<uint32_t>(card_res_y_has_changed);
     shader_values_changed += static_cast<uint32_t>(time_has_changed);
     shader_values_changed += static_cast<uint32_t>(in_stream_has_changed);
+    stream_values_changed += static_cast<uint32_t>(in_stream_has_changed);
+    log->debug("shader_values_changed: {}", shader_values_changed);
+    log->debug("topology_values_changed: {}", topology_values_changed);
+    log->debug("stream_values_changed: {}", stream_values_changed);
+
+    // Evaluate the OCG Graph.
+    auto exec_status = ocg::ExecuteStatus::kUninitialized;
+    if (stream_values_changed > 0) {
+        exec_status = evalutate_ocg_graph(
+            m_in_stream_node,
+            shared_graph,
+            m_ocg_cache);
+        // Get the graph output stream to deform the vertices.
+        auto stream_data = shared_graph->output_stream();
+
+        auto num_deformers = stream_data.deformers_len();
+        log->info("num_deformers: {}", num_deformers);
+
+        // TODO: Get and check if the deformer has changed.
+        vertex_values_changed += 1;
+    }
+    log->debug("vertex_values_changed: {}", vertex_values_changed);
+    log->debug("exec_status: {}", exec_status);
 
     // Have the attribute values changed?
-    bool update_geometry = container.count() == 0;
+    bool update_vertices = container.count() == 0;
+    bool update_topology = container.count() == 0;
     bool update_shader = container.count() == 0;
-    if (geometry_values_changed > 0) {
-        update_geometry = true;
+    if (vertex_values_changed > 0) {
+        update_vertices = true;
+    }
+    if (topology_values_changed > 0) {
+        update_topology = true;
     }
     if (shader_values_changed > 0) {
         update_shader = true;
     }
-    if (update_geometry) {
+    log->debug("update_shader={}", update_shader);
+    log->debug("update_topology={}", update_topology);
+    log->debug("update_vertices={}", update_vertices);
+
+    if (update_vertices) {
+        // if (exec_status == ocg::ExecuteStatus::kSuccess) {
+        auto stream_data = shared_graph->output_stream();
+        // auto display_window = stream_data.display_window();
+        // auto data_window = stream_data.data_window();
+        // auto transform_matrix = stream_data.transform_matrix();
+        // auto color_matrix = stream_data.color_matrix();
+        auto num_deformers = stream_data.deformers_len();
+        // if (num_deformers > 0) {
+        //     // SubSceneOverride::m_geometry.set_deformer_func(stream_data);
+        // }
+        log->debug("Updating vertex position... num_deformers={}", num_deformers);
+        SubSceneOverride::m_geometry.rebuild_vertex_positions(std::move(stream_data));
+        // } else {
+        //     auto stream_data = ocg::StreamData();
+        //     SubSceneOverride::m_geometry.rebuild_vertex_positions(std::move(stream_data));
+        // }
+    }
+
+    // Update Geometry.
+    if (update_topology) {
         // TODO: Split out the difference between topology and vertex
         // data changing. We can update the vertex buffer without
         // needing to change the index buffers.
-        SubSceneOverride::geometry_buffers.set_divisions_x(m_card_res_x);
-        SubSceneOverride::geometry_buffers.set_divisions_y(m_card_res_x);
-        SubSceneOverride::geometry_buffers.rebuild();
+        auto stream_data = shared_graph->output_stream();
+        SubSceneOverride::m_geometry.set_divisions_x(m_card_res_x);
+        SubSceneOverride::m_geometry.set_divisions_y(m_card_res_y);
+        SubSceneOverride::m_geometry.rebuild_all(std::move(stream_data));
+        // The vertices have been updated already, so there's no need
+        // to do it again.
+        update_vertices = false;
     }
 
     // Compile and update shader.
@@ -307,7 +365,7 @@ void SubSceneOverride::update(
         status = m_shader.set_color_param(m_shader_color_parameter_name, color_values);
         CHECK_MSTATUS(status);
 
-        // TODO: Replaced with proper values.
+        // TODO: Replace with proper values.
         const float identity_matrix_values[4][4] = {
             {1.0, 0.0, 0.0, 0.0},
             {0.0, 1.0, 0.0, 0.0},
@@ -322,10 +380,6 @@ void SubSceneOverride::update(
             m_shader_geometry_transform_parameter_name, geom_matrix);
         CHECK_MSTATUS(status);
 
-        auto exec_status = evalutate_ocg_graph(
-            m_in_stream_node,
-            shared_graph,
-            m_ocg_cache);
         if (exec_status == ocg::ExecuteStatus::kSuccess) {
             auto stream_data = shared_graph->output_stream();
             // auto display_window = stream_data.display_window();
@@ -481,15 +535,15 @@ void SubSceneOverride::update(
         shaded_item->setShader(m_shader.instance());
     }
 
-    if (items_changed || update_geometry) {
+    if (items_changed || update_topology || update_vertices) {
         MFnDagNode node(m_locator_node, &status);
 
         ShapeNode *fp = status ? dynamic_cast<ShapeNode *>(node.userNode()) : nullptr;
         MBoundingBox *bounds = fp ? new MBoundingBox(fp->boundingBox()) : nullptr;
 
-        auto position_buffer = this->geometry_buffers.vertex_positions();
-        auto uv_buffer = this->geometry_buffers.vertex_uvs();
-        auto shaded_index_buffer = this->geometry_buffers.index_triangles();
+        auto position_buffer = this->m_geometry.vertex_positions();
+        auto uv_buffer = this->m_geometry.vertex_uvs();
+        auto shaded_index_buffer = this->m_geometry.index_triangles();
 
         MHWRender::MVertexBufferArray vertex_buffers;
         vertex_buffers.addBuffer("positions", position_buffer);
@@ -616,7 +670,7 @@ SubSceneOverride::evalutate_ocg_graph(
         std::shared_ptr<ocg::Cache> shared_cache) {
     auto log = log::get_logger();
 
-    bool exists = shared_graph->node_exists(stream_ocg_node);
+    // bool exists = shared_graph->node_exists(stream_ocg_node);
     // log->debug(
     //     "ocgImagePlane: input node id={} node type={} exists={}",
     //     stream_ocg_node.get_id(),

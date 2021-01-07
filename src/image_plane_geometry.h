@@ -20,8 +20,8 @@
  * Image Plane Geometry Buffers.
  */
 
-#ifndef OPENCOMPGRAPHMAYA_IMAGE_PLANE_GEOMETRY_BUFFER_H
-#define OPENCOMPGRAPHMAYA_IMAGE_PLANE_GEOMETRY_BUFFER_H
+#ifndef OPENCOMPGRAPHMAYA_IMAGE_PLANE_GEOMETRY_H
+#define OPENCOMPGRAPHMAYA_IMAGE_PLANE_GEOMETRY_H
 
 // Maya
 #include <maya/MString.h>
@@ -51,12 +51,12 @@ namespace ocg = open_comp_graph;
 namespace open_comp_graph_maya{
 namespace image_plane{
 
-class GeometryBuffer {
+class Geometry {
 public:
 
-    GeometryBuffer();
-    ~GeometryBuffer();
-    
+    Geometry();
+    ~Geometry();
+
     size_t divisions_x() const noexcept;
     size_t divisions_y() const noexcept;
 
@@ -65,11 +65,19 @@ public:
 
     MHWRender::MVertexBuffer* vertex_positions() const noexcept;
     MHWRender::MVertexBuffer* vertex_uvs() const noexcept;
-    MHWRender::MIndexBuffer* index_triangles() const noexcept;    
+    MHWRender::MIndexBuffer* index_triangles() const noexcept;
 
-    // Create and delete VertexBuffers and Index Buffers, etc.
-    void rebuild();
-    void clear();
+    // Create VertexBuffers and Index Buffers.
+    void rebuild_vertex_positions(ocg::StreamData &stream_data);
+    void rebuild_vertex_uvs();
+    void rebuild_index_triangles();
+    void rebuild_all(ocg::StreamData &stream_data);
+
+    // delete VertexBuffers and Index Buffers.
+    void clear_vertex_positions();
+    void clear_vertex_uvs();
+    void clear_index_triangles();
+    void clear_all();
 
 private:
 
@@ -86,4 +94,4 @@ private:
 } // namespace image_plane
 } // namespace open_comp_graph_maya
 
-#endif // OPENCOMPGRAPHMAYA_IMAGE_PLANE_GEOMETRY_BUFFER_H
+#endif //OPENCOMPGRAPHMAYA_IMAGE_PLANE_GEOMETRY_H

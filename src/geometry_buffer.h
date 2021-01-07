@@ -26,12 +26,18 @@
 // Maya Viewport 2.0
 #include <maya/MHWGeometry.h>
 
+// OCG
+#include <opencompgraph.h>
+
+namespace ocg = open_comp_graph;
+
 namespace open_comp_graph_maya {
 namespace geometry_buffer {
 
 MHWRender::MVertexBuffer* build_vertex_buffer_positions(
     const size_t divisions_x,
-    const size_t divisions_y);
+    const size_t divisions_y,
+    ocg::StreamData &stream_data);
 
 MHWRender::MVertexBuffer* build_vertex_buffer_uvs(
     const size_t divisions_x,
