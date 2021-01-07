@@ -168,7 +168,9 @@ SubSceneOverride::SubSceneOverride(const MObject &obj)
         : MHWRender::MPxSubSceneOverride(obj),
           m_locator_node(obj),
           m_card_size_x(0.0f),
+          m_card_size_y(0.0f),
           m_card_res_x(16),
+          m_card_res_y(16),
           m_time(0.0f),
           m_is_instance_mode(false),
           m_are_ui_drawables_dirty(true),
@@ -257,7 +259,7 @@ void SubSceneOverride::update(
     bool card_res_x_has_changed = false;
     bool card_res_y_has_changed = false;
     MPlug card_res_x_plug(m_locator_node, ShapeNode::m_card_res_x_attr);
-    MPlug card_res_y_plug(m_locator_node, ShapeNode::m_card_res_x_attr);
+    MPlug card_res_y_plug(m_locator_node, ShapeNode::m_card_res_y_attr);
     std::tie(m_card_res_x, card_res_x_has_changed) =
         get_plug_value_uint32(card_res_x_plug, m_card_res_x);
     std::tie(m_card_res_y, card_res_y_has_changed) =
