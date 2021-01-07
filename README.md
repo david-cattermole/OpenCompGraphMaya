@@ -11,16 +11,17 @@ library (currently in development).
 
 *OCG Maya* consists of the following node types:
 
-| Node Type     | Description                                      | Status              |
-|---------------|--------------------------------------------------|---------------------|
-| ocgImagePlane | Displays the output of OCG to the Maya Viewport. | In progress         |
-| ocgImageRead  | Reads an image from disk.                        | In progress         |
-| ocgImageWrite | Write an image to disk.                          | Not implemented yet |
-| ocgImageMerge | Merge two images together.                       | Not implemented yet |
-| ocgColorGrade | Perform colour grading to an image.              | In progress         |
-| ocgNull       | An empty image operation - null operation.       | Not implemented yet |
-| ocgSwitch     | Switch between multiple node inputs.             | Not implemented yet |
-|               |                                                  |                     |
+| Node Type      | Description                                      | Status              |
+|----------------|--------------------------------------------------|---------------------|
+| ocgImagePlane  | Displays the output of OCG to the Maya Viewport. | In progress         |
+| ocgImageRead   | Reads an image from disk.                        | In progress         |
+| ocgImageWrite  | Write an image to disk.                          | Not implemented yet |
+| ocgImageMerge  | Merge two images together.                       | Not implemented yet |
+| ocgColorGrade  | Perform colour grading to an image.              | In progress         |
+| ocgLensDistort | Deform an image using brownian lens distortion.  | In progress         |
+| ocgNull        | An empty image operation - null operation.       | Not implemented yet |
+| ocgSwitch      | Switch between multiple node inputs.             | Not implemented yet |
+|                |                                                  |                     |
 
 ## Installation / Building
 
