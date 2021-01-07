@@ -32,10 +32,6 @@ def test_a():
     """
     maya.cmds.loadPlugin('OpenCompGraphMaya')
     node = maya.cmds.createNode('ocgImagePlane')
-
-    # Set random file path
-    file_path = _get_random_file_path()
-    maya.cmds.setAttr(node + '.filePath', file_path, type='string')
     return
 
 
