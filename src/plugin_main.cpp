@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020 David Cattermole.
+ * Copyright (C) 2020, 2021 David Cattermole.
  *
  * This file is part of OpenCompGraphMaya.
  *
@@ -38,6 +38,7 @@
 #include <image_plane_sub_scene_override.h>
 #include <color_grade_node.h>
 #include <image_read_node.h>
+#include <lens_distort_node.h>
 #include <graph_maya_data.h>
 #include "logger.h"
 
@@ -115,6 +116,13 @@ MStatus initializePlugin(MObject obj) {
                   ocgm::ColorGradeNode::initialize,
                   status);
 
+    REGISTER_NODE(plugin,
+                  ocgm::LensDistortNode::nodeName(),
+                  ocgm::LensDistortNode::m_id,
+                  ocgm::LensDistortNode::creator,
+                  ocgm::LensDistortNode::initialize,
+                  status);
+
     // Image Plane Shape Node
     status = plugin.registerNode(
         ocgm::image_plane::ShapeNode::nodeName(),
@@ -178,6 +186,9 @@ MStatus uninitializePlugin(MObject obj) {
 
     DEREGISTER_NODE(plugin, ocgm::ColorGradeNode::nodeName(),
                     ocgm::ColorGradeNode::m_id, status);
+
+    DEREGISTER_NODE(plugin, ocgm::LensDistortNode::nodeName(),
+                    ocgm::LensDistortNode::m_id, status);
 
     // Unloaded last, so that all nodes needing it are unloaded first
     // and we won't get a potential crash.
