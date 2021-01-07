@@ -57,7 +57,10 @@ public:
     // Input Attributes
     static MObject m_in_stream_attr;
     static MObject m_enable_attr;
-    static MObject m_multiply_attr;
+    static MObject m_multiply_r_attr;
+    static MObject m_multiply_g_attr;
+    static MObject m_multiply_b_attr;
+    static MObject m_multiply_a_attr;
 
     // Output Attributes
     static MObject m_out_stream_attr;

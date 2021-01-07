@@ -56,7 +56,10 @@ MTypeId ColorGradeNode::m_id(OCGM_COLOR_GRADE_TYPE_ID);
 // Input Attributes
 MObject ColorGradeNode::m_in_stream_attr;
 MObject ColorGradeNode::m_enable_attr;
-MObject ColorGradeNode::m_multiply_attr;
+MObject ColorGradeNode::m_multiply_r_attr;
+MObject ColorGradeNode::m_multiply_g_attr;
+MObject ColorGradeNode::m_multiply_b_attr;
+MObject ColorGradeNode::m_multiply_a_attr;
 
 // Output Attributes
 MObject ColorGradeNode::m_out_stream_attr;
@@ -126,15 +129,28 @@ MStatus ColorGradeNode::compute(const MPlug &plug, MDataBlock &data) {
             if (m_ocg_node.get_id() != 0) {
                 shared_graph->set_node_attr_i32(
                     m_ocg_node, "enable", static_cast<int32_t>(enable));
+                log->debug("ColorGradeNode: enable: {}", enable);
 
-                // Multiply Attribute
-                MDataHandle multiply_handle = data.inputValue(ColorGradeNode::m_multiply_attr, &status);
+
+                // Multiply Attribute RGBA
+                MDataHandle multiply_r_handle = data.inputValue(m_multiply_r_attr, &status);
                 CHECK_MSTATUS_AND_RETURN_IT(status);
-                float temp = multiply_handle.asFloat();
-                log->debug("ColorGradeNode: multiply: {}", static_cast<double>(temp));
-                shared_graph->set_node_attr_f32(m_ocg_node, "multiply", temp);
+                MDataHandle multiply_g_handle = data.inputValue(m_multiply_g_attr, &status);
+                CHECK_MSTATUS_AND_RETURN_IT(status);
+                MDataHandle multiply_b_handle = data.inputValue(m_multiply_b_attr, &status);
+                CHECK_MSTATUS_AND_RETURN_IT(status);
+                MDataHandle multiply_a_handle = data.inputValue(m_multiply_a_attr, &status);
+                float temp_r = multiply_r_handle.asFloat();
+                float temp_g = multiply_g_handle.asFloat();
+                float temp_b = multiply_b_handle.asFloat();
+                float temp_a = multiply_a_handle.asFloat();
+                log->debug("ColorGradeNode: multiply_rgba: r={} g={} b={} a={}",
+                           temp_r, temp_g, temp_b, temp_a);
 
-                // float multiply = std::pow(2.0, exposure);  // Exposure Value
+                shared_graph->set_node_attr_f32(m_ocg_node, "multiply_r", temp_r);
+                shared_graph->set_node_attr_f32(m_ocg_node, "multiply_g", temp_g);
+                shared_graph->set_node_attr_f32(m_ocg_node, "multiply_b", temp_b);
+                shared_graph->set_node_attr_f32(m_ocg_node, "multiply_a", temp_a);
             }
         }
         log->debug(
@@ -200,16 +216,45 @@ MStatus ColorGradeNode::initialize() {
     CHECK_MSTATUS(nAttr.setKeyable(true));
     CHECK_MSTATUS(addAttribute(m_enable_attr));
 
-    // Multiply
+    // Multiply RGBA
     float multiply_min = 0.0f;
+    float multiply_soft_max = 10.0f;
     float multiply_default = 1.0f;
-    m_multiply_attr = nAttr.create(
-        "multiply", "mul",
+    m_multiply_r_attr = nAttr.create(
+        "multiplyR", "mulr",
         MFnNumericData::kFloat, multiply_default);
     CHECK_MSTATUS(nAttr.setStorable(true));
     CHECK_MSTATUS(nAttr.setKeyable(true));
     CHECK_MSTATUS(nAttr.setMin(multiply_min));
-    CHECK_MSTATUS(addAttribute(m_multiply_attr));
+    CHECK_MSTATUS(nAttr.setSoftMax(multiply_soft_max));
+    CHECK_MSTATUS(addAttribute(m_multiply_r_attr));
+
+    m_multiply_g_attr = nAttr.create(
+        "multiplyG", "mulg",
+        MFnNumericData::kFloat, multiply_default);
+    CHECK_MSTATUS(nAttr.setStorable(true));
+    CHECK_MSTATUS(nAttr.setKeyable(true));
+    CHECK_MSTATUS(nAttr.setMin(multiply_min));
+    CHECK_MSTATUS(nAttr.setSoftMax(multiply_soft_max));
+    CHECK_MSTATUS(addAttribute(m_multiply_g_attr));
+
+    m_multiply_b_attr = nAttr.create(
+        "multiplyB", "mulb",
+        MFnNumericData::kFloat, multiply_default);
+    CHECK_MSTATUS(nAttr.setStorable(true));
+    CHECK_MSTATUS(nAttr.setKeyable(true));
+    CHECK_MSTATUS(nAttr.setMin(multiply_min));
+    CHECK_MSTATUS(nAttr.setSoftMax(multiply_soft_max));
+    CHECK_MSTATUS(addAttribute(m_multiply_b_attr));
+
+    m_multiply_a_attr = nAttr.create(
+        "multiplyA", "mula",
+        MFnNumericData::kFloat, multiply_default);
+    CHECK_MSTATUS(nAttr.setStorable(true));
+    CHECK_MSTATUS(nAttr.setKeyable(true));
+    CHECK_MSTATUS(nAttr.setMin(multiply_min));
+    CHECK_MSTATUS(nAttr.setSoftMax(multiply_soft_max));
+    CHECK_MSTATUS(addAttribute(m_multiply_a_attr));
 
     // Out Stream
     m_out_stream_attr = tAttr.create(
@@ -222,7 +267,10 @@ MStatus ColorGradeNode::initialize() {
     CHECK_MSTATUS(addAttribute(m_out_stream_attr));
 
     // Attribute Affects
-    CHECK_MSTATUS(attributeAffects(m_multiply_attr, m_out_stream_attr));
+    CHECK_MSTATUS(attributeAffects(m_multiply_r_attr, m_out_stream_attr));
+    CHECK_MSTATUS(attributeAffects(m_multiply_g_attr, m_out_stream_attr));
+    CHECK_MSTATUS(attributeAffects(m_multiply_b_attr, m_out_stream_attr));
+    CHECK_MSTATUS(attributeAffects(m_multiply_a_attr, m_out_stream_attr));
     CHECK_MSTATUS(attributeAffects(m_enable_attr, m_out_stream_attr));
     CHECK_MSTATUS(attributeAffects(m_in_stream_attr, m_out_stream_attr));
 

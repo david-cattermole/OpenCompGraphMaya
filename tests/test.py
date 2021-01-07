@@ -46,7 +46,11 @@ def test_b():
 
     file_path = _get_random_file_path()
     maya.cmds.setAttr(read_node + '.filePath', file_path, type='string')
-    maya.cmds.setAttr(grade_node + '.multiply', 1.0)
+    maya.cmds.setAttr(grade_node + '.multiplyR', random.random() * 2)
+    maya.cmds.setAttr(grade_node + '.multiplyG', random.random() * 2)
+    maya.cmds.setAttr(grade_node + '.multiplyB', random.random() * 2)
+    maya.cmds.setAttr(grade_node + '.multiplyA', 1.0)
+    return
     return
 
 
