@@ -363,9 +363,9 @@ void SubSceneOverride::update(
     if (update_shader) {
         log->debug("SubSceneOverride: Update shader parameters...");
         // MColor my_color = MHWRender::MGeometryUtilities::wireframeColor(m_instance_dag_paths[0]);
-        const float color_values[4] = {1.0f, 1.0f, 1.0f, 1.0f};
-        status = m_shader.set_color_param(m_shader_color_parameter_name, color_values);
-        CHECK_MSTATUS(status);
+        // const float color_values[4] = {1.0f, 1.0f, 1.0f, 1.0f};
+        // status = m_shader.set_color_param(m_shader_color_parameter_name, color_values);
+        // CHECK_MSTATUS(status);
 
         // TODO: Replace with proper values.
         const float identity_matrix_values[4][4] = {

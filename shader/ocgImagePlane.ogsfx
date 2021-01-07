@@ -3,7 +3,7 @@ uniform mat4 gWVPXf : WorldViewProjection;
 
 // The solid color uniform, its default value and several extra
 // parameters
-uniform vec4 gSolidColor : DIFFUSE = {1, 0, 0, 1};
+uniform vec4 gSolidColor : DIFFUSE = {1, 1, 1, 1};
 
 // Matrix used to multiply colours, to perform color (linear)
 // grading/correction.
