@@ -39,7 +39,7 @@
 #include <color_grade_node.h>
 #include <image_read_node.h>
 #include <lens_distort_node.h>
-#include <graph_maya_data.h>
+#include <graph_data.h>
 #include "logger.h"
 
 namespace ocg = open_comp_graph;
@@ -97,9 +97,9 @@ MStatus initializePlugin(MObject obj) {
     // reference them.
     REGISTER_DATA(
         plugin,
-        ocgm::GraphMayaData::typeName(),
-        ocgm::GraphMayaData::m_id,
-        ocgm::GraphMayaData::creator,
+        ocgm::GraphData::typeName(),
+        ocgm::GraphData::m_id,
+        ocgm::GraphData::creator,
         status);
 
     REGISTER_NODE(plugin,
@@ -193,8 +193,8 @@ MStatus uninitializePlugin(MObject obj) {
     // Unloaded last, so that all nodes needing it are unloaded first
     // and we won't get a potential crash.
     DEREGISTER_DATA(plugin,
-                    ocgm::GraphMayaData::typeName(),
-                    ocgm::GraphMayaData::m_id, status);
+                    ocgm::GraphData::typeName(),
+                    ocgm::GraphData::m_id, status);
 
     ocgm::log::deinitialize();
     return status;

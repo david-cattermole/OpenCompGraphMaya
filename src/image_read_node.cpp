@@ -45,7 +45,7 @@
 // OCG Maya
 #include <opencompgraphmaya/node_type_ids.h>
 #include "logger.h"
-#include "graph_maya_data.h"
+#include "graph_data.h"
 #include "image_read_node.h"
 
 namespace ocg = open_comp_graph;
@@ -95,8 +95,8 @@ MStatus ImageReadNode::compute(const MPlug &plug, MDataBlock &data) {
 
         // Output Stream
         MDataHandle out_stream_handle = data.outputValue(m_out_stream_attr);
-        GraphMayaData* new_data =
-            static_cast<GraphMayaData*>(fn_plugin_data.data(&status));
+        GraphData* new_data =
+            static_cast<GraphData*>(fn_plugin_data.data(&status));
         if (shared_graph) {
             log->debug("ImageReadNode: enabled and has graph");
 

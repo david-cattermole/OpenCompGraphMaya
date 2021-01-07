@@ -20,8 +20,8 @@
  * Holds OCG Stream Data in the Maya DG.
  */
 
-#ifndef OPENCOMPGRAPHMAYA_GRAPH_MAYA_DATA_H
-#define OPENCOMPGRAPHMAYA_GRAPH_MAYA_DATA_H
+#ifndef OPENCOMPGRAPHMAYA_GRAPH_DATA_H
+#define OPENCOMPGRAPHMAYA_GRAPH_DATA_H
 
 // Maya
 #include <maya/MIOStream.h>
@@ -40,10 +40,10 @@ namespace ocg = open_comp_graph;
 
 namespace open_comp_graph_maya{
 
-class GraphMayaData : public MPxData {
+class GraphData : public MPxData {
 public:
-    GraphMayaData();
-    virtual ~GraphMayaData();
+    GraphData();
+    virtual ~GraphData();
 
     virtual MStatus readASCII(const MArgList&, unsigned& lastElement);
     virtual MStatus readBinary(istream& in, unsigned length);
@@ -74,4 +74,4 @@ private:
 
 } // namespace open_comp_graph_maya
 
-#endif //OPENCOMPGRAPHMAYA_GRAPH_MAYA_DATA_H
+#endif //OPENCOMPGRAPHMAYA_GRAPH_DATA_H

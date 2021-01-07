@@ -51,7 +51,7 @@
 #include "constant_texture_data.h"
 #include "image_plane_sub_scene_override.h"
 #include "image_plane_shape.h"
-#include "graph_maya_data.h"
+#include "graph_data.h"
 #include "logger.h"
 
 namespace ocg = open_comp_graph;
@@ -132,8 +132,8 @@ get_plug_value_stream(MPlug plug, ocg::Node old_value) {
         // We are ensured this is valid from Maya. The MObject is a smart
         // pointer and we check the object is valid before-hand too.
         MFnPluginData fn_plugin_data(new_object);
-        GraphMayaData* input_stream_data =
-            static_cast<GraphMayaData*>(fn_plugin_data.data(&status));
+        GraphData* input_stream_data =
+            static_cast<GraphData*>(fn_plugin_data.data(&status));
         CHECK_MSTATUS(status);
         if (input_stream_data == nullptr) {
             log->error("Input stream data is not valid.");

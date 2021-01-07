@@ -44,7 +44,7 @@
 
 // OCG Maya
 #include <opencompgraphmaya/node_type_ids.h>
-#include "graph_maya_data.h"
+#include "graph_data.h"
 #include "image_plane_shape.h"
 
 namespace open_comp_graph_maya {
