@@ -45,9 +45,6 @@
 // OCG
 #include <opencompgraph.h>
 
-// OCG Maya
-#include "image_plane_geometry_buffer.h"
-
 
 namespace ocg = open_comp_graph;
 
