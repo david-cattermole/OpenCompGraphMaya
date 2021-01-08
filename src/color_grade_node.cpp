@@ -140,6 +140,7 @@ MStatus ColorGradeNode::compute(const MPlug &plug, MDataBlock &data) {
                 MDataHandle multiply_b_handle = data.inputValue(m_multiply_b_attr, &status);
                 CHECK_MSTATUS_AND_RETURN_IT(status);
                 MDataHandle multiply_a_handle = data.inputValue(m_multiply_a_attr, &status);
+                CHECK_MSTATUS_AND_RETURN_IT(status);
                 float temp_r = multiply_r_handle.asFloat();
                 float temp_g = multiply_g_handle.asFloat();
                 float temp_b = multiply_b_handle.asFloat();
