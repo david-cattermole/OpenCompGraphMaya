@@ -366,7 +366,8 @@ void SubSceneOverride::update(
         // status = m_shader.set_color_param(m_shader_color_parameter_name, color_values);
         // CHECK_MSTATUS(status);
 
-        // TODO: Replace with proper values.
+        // TODO: Replace with proper values for moving all of the
+        // geometry.
         const float identity_matrix_values[4][4] = {
             {1.0, 0.0, 0.0, 0.0},
             {0.0, 1.0, 0.0, 0.0},
@@ -385,11 +386,17 @@ void SubSceneOverride::update(
             auto stream_data = shared_graph->output_stream();
             // auto display_window = stream_data.display_window();
             // auto data_window = stream_data.data_window();
-            // auto transform_matrix = stream_data.transform_matrix();
 
             // Set the transform matrix parameter expected to move the
             // geometry buffer into the correct place.
-            MFloatMatrix image_transform(identity_matrix_values);
+            auto tfm_matrix = stream_data.transform_matrix();
+            const float tfm_matrix_values[4][4] = {
+                {tfm_matrix.m00, tfm_matrix.m01, tfm_matrix.m02, tfm_matrix.m03},
+                {tfm_matrix.m10, tfm_matrix.m11, tfm_matrix.m12, tfm_matrix.m13},
+                {tfm_matrix.m20, tfm_matrix.m21, tfm_matrix.m22, tfm_matrix.m23},
+                {tfm_matrix.m30, tfm_matrix.m31, tfm_matrix.m32, tfm_matrix.m33},
+            };
+            MFloatMatrix image_transform(tfm_matrix_values);
             status = m_shader.set_float_matrix4x4_param(
                 m_shader_image_transform_parameter_name,
                 image_transform);

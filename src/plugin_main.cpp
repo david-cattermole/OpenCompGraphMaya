@@ -39,6 +39,7 @@
 #include <color_grade_node.h>
 #include <image_read_node.h>
 #include <lens_distort_node.h>
+#include <image_transform_node.h>
 #include <graph_data.h>
 #include "logger.h"
 
@@ -107,6 +108,13 @@ MStatus initializePlugin(MObject obj) {
                   ocgm::ImageReadNode::m_id,
                   ocgm::ImageReadNode::creator,
                   ocgm::ImageReadNode::initialize,
+                  status);
+
+    REGISTER_NODE(plugin,
+                  ocgm::ImageTransformNode::nodeName(),
+                  ocgm::ImageTransformNode::m_id,
+                  ocgm::ImageTransformNode::creator,
+                  ocgm::ImageTransformNode::initialize,
                   status);
 
     REGISTER_NODE(plugin,
@@ -183,6 +191,9 @@ MStatus uninitializePlugin(MObject obj) {
 
     DEREGISTER_NODE(plugin, ocgm::ImageReadNode::nodeName(),
                     ocgm::ImageReadNode::m_id, status);
+
+    DEREGISTER_NODE(plugin, ocgm::ImageTransformNode::nodeName(),
+                    ocgm::ImageTransformNode::m_id, status);
 
     DEREGISTER_NODE(plugin, ocgm::ColorGradeNode::nodeName(),
                     ocgm::ColorGradeNode::m_id, status);

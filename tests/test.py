@@ -78,11 +78,33 @@ def test_c():
     return
 
 
+def test_d():
+    """Read an image, transform the image and view it in
+    an image plane.
+    """
+    read_node = maya.cmds.createNode('ocgImageRead')
+    tfm_node = maya.cmds.createNode('ocgImageTransform')
+    image_plane = maya.cmds.createNode('ocgImagePlane')
+
+    maya.cmds.connectAttr(read_node + '.outStream', tfm_node + '.inStream')
+    maya.cmds.connectAttr(tfm_node + '.outStream', image_plane + '.inStream')
+
+    file_path = _get_random_file_path()
+    maya.cmds.setAttr(read_node + '.filePath', file_path, type='string')
+    maya.cmds.setAttr(tfm_node + '.translateX', random.uniform(-1.0, 1.0))
+    maya.cmds.setAttr(tfm_node + '.translateY', random.uniform(-1.0, 1.0))
+    maya.cmds.setAttr(tfm_node + '.rotate', random.random() * 45.0)
+    maya.cmds.setAttr(tfm_node + '.scaleX', random.uniform(0.5, 2.0))
+    maya.cmds.setAttr(tfm_node + '.scaleY', random.uniform(0.5, 2.0))
+    return
+
+
 def main():
     maya.cmds.loadPlugin('OpenCompGraphMaya')
     test_a()
     test_b()
     test_c()
+    test_d()
 
 
 main()
