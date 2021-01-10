@@ -297,6 +297,7 @@ void SubSceneOverride::update(
     topology_values_changed += static_cast<uint32_t>(card_res_y_has_changed);
     shader_values_changed += static_cast<uint32_t>(time_has_changed);
     shader_values_changed += static_cast<uint32_t>(in_stream_has_changed);
+    stream_values_changed += static_cast<uint32_t>(time_has_changed);
     stream_values_changed += static_cast<uint32_t>(in_stream_has_changed);
     log->debug("shader_values_changed: {}", shader_values_changed);
     log->debug("topology_values_changed: {}", topology_values_changed);
