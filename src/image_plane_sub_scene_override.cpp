@@ -26,6 +26,7 @@
 #include <maya/MTypeId.h>
 #include <maya/MPlug.h>
 #include <maya/MColor.h>
+#include <maya/MTime.h>
 #include <maya/MFloatMatrix.h>
 #include <maya/MDistance.h>
 #include <maya/MFnDagNode.h>
