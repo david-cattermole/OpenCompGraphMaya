@@ -107,7 +107,7 @@ private:
 
     Geometry m_geometry;
 
-    ocg::ExecuteStatus evalutate_ocg_graph(
+    ocg::ExecuteStatus execute_ocg_graph(
         ocg::Node stream_ocg_node,
         std::shared_ptr<ocg::Graph> shared_graph,
         std::shared_ptr<ocg::Cache> shared_cache);

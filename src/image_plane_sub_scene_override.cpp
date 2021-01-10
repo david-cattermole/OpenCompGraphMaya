@@ -287,7 +287,7 @@ void SubSceneOverride::update(
     // Evaluate the OCG Graph.
     auto exec_status = ocg::ExecuteStatus::kUninitialized;
     if (stream_values_changed > 0) {
-        exec_status = evalutate_ocg_graph(
+        exec_status = execute_ocg_graph(
             m_in_stream_node,
             shared_graph,
             m_ocg_cache);
@@ -672,7 +672,7 @@ bool SubSceneOverride::getInstancedSelectionPath(
 
 // Trigger a Graph evaluation and return the computed data.
 ocg::ExecuteStatus
-SubSceneOverride::evalutate_ocg_graph(
+SubSceneOverride::execute_ocg_graph(
         ocg::Node stream_ocg_node,
         std::shared_ptr<ocg::Graph> shared_graph,
         std::shared_ptr<ocg::Cache> shared_cache) {
