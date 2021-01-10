@@ -101,7 +101,7 @@ std::tuple<float, bool> get_plug_value_float(MPlug plug, float old_value) {
     bool has_changed = false;
     float value = old_value;
     if (!plug.isNull()) {
-        uint32_t new_value = plug.asFloat(&status);
+        float new_value = plug.asFloat(&status);
         CHECK_MSTATUS(status);
         has_changed = old_value != new_value;
         if (has_changed) {
