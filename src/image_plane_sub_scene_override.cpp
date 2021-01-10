@@ -79,6 +79,24 @@ std::tuple<float, bool> get_plug_value_distance_float(MPlug plug, float old_valu
     return std::make_tuple(value, has_changed);
 }
 
+// Get floating point attribute value.
+std::tuple<float, bool> get_plug_value_frame_float(MPlug plug, float old_value) {
+    MStatus status;
+    bool has_changed = false;
+    float value = old_value;
+    if (!plug.isNull()) {
+        MTime new_value_time = plug.asMTime(&status);
+        CHECK_MSTATUS(status);
+        float new_value =
+            static_cast<float>(new_value_time.asUnits(MTime::uiUnit()));
+        has_changed = old_value != new_value;
+        if (has_changed) {
+            value = new_value;
+        }
+    }
+    return std::make_tuple(value, has_changed);
+}
+
 // Get unsigned integer attribute value.
 std::tuple<uint32_t, bool> get_plug_value_uint32(MPlug plug, uint32_t old_value) {
     MStatus status;
@@ -267,7 +285,7 @@ void SubSceneOverride::update(
     bool time_has_changed = false;
     MPlug time_plug(m_locator_node, ShapeNode::m_time_attr);
     std::tie(m_time, time_has_changed) =
-        get_plug_value_float(time_plug, m_time);
+        get_plug_value_frame_float(time_plug, m_time);
 
     uint32_t stream_values_changed = 0;
     uint32_t shader_values_changed = 0;
