@@ -10,6 +10,8 @@ possible to write out image data from Maya
 efficent graph evaluation and support for real-time lens distortion
 previews.
 
+## Road Map
+
 This project is currently in development and should not be used in
 production for any reason.
 
@@ -32,6 +34,21 @@ library (currently in development).
 | ocgLensDistort   | Deform an image using brownian lens distortion.  | In progress         |
 | ocgNull          | An empty image operation - null operation.       | Not implemented yet |
 | ocgSwitch        | Switch between multiple node inputs.             | Not implemented yet |
+
+Below is a brief description on some of the features planed and being
+worked on.
+
+| Feature Description                                                  |        Status |
+|:---------------------------------------------------------------------|--------------:|
+| Import lens distortion values from Nuke.                             | To be started |
+| Import lens distortion values from 3DEqualizer.                      | To be started |
+| Export lens distortion values to Nuke.                               | To be started |
+| Export lens distortion values to 3DEqualizer.                        | To be started |
+| Python API to save, and load OCG graph networks as Maya nodes.       | To be started |
+| Python API to create and manipulate OCG Maya nodes.                  | To be started |
+| Write node graph to disk to bake and speed up read speeds.           | To be started |
+| Control OCG caching preferences from Maya nodes.                     | To be started |
+| Display which frames are cached in the Maya timeline (with a color). | To be started |
 
 ## Installation / Building
 
