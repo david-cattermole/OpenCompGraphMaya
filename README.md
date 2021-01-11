@@ -1,9 +1,17 @@
 # Open Comp Graph For Autodesk Maya
 
-*Open Comp Graph Maya* (or *OCG Maya* for short) is currently in
-development. When completed, the project will allow artists to create
-simple image processing composting node graphs inside of Autodesk
-Maya's DG Network, and view the results inside Maya's Viewport 2.0.
+**Open Comp Graph Maya** (or **OCG Maya** - pronounced *Ohh-See-Gee
+Maya*). OCG Maya will allow artists to create simple image processing
+composting node graphs inside of Autodesk Maya's DG Network, and view
+the results inside Maya's Viewport 2.0. Optionally, it will be
+possible to write out image data from Maya
+
+**OCG Maya** is focused on real-time image caching, playback speed,
+efficent graph evaluation and support for real-time lens distortion
+previews.
+
+This project is currently in development and should not be used in
+production for any reason.
 
 *Open Comp Graph Maya* is a plug-in using the
 [Open Comp Graph](https://github.com/david-cattermole/OpenCompGraph/)
@@ -11,17 +19,19 @@ library (currently in development).
 
 *OCG Maya* consists of the following node types:
 
-| Node Type      | Description                                      | Status              |
-|----------------|--------------------------------------------------|---------------------|
-| ocgImagePlane  | Displays the output of OCG to the Maya Viewport. | In progress         |
-| ocgImageRead   | Reads an image from disk.                        | In progress         |
-| ocgImageWrite  | Write an image to disk.                          | Not implemented yet |
-| ocgImageMerge  | Merge two images together.                       | Not implemented yet |
-| ocgColorGrade  | Perform colour grading to an image.              | In progress         |
-| ocgLensDistort | Deform an image using brownian lens distortion.  | In progress         |
-| ocgNull        | An empty image operation - null operation.       | Not implemented yet |
-| ocgSwitch      | Switch between multiple node inputs.             | Not implemented yet |
-|                |                                                  |                     |
+| Node Type        | Description                                      | Status              |
+|------------------|--------------------------------------------------|---------------------|
+| ocgImagePlane    | Displays the output of OCG to the Maya Viewport. | In progress         |
+| ocgImageRead     | Reads an image from disk.                        | In progress         |
+| ocgImageWrite    | Write an image to disk.                          | Not implemented yet |
+| ocgImageMerge    | Merge two images together.                       | Not implemented yet |
+| ocgImageReformat | Change the resolution of images.                 | Not implemented yet |
+| ocgImageRetime   | Perform time-based frame blending                | Not implemented yet |
+| ocgImageKeyer    | Perform time-based frame blending                | Not implemented yet |
+| ocgColorGrade    | Perform colour grading to an image.              | In progress         |
+| ocgLensDistort   | Deform an image using brownian lens distortion.  | In progress         |
+| ocgNull          | An empty image operation - null operation.       | Not implemented yet |
+| ocgSwitch        | Switch between multiple node inputs.             | Not implemented yet |
 
 ## Installation / Building
 
@@ -41,7 +51,7 @@ stay Free Open Source Software:
 
 Please read the *LICENSE* (text) file for details.
 
-## Bugs or Issues?
+## Bugs, Questions or Issues?
 
 All issues are listed in the
 [issues page](https://github.com/david-cattermole/OpenCompGraphMaya/issues)
