@@ -109,6 +109,7 @@ private:
 
     ocg::ExecuteStatus execute_ocg_graph(
         ocg::Node stream_ocg_node,
+        int32_t execute_frame,
         std::shared_ptr<ocg::Graph> shared_graph,
         std::shared_ptr<ocg::Cache> shared_cache);
 

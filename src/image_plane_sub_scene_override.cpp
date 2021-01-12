@@ -41,9 +41,11 @@
 #include <maya/MStateManager.h>
 
 // STL
+#include <cmath>
 #include <memory>
 #include <tuple>
 #include <cstdlib>
+#include <vector>
 
 // OCG
 #include "opencompgraph.h"
@@ -196,6 +198,10 @@ SubSceneOverride::SubSceneOverride(const MObject &obj)
           m_instance_removed_cb_id(0),
           m_ocg_cache(std::make_shared<ocg::Cache>()),
           m_in_stream_node(ocg::Node(ocg::NodeType::kNull, 0)) {
+    // 24GB of RAM used for the cache.
+    const size_t bytes_to_gigabytes = 1073741824;
+    m_ocg_cache->set_capacity_bytes(24 * bytes_to_gigabytes);
+
     MDagPath dag_path;
     if (MDagPath::getAPathTo(obj, dag_path)) {
         m_instance_added_cb_id = MDagMessage::addInstanceAddedDagPathCallback(
@@ -246,7 +252,6 @@ void SubSceneOverride::update(
         }
         num_instances = m_instance_dag_paths.length();
     }
-
     if (num_instances == 0) {
         return;
     }
@@ -307,15 +312,14 @@ void SubSceneOverride::update(
     // Evaluate the OCG Graph.
     auto exec_status = ocg::ExecuteStatus::kUninitialized;
     if (stream_values_changed > 0) {
+        log->debug("ocgImagePlane: m_time={}", m_time);
+        int32_t execute_frame = static_cast<int32_t>(std::lround(m_time));
+        log->debug("ocgImagePlane: execute_frame={}", execute_frame);
         exec_status = execute_ocg_graph(
             m_in_stream_node,
+            execute_frame,
             shared_graph,
             m_ocg_cache);
-        // Get the graph output stream to deform the vertices.
-        auto stream_data = shared_graph->output_stream();
-
-        auto num_deformers = stream_data.deformers_len();
-        log->info("num_deformers: {}", num_deformers);
 
         // TODO: Get and check if the deformer has changed.
         vertex_values_changed += 1;
@@ -694,29 +698,38 @@ bool SubSceneOverride::getInstancedSelectionPath(
 ocg::ExecuteStatus
 SubSceneOverride::execute_ocg_graph(
         ocg::Node stream_ocg_node,
+        int32_t execute_frame,
         std::shared_ptr<ocg::Graph> shared_graph,
         std::shared_ptr<ocg::Cache> shared_cache) {
     auto log = log::get_logger();
+    log->debug("ocgImagePlane: execute_frame={}", execute_frame);
 
-    // bool exists = shared_graph->node_exists(stream_ocg_node);
-    // log->debug(
-    //     "ocgImagePlane: input node id={} node type={} exists={}",
-    //     stream_ocg_node.get_id(),
-    //     static_cast<uint64_t>(stream_ocg_node.get_node_type()),
-    //     exists);
+    bool exists = shared_graph->node_exists(stream_ocg_node);
+    log->debug(
+        "ocgImagePlane: input node id={} node type={} exists={}",
+        stream_ocg_node.get_id(),
+        static_cast<uint64_t>(stream_ocg_node.get_node_type()),
+        exists);
 
-    auto exec_status = shared_graph->execute(stream_ocg_node, shared_cache);
-    // log->debug(
-    //     "ocgImagePlane: execute status={}",
-    //     static_cast<uint64_t>(exec_status));
+    std::vector<int32_t> frames;
+    frames.push_back(execute_frame);
+    for (auto f : frames) {
+        log->debug("ocgImagePlane: frames={}", f);
+    }
+    auto exec_status = shared_graph->execute(
+        stream_ocg_node, frames, shared_cache);
+    log->debug(
+        "ocgImagePlane: execute status={}",
+        static_cast<uint64_t>(exec_status));
 
-    // auto input_node_status = shared_graph->node_status(stream_ocg_node);
-    // log->debug(
-    //     "ocgImagePlane: input node status={}",
-    //     static_cast<uint64_t>(input_node_status));
-    // log->debug(
-    //     "ColorGraphNode: Graph as string:\n{}",
-    //     shared_graph->data_debug_string());
+    auto input_node_status = shared_graph->node_status(stream_ocg_node);
+    log->debug(
+        "ocgImagePlane: input node status={}",
+        static_cast<uint64_t>(input_node_status));
+    log->debug(
+        "ColorGraphNode: Graph as string:\n{}",
+        shared_graph->data_debug_string());
+
     if (exec_status != ocg::ExecuteStatus::kSuccess) {
         log->error("ocgImagePlane: Failed to execute OCG node network!");
     }
