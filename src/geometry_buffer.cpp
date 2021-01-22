@@ -146,5 +146,62 @@ MHWRender::MIndexBuffer* build_index_buffer_triangles(
     return index_buffer;
 }
 
+
+// Index buffer for border lines.
+MHWRender::MIndexBuffer* build_index_buffer_border_lines(
+    const size_t divisions_x,
+    const size_t divisions_y) {
+
+    auto geom = ocg::internal::create_geometry_plane_box(divisions_x, divisions_y);
+
+    MHWRender::MIndexBuffer* index_buffer = new MHWRender::MIndexBuffer(
+        MHWRender::MGeometry::kUnsignedInt32);
+    if (index_buffer) {
+        auto tri_count = geom->calc_buffer_size_index_border_lines();
+        bool write_only = true;  // We don't need the current buffer values
+        uint32_t *buffer = static_cast<uint32_t *>(
+            index_buffer->acquire(tri_count, write_only));
+        if (buffer) {
+            rust::Slice<uint32_t> slice{buffer, tri_count};
+            geom->fill_buffer_index_border_lines(slice);
+            // for (int i = 0; i < tri_count; ++i) {
+            //     log->debug("ocgImagePlane: indices {}={}",
+            //                i, buffer[i]);
+            // }
+            index_buffer->commit(buffer);
+        }
+    }
+    return index_buffer;
+}
+
+
+// Index buffer for wire lines.
+MHWRender::MIndexBuffer* build_index_buffer_wire_lines(
+    const size_t divisions_x,
+    const size_t divisions_y) {
+
+    auto geom = ocg::internal::create_geometry_plane_box(divisions_x, divisions_y);
+
+    MHWRender::MIndexBuffer* index_buffer = new MHWRender::MIndexBuffer(
+        MHWRender::MGeometry::kUnsignedInt32);
+    if (index_buffer) {
+        auto tri_count = geom->calc_buffer_size_index_wire_lines();
+        bool write_only = true;  // We don't need the current buffer values
+        uint32_t *buffer = static_cast<uint32_t *>(
+            index_buffer->acquire(tri_count, write_only));
+        if (buffer) {
+            rust::Slice<uint32_t> slice{buffer, tri_count};
+            geom->fill_buffer_index_wire_lines(slice);
+            // for (int i = 0; i < tri_count; ++i) {
+            //     log->debug("ocgImagePlane: indices {}={}",
+            //                i, buffer[i]);
+            // }
+            index_buffer->commit(buffer);
+        }
+    }
+    return index_buffer;
+}
+
+
 } // namespace geometry_buffer
 } // namespace open_comp_graph_maya

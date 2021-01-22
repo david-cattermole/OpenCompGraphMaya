@@ -181,14 +181,15 @@ MString SubSceneOverride::m_shader_image_transform_parameter_name = "gImageTrans
 MString SubSceneOverride::m_shader_image_color_matrix_parameter_name = "gImageColorMatrix";
 MString SubSceneOverride::m_shader_image_texture_parameter_name = "gImageTexture";
 MString SubSceneOverride::m_shader_image_texture_sampler_parameter_name = "gImageTextureSampler";
+MString SubSceneOverride::m_border_render_item_name = "ocgImagePlaneBorder";
 MString SubSceneOverride::m_wireframe_render_item_name = "ocgImagePlaneWireframe";
 MString SubSceneOverride::m_shaded_render_item_name = "ocgImagePlaneShadedTriangles";
 
 SubSceneOverride::SubSceneOverride(const MObject &obj)
         : MHWRender::MPxSubSceneOverride(obj),
           m_locator_node(obj),
-          m_card_size_x(0.0f),
-          m_card_size_y(0.0f),
+          m_card_size_x(1.0f),
+          m_card_size_y(1.0f),
           m_card_res_x(16),
           m_card_res_y(16),
           m_time(0.0f),
@@ -263,7 +264,7 @@ void SubSceneOverride::update(
     std::tie(shared_graph, new_stream_node, in_stream_has_changed) =
         get_plug_value_stream(in_stream_plug, m_in_stream_node);
     if (!shared_graph) {
-        log->warn("OCG Graph is not valid.");
+        log->error("OCG Graph is not valid.");
         return;
     }
     // Only update the internal class variable once we are sure the
@@ -295,10 +296,13 @@ void SubSceneOverride::update(
 
     uint32_t stream_values_changed = 0;
     uint32_t shader_values_changed = 0;
+    uint32_t shader_border_values_changed = 0;
     uint32_t topology_values_changed = 0;
     uint32_t vertex_values_changed = 0;
     shader_values_changed += static_cast<uint32_t>(card_size_x_has_changed);
     shader_values_changed += static_cast<uint32_t>(card_size_y_has_changed);
+    shader_border_values_changed += static_cast<uint32_t>(card_size_x_has_changed);
+    shader_border_values_changed += static_cast<uint32_t>(card_size_y_has_changed);
     topology_values_changed += static_cast<uint32_t>(card_res_x_has_changed);
     topology_values_changed += static_cast<uint32_t>(card_res_y_has_changed);
     shader_values_changed += static_cast<uint32_t>(time_has_changed);
@@ -306,6 +310,7 @@ void SubSceneOverride::update(
     stream_values_changed += static_cast<uint32_t>(time_has_changed);
     stream_values_changed += static_cast<uint32_t>(in_stream_has_changed);
     log->debug("shader_values_changed: {}", shader_values_changed);
+    log->debug("shader_border_values_changed: {}", shader_border_values_changed);
     log->debug("topology_values_changed: {}", topology_values_changed);
     log->debug("stream_values_changed: {}", stream_values_changed);
 
@@ -331,6 +336,7 @@ void SubSceneOverride::update(
     bool update_vertices = container.count() == 0;
     bool update_topology = container.count() == 0;
     bool update_shader = container.count() == 0;
+    bool update_shader_border = container.count() == 0;
     if (vertex_values_changed > 0) {
         update_vertices = true;
     }
@@ -340,27 +346,19 @@ void SubSceneOverride::update(
     if (shader_values_changed > 0) {
         update_shader = true;
     }
+    if (shader_border_values_changed > 0) {
+        update_shader_border = true;
+    }
+    log->debug("update_shader_border={}", update_shader_border);
     log->debug("update_shader={}", update_shader);
     log->debug("update_topology={}", update_topology);
     log->debug("update_vertices={}", update_vertices);
 
     if (update_vertices) {
-        // if (exec_status == ocg::ExecuteStatus::kSuccess) {
         auto stream_data = shared_graph->output_stream();
-        // auto display_window = stream_data.display_window();
-        // auto data_window = stream_data.data_window();
-        // auto transform_matrix = stream_data.transform_matrix();
-        // auto color_matrix = stream_data.color_matrix();
         auto num_deformers = stream_data.deformers_len();
-        // if (num_deformers > 0) {
-        //     // SubSceneOverride::m_geometry.set_deformer_func(stream_data);
-        // }
         log->debug("Updating vertex position... num_deformers={}", num_deformers);
         SubSceneOverride::m_geometry.rebuild_vertex_positions(std::move(stream_data));
-        // } else {
-        //     auto stream_data = ocg::StreamData();
-        //     SubSceneOverride::m_geometry.rebuild_vertex_positions(std::move(stream_data));
-        // }
     }
 
     // Update Geometry.
@@ -378,38 +376,53 @@ void SubSceneOverride::update(
     }
 
     // Compile and update shader.
-    status = SubSceneOverride::m_shader.compile("ocgImagePlane");
-    if (!m_shader.instance()) {
-        log->error("SubSceneOverride: Failed to get a shader.");
+    CHECK_MSTATUS(m_shader_wire.compile_file("ocgImagePlaneSolid"));
+    CHECK_MSTATUS(m_shader_border.compile_file("ocgImagePlaneSolid"));
+    CHECK_MSTATUS(m_shader.compile_file("ocgImagePlaneTextured"));
+    if (!m_shader.instance()
+        || !m_shader_border.instance()
+        || !m_shader_wire.instance()) {
+        log->error("SubSceneOverride: Failed to compile shader.");
         return;
     }
-    if (update_shader) {
-        log->debug("SubSceneOverride: Update shader parameters...");
-        // MColor my_color = MHWRender::MGeometryUtilities::wireframeColor(m_instance_dag_paths[0]);
-        // const float color_values[4] = {1.0f, 1.0f, 1.0f, 1.0f};
-        // status = m_shader.set_color_param(m_shader_color_parameter_name, color_values);
-        // CHECK_MSTATUS(status);
 
-        // TODO: Replace with proper values for moving all of the
-        // geometry.
-        const float identity_matrix_values[4][4] = {
+    if (update_shader || update_shader_border) {
+        log->warn("SubSceneOverride: Update shader parameters...");
+
+        const float geom_matrix_values[4][4] = {
             {1.0, 0.0, 0.0, 0.0},
             {0.0, 1.0, 0.0, 0.0},
             {0.0, 0.0, 1.0, 0.0},
             {0.0, 0.0, 0.0, 1.0},
         };
+        MFloatMatrix geom_matrix(geom_matrix_values);
+
+        const float wire_color_values[4] = {0.0f, 0.0f, 1.0f, 1.0f};
+        status = m_shader_wire.set_color_param(
+            m_shader_color_parameter_name, wire_color_values);
+        CHECK_MSTATUS(status);
+
+        const float border_color_values[4] = {1.0f, 0.0f, 0.0f, 1.0f};
+        status = m_shader_border.set_color_param(
+            m_shader_color_parameter_name, border_color_values);
+        CHECK_MSTATUS(status);
 
         // Set the transform matrix parameter expected to move the
         // geometry buffer into the correct place
-        MFloatMatrix geom_matrix(identity_matrix_values);
+        status = m_shader_wire.set_float_matrix4x4_param(
+            m_shader_geometry_transform_parameter_name, geom_matrix);
+        CHECK_MSTATUS(status);
+
+        status = m_shader_border.set_float_matrix4x4_param(
+            m_shader_geometry_transform_parameter_name, geom_matrix);
+        CHECK_MSTATUS(status);
+
         status = m_shader.set_float_matrix4x4_param(
             m_shader_geometry_transform_parameter_name, geom_matrix);
         CHECK_MSTATUS(status);
 
         if (exec_status == ocg::ExecuteStatus::kSuccess) {
             auto stream_data = shared_graph->output_stream();
-            // auto display_window = stream_data.display_window();
-            // auto data_window = stream_data.data_window();
 
             // Set the transform matrix parameter expected to move the
             // geometry buffer into the correct place.
@@ -421,6 +434,16 @@ void SubSceneOverride::update(
                 {tfm_matrix.m30, tfm_matrix.m31, tfm_matrix.m32, tfm_matrix.m33},
             };
             MFloatMatrix image_transform(tfm_matrix_values);
+            status = m_shader_wire.set_float_matrix4x4_param(
+                m_shader_image_transform_parameter_name,
+                image_transform);
+            CHECK_MSTATUS(status);
+
+            status = m_shader_border.set_float_matrix4x4_param(
+                m_shader_image_transform_parameter_name,
+                image_transform);
+            CHECK_MSTATUS(status);
+
             status = m_shader.set_float_matrix4x4_param(
                 m_shader_image_transform_parameter_name,
                 image_transform);
@@ -529,13 +552,28 @@ void SubSceneOverride::update(
     MHWRender::MRenderItem *wire_item = container.find(m_wireframe_render_item_name);
     if (!wire_item) {
         wire_item = MHWRender::MRenderItem::Create(
-                m_wireframe_render_item_name,
-                MHWRender::MRenderItem::DecorationItem,
-                MHWRender::MGeometry::kLineStrip
-            );
+            m_wireframe_render_item_name,
+            MHWRender::MRenderItem::DecorationItem,
+            MHWRender::MGeometry::kLines
+        );
         wire_item->setDrawMode(MHWRender::MGeometry::kWireframe);
         wire_item->depthPriority(MRenderItem::sDormantWireDepthPriority);
         container.add(wire_item);
+        items_changed = true;
+    }
+
+    MHWRender::MRenderItem *border_item = container.find(m_border_render_item_name);
+    if (!border_item) {
+        border_item = MHWRender::MRenderItem::Create(
+            m_border_render_item_name,
+            MHWRender::MRenderItem::DecorationItem,
+            MHWRender::MGeometry::kLines
+        );
+        MGeometry::DrawMode draw_mode =
+            static_cast<MGeometry::DrawMode>(MHWRender::MGeometry::kShaded);
+        border_item->setDrawMode(draw_mode);
+        border_item->depthPriority(MRenderItem::sDormantWireDepthPriority);
+        container.add(border_item);
         items_changed = true;
     }
 
@@ -543,14 +581,13 @@ void SubSceneOverride::update(
     if (!shaded_item)
     {
         shaded_item = MHWRender::MRenderItem::Create(
-                m_shaded_render_item_name,
-                MRenderItem::MaterialSceneItem,
-                MHWRender::MGeometry::kTriangles
-            );
+            m_shaded_render_item_name,
+            MRenderItem::MaterialSceneItem,
+            MHWRender::MGeometry::kTriangles
+        );
         MGeometry::DrawMode draw_mode =
             static_cast<MGeometry::DrawMode>(
-                MHWRender::MGeometry::kShaded
-                | MHWRender::MGeometry::kTextured);
+                MHWRender::MGeometry::kTextured);
         // MGeometry::DrawMode draw_mode = MHWRender::MGeometry::kAll;
         shaded_item->setDrawMode(draw_mode);
         shaded_item->setExcludedFromPostEffects(true);
@@ -562,8 +599,8 @@ void SubSceneOverride::update(
     }
 
     if (items_changed || any_instance_changed) {
-        // TODO: Create custom solid-color shader for wireframes.
-        wire_item->setShader(m_shader.instance());
+        wire_item->setShader(m_shader_wire.instance());
+        border_item->setShader(m_shader_border.instance());
         shaded_item->setShader(m_shader.instance());
     }
 
@@ -575,15 +612,22 @@ void SubSceneOverride::update(
 
         auto position_buffer = this->m_geometry.vertex_positions();
         auto uv_buffer = this->m_geometry.vertex_uvs();
+        auto wire_lines_index_buffer = this->m_geometry.index_wire_lines();
+        auto border_lines_index_buffer = this->m_geometry.index_border_lines();
         auto shaded_index_buffer = this->m_geometry.index_triangles();
 
         MHWRender::MVertexBufferArray vertex_buffers;
         vertex_buffers.addBuffer("positions", position_buffer);
         vertex_buffers.addBuffer("uvs", uv_buffer);
         setGeometryForRenderItem(
-                *wire_item, vertex_buffers, *shaded_index_buffer, bounds);
+            *wire_item, vertex_buffers,
+            *wire_lines_index_buffer, bounds);
         setGeometryForRenderItem(
-                *shaded_item, vertex_buffers, *shaded_index_buffer, bounds);
+            *border_item, vertex_buffers,
+            *border_lines_index_buffer, bounds);
+        setGeometryForRenderItem(
+            *shaded_item, vertex_buffers,
+            *shaded_index_buffer, bounds);
 
         delete bounds;
     }
@@ -594,6 +638,7 @@ void SubSceneOverride::update(
             // consolidation is enabled for static scenario, mainly to
             // improve tumbling performance.
             wire_item->setWantSubSceneConsolidation(true);
+            border_item->setWantSubSceneConsolidation(true);
             shaded_item->setWantSubSceneConsolidation(true);
 
             // When not dealing with multiple instances, don't convert
@@ -601,11 +646,13 @@ void SubSceneOverride::update(
             // on them directly.
             MMatrix &obj_to_world = instance_matrix_array[0];
             wire_item->setMatrix(&obj_to_world);
+            border_item->setMatrix(&obj_to_world);
             shaded_item->setMatrix(&obj_to_world);
         } else {
             // For multiple instances, subscene conslidation should be
             // turned off so that the GPU instancing can kick in.
             wire_item->setWantSubSceneConsolidation(false);
+            border_item->setWantSubSceneConsolidation(false);
             shaded_item->setWantSubSceneConsolidation(false);
 
             // If we have DAG instances of this shape then use the
@@ -616,9 +663,12 @@ void SubSceneOverride::update(
             // Note this has to happen after the geometry and shaders
             // are set, otherwise it will fail.
             setInstanceTransformArray(*wire_item, instance_matrix_array);
+            setInstanceTransformArray(*border_item, instance_matrix_array);
             setInstanceTransformArray(*shaded_item, instance_matrix_array);
             setExtraInstanceData(
                 *wire_item, m_shader_color_parameter_name, instance_color_array);
+            setExtraInstanceData(
+                *border_item, m_shader_color_parameter_name, instance_color_array);
             setExtraInstanceData(
                 *shaded_item, m_shader_color_parameter_name, instance_color_array);
 

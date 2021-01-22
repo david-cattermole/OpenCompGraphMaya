@@ -53,6 +53,9 @@ Shader::Shader() : m_shader(nullptr) {}
 Shader::~Shader() {
     auto log = log::get_logger();
     log->debug("ocgImagePlane: Releasing shader...");
+    if (m_shader == nullptr) {
+        return;
+    }
 
     MHWRender::MRenderer *renderer = MHWRender::MRenderer::theRenderer();
     if (!renderer) {
@@ -79,34 +82,28 @@ MShaderInstance* Shader::instance() const noexcept {
     return this->m_shader;
 };
 
-MStatus
-Shader::compile(const MString shader_file_name) {
+
+const MHWRender::MShaderManager*
+Shader::get_shader_manager() {
     auto log = log::get_logger();
-    MStatus status = MS::kSuccess;
-    if (m_shader != nullptr) {
-        // log->debug("ocgImagePlane, found shader!");
-        return status;
-    } else {
-        log->debug("ocgImagePlane compiling shader...");
-    }
 
     MHWRender::MRenderer *renderer = MHWRender::MRenderer::theRenderer();
     if (!renderer) {
         log->error("ocgImagePlane: failed to get renderer.");
-        return MS::kFailure;
+        return nullptr;
     }
 
     // If not core profile: ogsfx is not available save effect name
     // and leave.
     if (renderer->drawAPI() != MHWRender::kOpenGLCoreProfile) {
         log->warn("ocgImagePlane is only supported with OpenGL Core Profile!");
-        return MS::kFailure;
+        return nullptr;
     }
 
     const MHWRender::MShaderManager *shader_manager = renderer->getShaderManager();
     if (!shader_manager) {
         log->error("ocgImagePlane failed get shader manager.");
-        return MS::kFailure;
+        return nullptr;
     }
 
     // In core profile, there used to be the problem where the shader
@@ -118,11 +115,51 @@ Shader::compile(const MString shader_file_name) {
     // context... so that in the draw phase, after switching to the
     // viewport context, the drawing is erroneous.  In order to solve
     // that problem, make the view context current
+    MStatus status = MS::kSuccess;
     M3dView view = M3dView::active3dView(&status);
     if (status != MStatus::kSuccess) {
-        return status;
+        return nullptr;
     }
     view.makeSharedContextCurrent();
+    return shader_manager;
+}
+
+
+MStatus
+Shader::compile_stock_3d_shader() {
+    auto log = log::get_logger();
+    MStatus status = MS::kSuccess;
+    if (m_shader != nullptr) {
+        return status;
+    } else {
+        log->debug("ocgImagePlane compiling stock 3d shader...");
+    }
+
+    auto shader_manager = get_shader_manager();
+    if (shader_manager == nullptr) {
+        return MS::kFailure;
+    }
+
+    m_shader = shader_manager->getStockShader(
+        MHWRender::MShaderManager::k3dSolidShader);
+    return MS::kSuccess;
+}
+
+
+MStatus
+Shader::compile_file(const MString shader_file_name) {
+    auto log = log::get_logger();
+    MStatus status = MS::kSuccess;
+    if (m_shader != nullptr) {
+        return status;
+    } else {
+        log->debug("ocgImagePlane compiling shader file...");
+    }
+
+    auto shader_manager = get_shader_manager();
+    if (shader_manager == nullptr) {
+        return MS::kFailure;
+    }
 
     MString shader_location;
     MString cmd = MString("getModulePath -moduleName \"OpenCompGraphMaya\";");

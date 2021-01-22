@@ -66,17 +66,23 @@ public:
     MHWRender::MVertexBuffer* vertex_positions() const noexcept;
     MHWRender::MVertexBuffer* vertex_uvs() const noexcept;
     MHWRender::MIndexBuffer* index_triangles() const noexcept;
+    MHWRender::MIndexBuffer* index_border_lines() const noexcept;
+    MHWRender::MIndexBuffer* index_wire_lines() const noexcept;
 
     // Create VertexBuffers and Index Buffers.
     void rebuild_vertex_positions(ocg::StreamData &stream_data);
     void rebuild_vertex_uvs();
     void rebuild_index_triangles();
+    void rebuild_index_border_lines();
+    void rebuild_index_wire_lines();
     void rebuild_all(ocg::StreamData &stream_data);
 
     // delete VertexBuffers and Index Buffers.
     void clear_vertex_positions();
     void clear_vertex_uvs();
     void clear_index_triangles();
+    void clear_index_border_lines();
+    void clear_index_wire_lines();
     void clear_all();
 
 private:
@@ -89,6 +95,8 @@ private:
     MHWRender::MVertexBuffer* m_position_buffer;
     MHWRender::MVertexBuffer* m_uv_buffer;
     MHWRender::MIndexBuffer* m_shaded_index_buffer;
+    MHWRender::MIndexBuffer* m_border_lines_index_buffer;
+    MHWRender::MIndexBuffer* m_wire_lines_index_buffer;
 };
 
 } // namespace image_plane

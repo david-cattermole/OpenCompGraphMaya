@@ -114,6 +114,8 @@ private:
         std::shared_ptr<ocg::Cache> shared_cache);
 
     // Shaders
+    Shader m_shader_wire;
+    Shader m_shader_border;
     Shader m_shader;
 
     // Shader Constants
@@ -150,7 +152,6 @@ private:
         MColor m_color;
 
         InstanceInfo() {}
-
         InstanceInfo(const MMatrix &matrix,
                      const MColor &color) : m_matrix(matrix),
                                             m_color(color) {}
@@ -168,6 +169,7 @@ private:
     MDagPathArray m_instance_dag_paths;
 
     // Viewport 2.0 render item names
+    static MString m_border_render_item_name;
     static MString m_wireframe_render_item_name;
     static MString m_shaded_render_item_name;
 };

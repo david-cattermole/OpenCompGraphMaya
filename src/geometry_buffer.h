@@ -47,6 +47,14 @@ MHWRender::MIndexBuffer* build_index_buffer_triangles(
     const size_t divisions_x,
     const size_t divisions_y);
 
+MHWRender::MIndexBuffer* build_index_buffer_border_lines(
+    const size_t divisions_x,
+    const size_t divisions_y);
+
+MHWRender::MIndexBuffer* build_index_buffer_wire_lines(
+    const size_t divisions_x,
+    const size_t divisions_y);
+
 } // namespace geometry_buffer
 } // namespace open_comp_graph_maya
 

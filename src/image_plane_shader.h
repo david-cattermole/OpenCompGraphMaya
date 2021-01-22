@@ -59,8 +59,8 @@ public:
 
     MHWRender::MShaderInstance* instance() const noexcept;
 
-    // Shader compile.
-    MStatus compile(const MString shader_file_name);
+    MStatus compile_stock_3d_shader();
+    MStatus compile_file(const MString shader_file_name);
 
     // Set Parameters
     MStatus set_color_param(
@@ -80,6 +80,8 @@ public:
         ocg::StreamData stream_data);
 
 private:
+    const MHWRender::MShaderManager* get_shader_manager();
+
     MHWRender::MShaderInstance *m_shader;
 };
 

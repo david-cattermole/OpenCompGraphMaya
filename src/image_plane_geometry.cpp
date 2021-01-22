@@ -44,6 +44,8 @@ namespace image_plane {
 Geometry::Geometry() : m_divisions_x(16), m_divisions_y(16),
                        m_position_buffer(nullptr),
                        m_uv_buffer(nullptr),
+                       m_wire_lines_index_buffer(nullptr),
+                       m_border_lines_index_buffer(nullptr),
                        m_shaded_index_buffer(nullptr) {}
 
 Geometry::~Geometry() {
@@ -79,12 +81,19 @@ MHWRender::MIndexBuffer* Geometry::index_triangles() const noexcept {
     return Geometry::m_shaded_index_buffer;
 }
 
+MHWRender::MIndexBuffer* Geometry::index_border_lines() const noexcept {
+    return Geometry::m_border_lines_index_buffer;
+}
+
+MHWRender::MIndexBuffer* Geometry::index_wire_lines() const noexcept {
+    return Geometry::m_wire_lines_index_buffer;
+}
+
 void Geometry::rebuild_vertex_positions(ocg::StreamData &stream_data) {
     this->clear_vertex_positions();
     m_position_buffer = geometry_buffer::build_vertex_buffer_positions(
         m_divisions_x, m_divisions_y, std::move(stream_data));
 }
-
 
 void Geometry::rebuild_vertex_uvs() {
     this->clear_vertex_uvs();
@@ -92,13 +101,23 @@ void Geometry::rebuild_vertex_uvs() {
         m_divisions_x, m_divisions_y);
 }
 
-
 void Geometry::rebuild_index_triangles() {
     this->clear_index_triangles();
     m_shaded_index_buffer = geometry_buffer::build_index_buffer_triangles(
         m_divisions_x, m_divisions_y);
 }
 
+void Geometry::rebuild_index_border_lines() {
+    this->clear_index_border_lines();
+    m_border_lines_index_buffer = geometry_buffer::build_index_buffer_border_lines(
+        m_divisions_x, m_divisions_y);
+}
+
+void Geometry::rebuild_index_wire_lines() {
+    this->clear_index_wire_lines();
+    m_wire_lines_index_buffer = geometry_buffer::build_index_buffer_wire_lines(
+        m_divisions_x, m_divisions_y);
+}
 
 void Geometry::rebuild_all(ocg::StreamData &stream_data) {
     auto log = log::get_logger();
@@ -111,6 +130,11 @@ void Geometry::rebuild_all(ocg::StreamData &stream_data) {
         m_divisions_x, m_divisions_y);
     m_shaded_index_buffer = geometry_buffer::build_index_buffer_triangles(
         m_divisions_x, m_divisions_y);
+    m_border_lines_index_buffer = geometry_buffer::build_index_buffer_border_lines(
+        m_divisions_x, m_divisions_y);
+    m_wire_lines_index_buffer = geometry_buffer::build_index_buffer_wire_lines(
+        m_divisions_x, m_divisions_y);
+
 }
 
 void Geometry::clear_vertex_positions() {
@@ -128,10 +152,22 @@ void Geometry::clear_index_triangles() {
     m_shaded_index_buffer = nullptr;
 }
 
+void Geometry::clear_index_border_lines() {
+    delete m_border_lines_index_buffer;
+    m_border_lines_index_buffer = nullptr;
+}
+
+void Geometry::clear_index_wire_lines() {
+    delete m_wire_lines_index_buffer;
+    m_wire_lines_index_buffer = nullptr;
+}
+
 void Geometry::clear_all() {
     clear_vertex_positions();
     clear_vertex_uvs();
     clear_index_triangles();
+    clear_index_border_lines();
+    clear_index_wire_lines();
 }
 
 } // namespace image_plane
