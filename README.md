@@ -49,6 +49,7 @@ worked on.
 | Write node graph to disk to bake and speed up read speeds.           | To be started |
 | Control OCG caching preferences from Maya nodes.                     | To be started |
 | Display which frames are cached in the Maya timeline (with a color). | To be started |
+| Render the image plane natively in Software renderers (e.g. Arnold)  | To be started |
 
 ## Installation / Building
 
