@@ -219,6 +219,12 @@ Shader::compile_file(const MString shader_file_name) {
                        display_line_number, filter_source, num_lines).asChar());
         return MS::kFailure;
     }
+
+    // Allow transparency in the shader.
+    //
+    // TODO: Expose this method call to this 'Shader' class.
+    m_shader->setIsTransparent(true);
+
     MStringArray parameter_list;
     m_shader->parameterList(parameter_list);
     for (uint32_t i = 0; i < parameter_list.length(); ++i) {
