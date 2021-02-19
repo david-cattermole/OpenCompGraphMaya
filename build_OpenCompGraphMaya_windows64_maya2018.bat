@@ -74,9 +74,15 @@ POPD
 :: Build the OpenCompGraph project.
 SET OCG_ROOT=%PROJECT_ROOT%\src\OpenCompGraph\
 CALL %OCG_ROOT%\scripts\build_rust_windows64.bat
+
 :: Where to find the Rust libraries and headers.
 SET RUST_BUILD_DIR="%OCG_ROOT%\target\release"
 SET RUST_INCLUDE_DIR="%OCG_ROOT%\include"
+
+:: Third-party libraries.
+SET THIRDPARTY_INSTALL_DIR=%OCG_ROOT%\thirdparty\install
+SET OPENCOLORIO_ROOT=%THIRDPARTY_INSTALL_DIR%\opencolorio
+SET OPENIMAGEIO_ROOT=%THIRDPARTY_INSTALL_DIR%\openimageio
 
 :: Build plugin
 MKDIR build_windows64_maya%MAYA_VERSION%_%BUILD_TYPE%
@@ -102,11 +108,13 @@ REM To Generate a Visual Studio 'Solution' file
     cmake -G "NMake Makefiles" ^
         -DCMAKE_BUILD_TYPE=%BUILD_TYPE% ^
         -DCMAKE_INSTALL_PREFIX=%INSTALL_MODULE_DIR% ^
-        -DRUST_BUILD_DIR=%RUST_BUILD_DIR% ^
-        -DRUST_INCLUDE_DIR=%RUST_INCLUDE_DIR% ^
+        -DOpenCompGraph_RUST_BUILD_DIR=%RUST_BUILD_DIR% ^
+        -DOpenCompGraph_RUST_INCLUDE_DIR=%RUST_INCLUDE_DIR% ^
         -DMAYA_LOCATION=%MAYA_LOCATION% ^
         -DMAYA_VERSION=%MAYA_VERSION% ^
         -Dspdlog_DIR=%PROJECT_ROOT%\thirdparty\install\lib\cmake\spdlog ^
+        -DOPENCOLORIO_ROOT=%OPENCOLORIO_ROOT% ^
+        -DOPENIMAGEIO_ROOT=%OPENIMAGEIO_ROOT% ^
         ..
 
     nmake /F Makefile clean

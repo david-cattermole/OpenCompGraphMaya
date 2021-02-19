@@ -286,6 +286,8 @@ Shader::set_texture_param_with_stream_data(
     log->debug("pixels: {}x{} c={}",
                pixel_width,  pixel_height,
                static_cast<uint32_t>(pixel_num_channels));
+    auto pixel_data_type = stream_data.pixel_data_type();
+    auto channel_num_bytes = ocg::internal::channel_size_bytes(pixel_data_type);
     auto buffer = static_cast<const void*>(pixel_buffer.data());
 
     // Upload Texture data to the GPU using Maya's API.
@@ -296,12 +298,35 @@ Shader::set_texture_param_with_stream_data(
     texture_description.setToDefault2DTexture();
     texture_description.fWidth = pixel_width;
     texture_description.fHeight = pixel_height;
-    if (pixel_num_channels == 3) {
-        texture_description.fFormat = MHWRender::kR32G32B32_FLOAT;
-    } else {
-        texture_description.fFormat = MHWRender::kR32G32B32A32_FLOAT;
-    }
+    texture_description.fDepth = 1;
     texture_description.fMipmaps = 1;
+
+    if (pixel_data_type == ocg::PixelDataType::kUInt8) {
+        texture_description.fFormat = MHWRender::kR8G8B8A8_UNORM;
+
+    } else if (pixel_data_type == ocg::PixelDataType::kHalf16) {
+        texture_description.fFormat = MHWRender::kR16G16B16A16_FLOAT;
+
+    } else if (pixel_data_type == ocg::PixelDataType::kUInt16) {
+        texture_description.fFormat = MHWRender::kR16G16B16A16_UINT;
+
+    } else if (pixel_data_type == ocg::PixelDataType::kFloat32) {
+        if (pixel_num_channels == 3) {
+            texture_description.fFormat = MHWRender::kR32G32B32_FLOAT;
+        } else if (pixel_num_channels == 4) {
+            texture_description.fFormat = MHWRender::kR32G32B32A32_FLOAT;
+        } else {
+            log->error("ocgImagePlane: Invalid number of channels in image.");
+            return MS::kFailure;
+        }
+
+    } else {
+        log->error(
+            "ocgImagePlane: Invalid image pixel data type: {}",
+            pixel_data_type);
+        return MS::kFailure;
+    }
+
     // Using an empty texture name by-passes the MTextureManager's
     // inbuilt caching system - or values are not remembered by
     // Maya, we must store a cache.
