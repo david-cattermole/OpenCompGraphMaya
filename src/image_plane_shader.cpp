@@ -220,11 +220,6 @@ Shader::compile_file(const MString shader_file_name) {
         return MS::kFailure;
     }
 
-    // Allow transparency in the shader.
-    //
-    // TODO: Expose this method call to this 'Shader' class.
-    m_shader->setIsTransparent(true);
-
     MStringArray parameter_list;
     m_shader->parameterList(parameter_list);
     for (uint32_t i = 0; i < parameter_list.length(); ++i) {
@@ -234,6 +229,17 @@ Shader::compile_file(const MString shader_file_name) {
 
     return status;
 }
+
+
+bool Shader::is_transparent() const {
+    return m_shader->isTransparent();
+}
+
+
+MStatus Shader::set_is_transparent(const bool value) {
+    return m_shader->setIsTransparent(value);
+}
+
 
 // Set a color parameter.
 MStatus

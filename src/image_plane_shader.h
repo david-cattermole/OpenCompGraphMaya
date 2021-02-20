@@ -62,6 +62,10 @@ public:
     MStatus compile_stock_3d_shader();
     MStatus compile_file(const MString shader_file_name);
 
+    // Is the shader treated as transparent?
+    bool is_transparent() const;
+    MStatus set_is_transparent(const bool value);
+
     // Set Parameters
     MStatus set_color_param(
         const MString parameter_name,

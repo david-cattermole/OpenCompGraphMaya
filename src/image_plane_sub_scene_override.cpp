@@ -389,6 +389,9 @@ void SubSceneOverride::update(
     if (update_shader || update_shader_border) {
         log->warn("SubSceneOverride: Update shader parameters...");
 
+        // Allow transparency in the shader.
+        m_shader.set_is_transparent(true);
+
         const float geom_matrix_values[4][4] = {
             {1.0, 0.0, 0.0, 0.0},
             {0.0, 1.0, 0.0, 0.0},
