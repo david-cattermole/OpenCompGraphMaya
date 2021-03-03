@@ -63,9 +63,21 @@ MHWRender::MVertexBuffer* build_vertex_buffer_positions(
         if (buffer) {
             rust::Slice<float> slice{buffer, pos_buffer_size};
             geom->fill_buffer_vertex_positions(slice);
+
+            // Deformer variables required for deformation.
+            //
+            // TODO: Allow the user to set the direction.
+            auto direction = ocg::DeformerDirection::kForward;
+            // TODO: Set the 'display window' for the deformation to be used.
+            auto image_window = ocg::BBox2Df();
+            image_window.min_x = -0.5;
+            image_window.min_y = -0.5;
+            image_window.max_x = +0.5;
+            image_window.max_y = +0.5;
+
             if (stream_data.deformers_len() > 0) {
                 log->warn("applying lens distortion!");
-                stream_data.apply_deformers(slice);
+                stream_data.apply_deformers(slice, image_window, direction);
             }
             // for (int i = 0; i < pos_count; ++i) {
             //     int index = i * per_vertex_pos_count;
