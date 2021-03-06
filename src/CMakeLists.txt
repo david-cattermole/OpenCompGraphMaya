@@ -27,7 +27,7 @@ set(SOURCE_FILES
   ${CMAKE_CURRENT_SOURCE_DIR}/image_plane_shape.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/image_plane_shader.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/image_plane_sub_scene_override.cpp
-  ${CMAKE_CURRENT_SOURCE_DIR}/image_plane_geometry.cpp
+  ${CMAKE_CURRENT_SOURCE_DIR}/image_plane_geometry_canvas.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/image_read_node.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/image_transform_node.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/color_grade_node.cpp

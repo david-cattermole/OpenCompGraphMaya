@@ -214,7 +214,7 @@ SubSceneOverride::SubSceneOverride(const MObject &obj)
 }
 
 SubSceneOverride::~SubSceneOverride() {
-    SubSceneOverride::m_geometry.clear_all();
+    m_geometry_canvas.clear_all();
 
     // Remove callbacks related to instances.
     if (m_instance_added_cb_id != 0) {
@@ -358,7 +358,7 @@ void SubSceneOverride::update(
         auto stream_data = shared_graph->output_stream();
         auto num_deformers = stream_data.deformers_len();
         log->debug("Updating vertex position... num_deformers={}", num_deformers);
-        SubSceneOverride::m_geometry.rebuild_vertex_positions(std::move(stream_data));
+        m_geometry_canvas.rebuild_vertex_positions(std::move(stream_data));
     }
 
     // Update Geometry.
@@ -367,9 +367,9 @@ void SubSceneOverride::update(
         // data changing. We can update the vertex buffer without
         // needing to change the index buffers.
         auto stream_data = shared_graph->output_stream();
-        SubSceneOverride::m_geometry.set_divisions_x(m_card_res_x);
-        SubSceneOverride::m_geometry.set_divisions_y(m_card_res_y);
-        SubSceneOverride::m_geometry.rebuild_all(std::move(stream_data));
+        m_geometry_canvas.set_divisions_x(m_card_res_x);
+        m_geometry_canvas.set_divisions_y(m_card_res_y);
+        m_geometry_canvas.rebuild_all(std::move(stream_data));
         // The vertices have been updated already, so there's no need
         // to do it again.
         update_vertices = false;
@@ -613,11 +613,11 @@ void SubSceneOverride::update(
         ShapeNode *fp = status ? dynamic_cast<ShapeNode *>(node.userNode()) : nullptr;
         MBoundingBox *bounds = fp ? new MBoundingBox(fp->boundingBox()) : nullptr;
 
-        auto position_buffer = this->m_geometry.vertex_positions();
-        auto uv_buffer = this->m_geometry.vertex_uvs();
-        auto wire_lines_index_buffer = this->m_geometry.index_wire_lines();
-        auto border_lines_index_buffer = this->m_geometry.index_border_lines();
-        auto shaded_index_buffer = this->m_geometry.index_triangles();
+        auto position_buffer = this->m_geometry_canvas.vertex_positions();
+        auto uv_buffer = this->m_geometry_canvas.vertex_uvs();
+        auto wire_lines_index_buffer = this->m_geometry_canvas.index_wire_lines();
+        auto border_lines_index_buffer = this->m_geometry_canvas.index_border_lines();
+        auto shaded_index_buffer = this->m_geometry_canvas.index_triangles();
 
         MHWRender::MVertexBufferArray vertex_buffers;
         vertex_buffers.addBuffer("positions", position_buffer);

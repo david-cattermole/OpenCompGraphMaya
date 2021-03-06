@@ -17,11 +17,11 @@
  * along with OpenCompGraphMaya.  If not, see <https://www.gnu.org/licenses/>.
  * ====================================================================
  *
- * Image Plane Geometry Buffers.
+ * Image Plane Canvas Geometry Buffers.
  */
 
-#ifndef OPENCOMPGRAPHMAYA_IMAGE_PLANE_GEOMETRY_H
-#define OPENCOMPGRAPHMAYA_IMAGE_PLANE_GEOMETRY_H
+#ifndef OPENCOMPGRAPHMAYA_IMAGE_PLANE_GEOMETRY_CANVAS_H
+#define OPENCOMPGRAPHMAYA_IMAGE_PLANE_GEOMETRY_CANVAS_H
 
 // Maya
 #include <maya/MString.h>
@@ -51,11 +51,11 @@ namespace ocg = open_comp_graph;
 namespace open_comp_graph_maya{
 namespace image_plane{
 
-class Geometry {
+class GeometryCanvas {
 public:
 
-    Geometry();
-    ~Geometry();
+    GeometryCanvas();
+    ~GeometryCanvas();
 
     size_t divisions_x() const noexcept;
     size_t divisions_y() const noexcept;
@@ -102,4 +102,4 @@ private:
 } // namespace image_plane
 } // namespace open_comp_graph_maya
 
-#endif //OPENCOMPGRAPHMAYA_IMAGE_PLANE_GEOMETRY_H
+#endif //OPENCOMPGRAPHMAYA_IMAGE_PLANE_GEOMETRY_CANVAS_H

@@ -48,7 +48,7 @@
 #include <opencompgraph.h>
 
 // OCG Maya
-#include "image_plane_geometry.h"
+#include "image_plane_geometry_canvas.h"
 #include "image_plane_shader.h"
 
 
@@ -105,7 +105,7 @@ private:
 
     SubSceneOverride(const MObject &obj);
 
-    Geometry m_geometry;
+    GeometryCanvas m_geometry_canvas;
 
     ocg::ExecuteStatus execute_ocg_graph(
         ocg::Node stream_ocg_node,
