@@ -178,6 +178,7 @@ get_plug_value_stream(MPlug plug, ocg::Node old_value) {
 // Parameter Names
 MString SubSceneOverride::m_shader_color_parameter_name = "gSolidColor";
 MString SubSceneOverride::m_shader_geometry_transform_parameter_name = "gGeometryTransform";
+MString SubSceneOverride::m_shader_rescale_transform_parameter_name = "gRescaleTransform";
 MString SubSceneOverride::m_shader_image_transform_parameter_name = "gImageTransform";
 MString SubSceneOverride::m_shader_image_color_matrix_parameter_name = "gImageColorMatrix";
 MString SubSceneOverride::m_shader_image_texture_parameter_name = "gImageTexture";
@@ -417,6 +418,14 @@ void SubSceneOverride::update(
         // Allow transparency in the shader.
         m_shader.set_is_transparent(true);
 
+        const float identity_transform_values[4][4] = {
+            {1.0, 0.0, 0.0, 0.0},
+            {0.0, 1.0, 0.0, 0.0},
+            {0.0, 0.0, 1.0, 0.0},
+            {0.0, 0.0, 0.0, 1.0},
+        };
+        MFloatMatrix identity_transform(identity_transform_values);
+
         const float geom_matrix_values[4][4] = {
             {1.0, 0.0, 0.0, 0.0},
             {0.0, 1.0, 0.0, 0.0},
@@ -469,6 +478,75 @@ void SubSceneOverride::update(
 
         if (exec_status == ocg::ExecuteStatus::kSuccess) {
             auto stream_data = shared_graph->output_stream();
+
+            // Move display window to the image plane.
+            auto display_window = stream_data.display_window();
+            auto display_width = static_cast<float>(display_window.max_x - display_window.min_x);
+            auto display_height = static_cast<float>(display_window.max_y - display_window.min_y);
+            auto display_half_width = display_width / 2.0;
+            auto display_half_height = display_height / 2.0;
+            // TODO: Create logic for "film fit" modes. Currently
+            // we're using "horizontal" (aka "width").
+            auto display_fit_scale_x = display_width;
+            auto display_fit_scale_y = display_width;
+            auto display_scale_x = 1.0 / display_fit_scale_x;
+            auto display_scale_y = 1.0 / display_fit_scale_y;
+            auto display_offset_x = (static_cast<float>(display_window.min_x) - display_half_width) / display_fit_scale_x;
+            auto display_offset_y = (static_cast<float>(display_window.min_y) - display_half_height) / display_fit_scale_y;
+            const float rescale_display_window_values[4][4] = {
+                // X
+                {display_scale_x, 0.0, 0.0, 0.0},
+                // Y
+                {0.0, display_scale_y, 0.0, 0.0},
+                // Z
+                {0.0, 0.0, 1.0, 0.0},
+                // W
+                {display_offset_x, display_offset_y, 0.0, 1.0},
+            };
+            MFloatMatrix rescale_display_window_transform(rescale_display_window_values);
+
+            // Move Canvas to the data window.
+            auto data_window = stream_data.data_window();
+            auto data_scale_x = static_cast<float>(data_window.max_x - data_window.min_x);
+            auto data_scale_y = static_cast<float>(data_window.max_y - data_window.min_y);
+            auto data_offset_x = static_cast<float>(data_window.min_x);
+            auto data_offset_y = static_cast<float>(data_window.min_y);
+            const float move_data_window_values[4][4] = {
+                // X
+                {data_scale_x, 0.0, 0.0, 0.0},
+                // Y
+                {0.0, data_scale_y, 0.0, 0.0},
+                // Z
+                {0.0, 0.0, 1.0, 0.0},
+                // W
+                {data_offset_x, data_offset_y, 0.0, 1.0},
+            };
+            MFloatMatrix move_data_window_transform(move_data_window_values);
+            move_data_window_transform *= rescale_display_window_transform;
+            status = m_shader_wire.set_float_matrix4x4_param(
+                m_shader_rescale_transform_parameter_name,
+                move_data_window_transform);
+            CHECK_MSTATUS(status);
+
+            status = m_shader_border.set_float_matrix4x4_param(
+                m_shader_rescale_transform_parameter_name,
+                move_data_window_transform);
+            CHECK_MSTATUS(status);
+
+            status = m_shader.set_float_matrix4x4_param(
+                m_shader_rescale_transform_parameter_name,
+                move_data_window_transform);
+            CHECK_MSTATUS(status);
+
+            status = m_shader_display_window.set_float_matrix4x4_param(
+                m_shader_rescale_transform_parameter_name,
+                rescale_display_window_transform);
+            CHECK_MSTATUS(status);
+
+            status = m_shader_data_window.set_float_matrix4x4_param(
+                m_shader_rescale_transform_parameter_name,
+                rescale_display_window_transform);
+            CHECK_MSTATUS(status);
 
             // Set the transform matrix parameter expected to move the
             // geometry buffer into the correct place.

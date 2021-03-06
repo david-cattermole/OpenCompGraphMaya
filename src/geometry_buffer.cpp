@@ -45,7 +45,14 @@ MHWRender::MVertexBuffer* build_vertex_buffer_positions(
     ocg::StreamData &stream_data) {
     auto log = log::get_logger();
 
-    auto geom = ocg::internal::create_geometry_plane_box(divisions_x, divisions_y);
+    auto center_x = -0.5f;
+    auto center_y = -0.5f;
+    auto size_x = 1.0f;
+    auto size_y = 1.0f;
+    auto geom = ocg::internal::create_geometry_plane_box(
+        center_x, center_y,
+        size_x, size_y,
+        divisions_x, divisions_y);
 
     const auto per_vertex_pos_count = 3;
     const MHWRender::MVertexBufferDescriptor vb_desc(
@@ -68,16 +75,22 @@ MHWRender::MVertexBuffer* build_vertex_buffer_positions(
             //
             // TODO: Allow the user to set the direction.
             auto direction = ocg::DeformerDirection::kForward;
-            // TODO: Set the 'display window' for the deformation to be used.
-            auto image_window = ocg::BBox2Df();
-            image_window.min_x = -0.5;
-            image_window.min_y = -0.5;
-            image_window.max_x = +0.5;
-            image_window.max_y = +0.5;
+
+            // TODO: Work out the correct maths to ensure lens
+            // distortion considers the deformation relative to the
+            // display window.
+            auto canvas_window = ocg::BBox2Df();
+            canvas_window.min_x = -0.0;
+            canvas_window.min_y = -0.0;
+            canvas_window.max_x = +1.0;
+            canvas_window.max_y = +1.0;
 
             if (stream_data.deformers_len() > 0) {
                 log->warn("applying lens distortion!");
-                stream_data.apply_deformers(slice, image_window, direction);
+                log->warn("canvas window: min_x={} min_y={} max_x={} max_y={}",
+                          canvas_window.min_x, canvas_window.min_y,
+                          canvas_window.max_x, canvas_window.max_y);
+                stream_data.apply_deformers(slice, canvas_window, direction);
             }
             // for (int i = 0; i < pos_count; ++i) {
             //     int index = i * per_vertex_pos_count;
@@ -99,7 +112,14 @@ MHWRender::MVertexBuffer* build_vertex_buffer_uvs(
     const size_t divisions_y) {
     auto log = log::get_logger();
 
-    auto geom = ocg::internal::create_geometry_plane_box(divisions_x, divisions_y);
+    auto center_x = -0.5f;
+    auto center_y = -0.5f;
+    auto size_x = 1.0f;
+    auto size_y = 1.0f;
+    auto geom = ocg::internal::create_geometry_plane_box(
+        center_x, center_y,
+        size_x, size_y,
+        divisions_x, divisions_y);
 
     const auto per_vertex_uv_count = 2;
     const MHWRender::MVertexBufferDescriptor uv_desc(
@@ -136,7 +156,14 @@ MHWRender::MIndexBuffer* build_index_buffer_triangles(
     const size_t divisions_x,
     const size_t divisions_y) {
 
-    auto geom = ocg::internal::create_geometry_plane_box(divisions_x, divisions_y);
+    auto center_x = -0.5f;
+    auto center_y = -0.5f;
+    auto size_x = 1.0f;
+    auto size_y = 1.0f;
+    auto geom = ocg::internal::create_geometry_plane_box(
+        center_x, center_y,
+        size_x, size_y,
+        divisions_x, divisions_y);
 
     MHWRender::MIndexBuffer* index_buffer = new MHWRender::MIndexBuffer(
         MHWRender::MGeometry::kUnsignedInt32);
@@ -164,7 +191,14 @@ MHWRender::MIndexBuffer* build_index_buffer_border_lines(
     const size_t divisions_x,
     const size_t divisions_y) {
 
-    auto geom = ocg::internal::create_geometry_plane_box(divisions_x, divisions_y);
+    auto center_x = -0.5f;
+    auto center_y = -0.5f;
+    auto size_x = 1.0f;
+    auto size_y = 1.0f;
+    auto geom = ocg::internal::create_geometry_plane_box(
+        center_x, center_y,
+        size_x, size_y,
+        divisions_x, divisions_y);
 
     MHWRender::MIndexBuffer* index_buffer = new MHWRender::MIndexBuffer(
         MHWRender::MGeometry::kUnsignedInt32);
@@ -192,7 +226,14 @@ MHWRender::MIndexBuffer* build_index_buffer_wire_lines(
     const size_t divisions_x,
     const size_t divisions_y) {
 
-    auto geom = ocg::internal::create_geometry_plane_box(divisions_x, divisions_y);
+    auto center_x = -0.5f;
+    auto center_y = -0.5f;
+    auto size_x = 1.0f;
+    auto size_y = 1.0f;
+    auto geom = ocg::internal::create_geometry_plane_box(
+        center_x, center_y,
+        size_x, size_y,
+        divisions_x, divisions_y);
 
     MHWRender::MIndexBuffer* index_buffer = new MHWRender::MIndexBuffer(
         MHWRender::MGeometry::kUnsignedInt32);
@@ -238,26 +279,26 @@ MHWRender::MVertexBuffer* build_window_vertex_buffer_positions(
         if (buffer) {
             // Vertex 0 - lower-left
             auto vertex_idx = 0;
-            buffer[vertex_idx + 0] = static_cast<float>(bounding_box.min_x) / 10.0f;
-            buffer[vertex_idx + 1] = static_cast<float>(bounding_box.min_y) / 10.0f;
+            buffer[vertex_idx + 0] = static_cast<float>(bounding_box.min_x);
+            buffer[vertex_idx + 1] = static_cast<float>(bounding_box.min_y);
             buffer[vertex_idx + 2] = 0.0;
             vertex_idx += per_vertex_pos_count;
 
             // Vertex 1 - upper-left
-            buffer[vertex_idx + 0] = static_cast<float>(bounding_box.min_x) / 10.0f;
-            buffer[vertex_idx + 1] = static_cast<float>(bounding_box.max_y) / 10.0f;
+            buffer[vertex_idx + 0] = static_cast<float>(bounding_box.min_x);
+            buffer[vertex_idx + 1] = static_cast<float>(bounding_box.max_y);
             buffer[vertex_idx + 2] = 0.0;
             vertex_idx += per_vertex_pos_count;
 
             // Vertex 2 - upper-right
-            buffer[vertex_idx + 0] = static_cast<float>(bounding_box.max_x) / 10.0f;
-            buffer[vertex_idx + 1] = static_cast<float>(bounding_box.max_y) / 10.0f;
+            buffer[vertex_idx + 0] = static_cast<float>(bounding_box.max_x);
+            buffer[vertex_idx + 1] = static_cast<float>(bounding_box.max_y);
             buffer[vertex_idx + 2] = 0.0;
             vertex_idx += per_vertex_pos_count;
 
             // Vertex 3 - lower-right
-            buffer[vertex_idx + 0] = static_cast<float>(bounding_box.max_x) / 10.0f;
-            buffer[vertex_idx + 1] = static_cast<float>(bounding_box.min_y) / 10.0f;
+            buffer[vertex_idx + 0] = static_cast<float>(bounding_box.max_x);
+            buffer[vertex_idx + 1] = static_cast<float>(bounding_box.min_y);
             buffer[vertex_idx + 2] = 0.0;
             vertex_idx += per_vertex_pos_count;
 

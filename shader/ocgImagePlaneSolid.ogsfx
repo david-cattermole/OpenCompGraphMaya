@@ -7,6 +7,7 @@ uniform vec4 gSolidColor : DIFFUSE = {1, 1, 1, 1};
 
 // Transforms to be applied to the vertices in various ways.
 uniform float4x4 gImageTransform < string UIWidget = "None"; >;
+uniform float4x4 gRescaleTransform < string UIWidget = "None"; >;
 uniform float4x4 gGeometryTransform < string UIWidget = "None"; >;
 
 attribute vs_input
@@ -27,7 +28,7 @@ GLSLShader VS
 {
     void main()
     {
-        gl_Position = gWVPXf * gGeometryTransform * gImageTransform * vec4(in_position, 1);
+        gl_Position = gWVPXf * gRescaleTransform * gGeometryTransform * gImageTransform * vec4(in_position, 1);
     }
 }
 

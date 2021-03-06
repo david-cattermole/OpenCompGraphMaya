@@ -17,6 +17,9 @@ def _get_random_file_path():
     file_path6 = "C:/Users/catte/dev/OpenCompGraphMaya/src/OpenCompGraph/tests/data/vancouver_jpg/vancouver.####.jpg"
     file_path7 = "C:/Users/catte/dev/OpenCompGraphMaya/src/OpenCompGraph/tests/data/color_bars_3840x2160_jpg/color_bars.####.jpg"
     file_path8 = "C:/Users/catte/dev/OpenCompGraphMaya/src/OpenCompGraph/tests/data/color_bars_3840x2160_png/color_bars.####.png"
+    file_path9 = "C:/Users/catte/dev/OpenCompGraphMaya/src/OpenCompGraph/tests/data/openexr-images/Beachball/multipart.####.exr"
+    file_path10 = "C:/Users/catte/dev/OpenCompGraphMaya/src/OpenCompGraph/tests/data/openexr-images/Beachball/singlepart.####.exr"
+    file_path11 = "C:/Users/catte/dev/OpenCompGraphMaya/src/OpenCompGraph/tests/data/openexr-images/DisplayWindow/t##.exr"
     # TODO: Fill the "sequences" parameters too, so we can
     # automatically set the frame range correctly.
 
@@ -29,6 +32,9 @@ def _get_random_file_path():
         file_path6,
         file_path7,
         file_path8,
+        file_path9,
+        file_path10,
+        file_path11,
     ]
     file_path = random.choice(file_paths)
     return os.path.abspath(file_path)

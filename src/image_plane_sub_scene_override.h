@@ -126,6 +126,7 @@ private:
     // Shader Constants
     static MString m_shader_color_parameter_name;
     static MString m_shader_geometry_transform_parameter_name;
+    static MString m_shader_rescale_transform_parameter_name;
     static MString m_shader_image_transform_parameter_name;
     static MString m_shader_image_color_matrix_parameter_name;
     static MString m_shader_image_texture_parameter_name;
