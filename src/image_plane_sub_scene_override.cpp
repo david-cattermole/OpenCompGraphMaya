@@ -175,12 +175,17 @@ get_plug_value_stream(MPlug plug, ocg::Node old_value) {
 
 } // namespace anonymous
 
+// Parameter Names
 MString SubSceneOverride::m_shader_color_parameter_name = "gSolidColor";
 MString SubSceneOverride::m_shader_geometry_transform_parameter_name = "gGeometryTransform";
 MString SubSceneOverride::m_shader_image_transform_parameter_name = "gImageTransform";
 MString SubSceneOverride::m_shader_image_color_matrix_parameter_name = "gImageColorMatrix";
 MString SubSceneOverride::m_shader_image_texture_parameter_name = "gImageTexture";
 MString SubSceneOverride::m_shader_image_texture_sampler_parameter_name = "gImageTextureSampler";
+
+// Item Names
+MString SubSceneOverride::m_data_window_render_item_name = "ocgImagePlaneDataWindow";
+MString SubSceneOverride::m_display_window_render_item_name = "ocgImagePlaneDisplayWindow";
 MString SubSceneOverride::m_border_render_item_name = "ocgImagePlaneBorder";
 MString SubSceneOverride::m_wireframe_render_item_name = "ocgImagePlaneWireframe";
 MString SubSceneOverride::m_shaded_render_item_name = "ocgImagePlaneShadedTriangles";
@@ -215,6 +220,8 @@ SubSceneOverride::SubSceneOverride(const MObject &obj)
 
 SubSceneOverride::~SubSceneOverride() {
     m_geometry_canvas.clear_all();
+    m_geometry_window_display.clear_all();
+    m_geometry_window_data.clear_all();
 
     // Remove callbacks related to instances.
     if (m_instance_added_cb_id != 0) {
@@ -358,18 +365,32 @@ void SubSceneOverride::update(
         auto stream_data = shared_graph->output_stream();
         auto num_deformers = stream_data.deformers_len();
         log->debug("Updating vertex position... num_deformers={}", num_deformers);
+
+        auto display_window = stream_data.display_window();
+        auto data_window = stream_data.data_window();
+        m_geometry_window_display.set_bounding_box(display_window);
+        m_geometry_window_data.set_bounding_box(data_window);
+
+        m_geometry_window_display.rebuild_vertex_positions();
+        m_geometry_window_data.rebuild_vertex_positions();
         m_geometry_canvas.rebuild_vertex_positions(std::move(stream_data));
     }
 
     // Update Geometry.
     if (update_topology) {
-        // TODO: Split out the difference between topology and vertex
-        // data changing. We can update the vertex buffer without
-        // needing to change the index buffers.
         auto stream_data = shared_graph->output_stream();
+        auto display_window = stream_data.display_window();
+        auto data_window = stream_data.data_window();
+
+        m_geometry_window_display.set_bounding_box(display_window);
+        m_geometry_window_data.set_bounding_box(data_window);
         m_geometry_canvas.set_divisions_x(m_card_res_x);
         m_geometry_canvas.set_divisions_y(m_card_res_y);
+
+        m_geometry_window_display.rebuild_all();
+        m_geometry_window_data.rebuild_all();
         m_geometry_canvas.rebuild_all(std::move(stream_data));
+
         // The vertices have been updated already, so there's no need
         // to do it again.
         update_vertices = false;
@@ -378,10 +399,14 @@ void SubSceneOverride::update(
     // Compile and update shader.
     CHECK_MSTATUS(m_shader_wire.compile_file("ocgImagePlaneSolid"));
     CHECK_MSTATUS(m_shader_border.compile_file("ocgImagePlaneSolid"));
+    CHECK_MSTATUS(m_shader_display_window.compile_file("ocgImagePlaneSolid"));
+    CHECK_MSTATUS(m_shader_data_window.compile_file("ocgImagePlaneSolid"));
     CHECK_MSTATUS(m_shader.compile_file("ocgImagePlaneTextured"));
     if (!m_shader.instance()
         || !m_shader_border.instance()
-        || !m_shader_wire.instance()) {
+        || !m_shader_wire.instance()
+        || !m_shader_display_window.instance()
+        || !m_shader_data_window.instance()) {
         log->error("SubSceneOverride: Failed to compile shader.");
         return;
     }
@@ -400,6 +425,16 @@ void SubSceneOverride::update(
         };
         MFloatMatrix geom_matrix(geom_matrix_values);
 
+        const float display_window_color_values[4] = {1.0f, 1.0f, 0.0f, 1.0f};
+        status = m_shader_display_window.set_color_param(
+            m_shader_color_parameter_name, display_window_color_values);
+        CHECK_MSTATUS(status);
+
+        const float data_window_color_values[4] = {0.0f, 1.0f, 1.0f, 1.0f};
+        status = m_shader_data_window.set_color_param(
+            m_shader_color_parameter_name, data_window_color_values);
+        CHECK_MSTATUS(status);
+
         const float wire_color_values[4] = {0.0f, 0.0f, 1.0f, 1.0f};
         status = m_shader_wire.set_color_param(
             m_shader_color_parameter_name, wire_color_values);
@@ -412,6 +447,14 @@ void SubSceneOverride::update(
 
         // Set the transform matrix parameter expected to move the
         // geometry buffer into the correct place
+        status = m_shader_display_window.set_float_matrix4x4_param(
+            m_shader_geometry_transform_parameter_name, geom_matrix);
+        CHECK_MSTATUS(status);
+
+        status = m_shader_data_window.set_float_matrix4x4_param(
+            m_shader_geometry_transform_parameter_name, geom_matrix);
+        CHECK_MSTATUS(status);
+
         status = m_shader_wire.set_float_matrix4x4_param(
             m_shader_geometry_transform_parameter_name, geom_matrix);
         CHECK_MSTATUS(status);
@@ -437,6 +480,16 @@ void SubSceneOverride::update(
                 {tfm_matrix.m30, tfm_matrix.m31, tfm_matrix.m32, tfm_matrix.m33},
             };
             MFloatMatrix image_transform(tfm_matrix_values);
+            status = m_shader_display_window.set_float_matrix4x4_param(
+                m_shader_image_transform_parameter_name,
+                image_transform);
+            CHECK_MSTATUS(status);
+
+            status = m_shader_data_window.set_float_matrix4x4_param(
+                m_shader_image_transform_parameter_name,
+                image_transform);
+            CHECK_MSTATUS(status);
+
             status = m_shader_wire.set_float_matrix4x4_param(
                 m_shader_image_transform_parameter_name,
                 image_transform);
@@ -552,6 +605,34 @@ void SubSceneOverride::update(
 
     bool items_changed = false;
 
+    MHWRender::MRenderItem *display_window_item =
+        container.find(m_display_window_render_item_name);
+    if (!display_window_item) {
+        display_window_item = MHWRender::MRenderItem::Create(
+            m_display_window_render_item_name,
+            MHWRender::MRenderItem::DecorationItem,
+            MHWRender::MGeometry::kLines
+        );
+        display_window_item->setDrawMode(MHWRender::MGeometry::kAll);
+        display_window_item->depthPriority(MRenderItem::sDormantWireDepthPriority);
+        container.add(display_window_item);
+        items_changed = true;
+    }
+
+    MHWRender::MRenderItem *data_window_item =
+        container.find(m_data_window_render_item_name);
+    if (!data_window_item) {
+        data_window_item = MHWRender::MRenderItem::Create(
+            m_data_window_render_item_name,
+            MHWRender::MRenderItem::DecorationItem,
+            MHWRender::MGeometry::kLines
+        );
+        data_window_item->setDrawMode(MHWRender::MGeometry::kAll);
+        data_window_item->depthPriority(MRenderItem::sDormantWireDepthPriority);
+        container.add(data_window_item);
+        items_changed = true;
+    }
+
     MHWRender::MRenderItem *wire_item = container.find(m_wireframe_render_item_name);
     if (!wire_item) {
         wire_item = MHWRender::MRenderItem::Create(
@@ -602,6 +683,8 @@ void SubSceneOverride::update(
     }
 
     if (items_changed || any_instance_changed) {
+        display_window_item->setShader(m_shader_display_window.instance());
+        data_window_item->setShader(m_shader_data_window.instance());
         wire_item->setShader(m_shader_wire.instance());
         border_item->setShader(m_shader_border.instance());
         shaded_item->setShader(m_shader.instance());
@@ -613,11 +696,12 @@ void SubSceneOverride::update(
         ShapeNode *fp = status ? dynamic_cast<ShapeNode *>(node.userNode()) : nullptr;
         MBoundingBox *bounds = fp ? new MBoundingBox(fp->boundingBox()) : nullptr;
 
-        auto position_buffer = this->m_geometry_canvas.vertex_positions();
-        auto uv_buffer = this->m_geometry_canvas.vertex_uvs();
-        auto wire_lines_index_buffer = this->m_geometry_canvas.index_wire_lines();
-        auto border_lines_index_buffer = this->m_geometry_canvas.index_border_lines();
-        auto shaded_index_buffer = this->m_geometry_canvas.index_triangles();
+        // Canvas
+        auto position_buffer = m_geometry_canvas.vertex_positions();
+        auto uv_buffer = m_geometry_canvas.vertex_uvs();
+        auto wire_lines_index_buffer = m_geometry_canvas.index_wire_lines();
+        auto border_lines_index_buffer = m_geometry_canvas.index_border_lines();
+        auto shaded_index_buffer = m_geometry_canvas.index_triangles();
 
         MHWRender::MVertexBufferArray vertex_buffers;
         vertex_buffers.addBuffer("positions", position_buffer);
@@ -632,6 +716,30 @@ void SubSceneOverride::update(
             *shaded_item, vertex_buffers,
             *shaded_index_buffer, bounds);
 
+        // Display Window
+        auto display_window_position_buffer =
+            m_geometry_window_display.vertex_positions();
+        auto display_window_lines_index_buffer =
+            m_geometry_window_display.index_border_lines();
+        MHWRender::MVertexBufferArray window_display_vertex_buffers;
+        window_display_vertex_buffers.addBuffer(
+                "positions", display_window_position_buffer);
+        setGeometryForRenderItem(
+            *display_window_item, window_display_vertex_buffers,
+            *display_window_lines_index_buffer, bounds);
+
+        // Data window
+        auto data_window_position_buffer =
+            m_geometry_window_data.vertex_positions();
+        auto data_window_lines_index_buffer =
+            m_geometry_window_data.index_border_lines();
+        MHWRender::MVertexBufferArray window_data_vertex_buffers;
+        window_data_vertex_buffers.addBuffer(
+                "positions", data_window_position_buffer);
+        setGeometryForRenderItem(
+            *data_window_item, window_data_vertex_buffers,
+            *data_window_lines_index_buffer, bounds);
+
         delete bounds;
     }
 
@@ -640,6 +748,8 @@ void SubSceneOverride::update(
             // For multiple copies (not multiple instances), subscene
             // consolidation is enabled for static scenario, mainly to
             // improve tumbling performance.
+            display_window_item->setWantSubSceneConsolidation(true);
+            data_window_item->setWantSubSceneConsolidation(true);
             wire_item->setWantSubSceneConsolidation(true);
             border_item->setWantSubSceneConsolidation(true);
             shaded_item->setWantSubSceneConsolidation(true);
@@ -654,6 +764,8 @@ void SubSceneOverride::update(
         } else {
             // For multiple instances, subscene conslidation should be
             // turned off so that the GPU instancing can kick in.
+            display_window_item->setWantSubSceneConsolidation(false);
+            data_window_item->setWantSubSceneConsolidation(false);
             wire_item->setWantSubSceneConsolidation(false);
             border_item->setWantSubSceneConsolidation(false);
             shaded_item->setWantSubSceneConsolidation(false);
@@ -665,9 +777,15 @@ void SubSceneOverride::update(
             // instance, especially for large numbers of instances.
             // Note this has to happen after the geometry and shaders
             // are set, otherwise it will fail.
+            setInstanceTransformArray(*display_window_item, instance_matrix_array);
+            setInstanceTransformArray(*data_window_item, instance_matrix_array);
             setInstanceTransformArray(*wire_item, instance_matrix_array);
             setInstanceTransformArray(*border_item, instance_matrix_array);
             setInstanceTransformArray(*shaded_item, instance_matrix_array);
+            setExtraInstanceData(
+                *display_window_item, m_shader_color_parameter_name, instance_color_array);
+            setExtraInstanceData(
+                *data_window_item, m_shader_color_parameter_name, instance_color_array);
             setExtraInstanceData(
                 *wire_item, m_shader_color_parameter_name, instance_color_array);
             setExtraInstanceData(

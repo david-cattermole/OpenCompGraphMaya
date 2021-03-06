@@ -55,6 +55,14 @@ MHWRender::MIndexBuffer* build_index_buffer_wire_lines(
     const size_t divisions_x,
     const size_t divisions_y);
 
+////////////////////////////////////////////////////////////////////////
+
+MHWRender::MVertexBuffer* build_window_vertex_buffer_positions(
+    const ocg::BBox2Di bounding_box);
+
+MHWRender::MIndexBuffer* build_window_index_buffer_border_lines();
+
+
 } // namespace geometry_buffer
 } // namespace open_comp_graph_maya
 

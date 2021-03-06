@@ -215,5 +215,87 @@ MHWRender::MIndexBuffer* build_index_buffer_wire_lines(
 }
 
 
+/////////////////////////////////////////////////////////////////////////////////
+
+
+// VertexBuffer for positions.
+MHWRender::MVertexBuffer* build_window_vertex_buffer_positions(
+    const ocg::BBox2Di bounding_box) {
+    auto log = log::get_logger();
+
+    const auto per_vertex_pos_count = 3;
+    const MHWRender::MVertexBufferDescriptor vb_desc(
+        "",
+        MHWRender::MGeometry::kPosition,
+        MHWRender::MGeometry::kFloat,
+        per_vertex_pos_count);
+    MHWRender::MVertexBuffer* vertex_buffer = new MHWRender::MVertexBuffer(vb_desc);
+    if (vertex_buffer) {
+        auto count = 4;
+        bool write_only = true;
+        float *buffer = static_cast<float *>(
+            vertex_buffer->acquire(count, write_only));
+        if (buffer) {
+            // Vertex 0 - lower-left
+            auto vertex_idx = 0;
+            buffer[vertex_idx + 0] = static_cast<float>(bounding_box.min_x) / 10.0f;
+            buffer[vertex_idx + 1] = static_cast<float>(bounding_box.min_y) / 10.0f;
+            buffer[vertex_idx + 2] = 0.0;
+            vertex_idx += per_vertex_pos_count;
+
+            // Vertex 1 - upper-left
+            buffer[vertex_idx + 0] = static_cast<float>(bounding_box.min_x) / 10.0f;
+            buffer[vertex_idx + 1] = static_cast<float>(bounding_box.max_y) / 10.0f;
+            buffer[vertex_idx + 2] = 0.0;
+            vertex_idx += per_vertex_pos_count;
+
+            // Vertex 2 - upper-right
+            buffer[vertex_idx + 0] = static_cast<float>(bounding_box.max_x) / 10.0f;
+            buffer[vertex_idx + 1] = static_cast<float>(bounding_box.max_y) / 10.0f;
+            buffer[vertex_idx + 2] = 0.0;
+            vertex_idx += per_vertex_pos_count;
+
+            // Vertex 3 - lower-right
+            buffer[vertex_idx + 0] = static_cast<float>(bounding_box.max_x) / 10.0f;
+            buffer[vertex_idx + 1] = static_cast<float>(bounding_box.min_y) / 10.0f;
+            buffer[vertex_idx + 2] = 0.0;
+            vertex_idx += per_vertex_pos_count;
+
+            vertex_buffer->commit(buffer);
+        }
+    }
+    return vertex_buffer;
+}
+
+
+// Index buffer for border lines.
+MHWRender::MIndexBuffer* build_window_index_buffer_border_lines() {
+    MHWRender::MIndexBuffer* index_buffer = new MHWRender::MIndexBuffer(
+        MHWRender::MGeometry::kUnsignedInt32);
+    if (index_buffer) {
+        auto count = 8;
+        bool write_only = true;
+        uint32_t *buffer = static_cast<uint32_t *>(
+            index_buffer->acquire(count, write_only));
+        if (buffer) {
+            // Left
+            buffer[0] = 1;
+            buffer[1] = 0;
+            // Right
+            buffer[2] = 2;
+            buffer[3] = 3;
+            // Top
+            buffer[4] = 1;
+            buffer[5] = 2;
+            // Bottom
+            buffer[6] = 0;
+            buffer[7] = 3;
+            index_buffer->commit(buffer);
+        }
+    }
+    return index_buffer;
+}
+
+
 } // namespace geometry_buffer
 } // namespace open_comp_graph_maya

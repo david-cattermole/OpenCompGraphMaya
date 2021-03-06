@@ -49,6 +49,7 @@
 
 // OCG Maya
 #include "image_plane_geometry_canvas.h"
+#include "image_plane_geometry_window.h"
 #include "image_plane_shader.h"
 
 
@@ -106,6 +107,8 @@ private:
     SubSceneOverride(const MObject &obj);
 
     GeometryCanvas m_geometry_canvas;
+    GeometryWindow m_geometry_window_display;
+    GeometryWindow m_geometry_window_data;
 
     ocg::ExecuteStatus execute_ocg_graph(
         ocg::Node stream_ocg_node,
@@ -117,6 +120,8 @@ private:
     Shader m_shader_wire;
     Shader m_shader_border;
     Shader m_shader;
+    Shader m_shader_display_window;
+    Shader m_shader_data_window;
 
     // Shader Constants
     static MString m_shader_color_parameter_name;
@@ -169,6 +174,8 @@ private:
     MDagPathArray m_instance_dag_paths;
 
     // Viewport 2.0 render item names
+    static MString m_data_window_render_item_name;
+    static MString m_display_window_render_item_name;
     static MString m_border_render_item_name;
     static MString m_wireframe_render_item_name;
     static MString m_shaded_render_item_name;
