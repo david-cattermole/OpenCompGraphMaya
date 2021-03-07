@@ -163,6 +163,13 @@ MStatus initializePlugin(MObject obj) {
     mel_cmd += "\" 1";
     status = MGlobal::executeCommand(mel_cmd);
 
+    // Register plugin display filter.
+    // The filter is registered in both interactive and match mode (Hardware 2.0)
+    plugin.registerDisplayFilter(
+        ocgm::image_plane::ShapeNode::m_display_filter_name,
+        ocgm::image_plane::ShapeNode::m_display_filter_label,
+        ocgm::image_plane::ShapeNode::m_draw_db_classification);
+
     return status;
 }
 
@@ -170,6 +177,10 @@ MStatus initializePlugin(MObject obj) {
 MStatus uninitializePlugin(MObject obj) {
     MStatus status;
     MFnPlugin plugin(obj);
+
+    // Deregister plugin display filter
+    const MString displayFilterLabel("ocgImagePlaneDisplayFilter");
+    plugin.deregisterDisplayFilter(displayFilterLabel);
 
     status = MHWRender::MDrawRegistry::deregisterSubSceneOverrideCreator(
         ocgm::image_plane::ShapeNode::m_draw_db_classification,

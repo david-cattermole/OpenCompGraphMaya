@@ -55,6 +55,8 @@ MTypeId ShapeNode::m_id(OCGM_IMAGE_PLANE_SHAPE_TYPE_ID);
 MString ShapeNode::m_draw_db_classification("drawdb/subscene/ocgImagePlane_SubSceneOverride");
 MString ShapeNode::m_draw_registrant_id("ocgImagePlaneNode_SubSceneOverridePlugin");
 MString ShapeNode::m_selection_type_name("ocgImagePlaneSelection");
+MString ShapeNode::m_display_filter_name("ocgImagePlaneDisplayFilter");
+MString ShapeNode::m_display_filter_label("OCG ImagePlane");
 
 // Input Attributes
 MObject ShapeNode::m_in_stream_attr;
