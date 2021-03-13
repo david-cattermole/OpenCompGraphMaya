@@ -20,24 +20,22 @@ def _get_random_file_path():
     file_path9 = "C:/Users/catte/dev/OpenCompGraphMaya/src/OpenCompGraph/tests/data/openexr-images/Beachball/multipart.####.exr"
     file_path10 = "C:/Users/catte/dev/OpenCompGraphMaya/src/OpenCompGraph/tests/data/openexr-images/Beachball/singlepart.####.exr"
     file_path11 = "C:/Users/catte/dev/OpenCompGraphMaya/src/OpenCompGraph/tests/data/openexr-images/DisplayWindow/t##.exr"
-    # TODO: Fill the "sequences" parameters too, so we can
-    # automatically set the frame range correctly.
 
     file_paths = [
-        file_path1,
-        file_path2,
-        file_path3,
-        file_path4,
-        file_path5,
-        file_path6,
-        file_path7,
-        file_path8,
-        file_path9,
-        file_path10,
-        file_path11,
+        (file_path1, 1, 1),
+        (file_path2, 1, 1),
+        (file_path3, 991, 1501),
+        (file_path4, 1, 1),
+        (file_path5, 1, 10),
+        (file_path6, 901, 1501),
+        (file_path7, 901, 1501),
+        (file_path8, 901, 1501),
+        (file_path9, 1, 10),
+        (file_path10, 1, 10),
+        (file_path11, 1, 20),
     ]
-    file_path = random.choice(file_paths)
-    return os.path.abspath(file_path)
+    file_path, start_frame, end_frame = random.choice(file_paths)
+    return os.path.abspath(file_path), start_frame, end_frame
 
 
 def test_a():
@@ -62,7 +60,7 @@ def test_b():
     maya.cmds.connectAttr(read_node + '.outStream', grade_node + '.inStream')
     maya.cmds.connectAttr(grade_node + '.outStream', image_plane + '.inStream')
 
-    file_path = _get_random_file_path()
+    file_path, start_frame, end_frame = _get_random_file_path()
     maya.cmds.setAttr(read_node + '.filePath', file_path, type='string')
     maya.cmds.setAttr(grade_node + '.multiplyR', random.random() * 2)
     maya.cmds.setAttr(grade_node + '.multiplyG', random.random() * 2)
@@ -85,7 +83,7 @@ def test_c():
     maya.cmds.connectAttr(grade_node + '.outStream', lens_node + '.inStream')
     maya.cmds.connectAttr(lens_node + '.outStream', image_plane + '.inStream')
 
-    file_path = _get_random_file_path()
+    file_path, start_frame, end_frame = _get_random_file_path()
     maya.cmds.setAttr(read_node + '.filePath', file_path, type='string')
     maya.cmds.setAttr(grade_node + '.multiplyR', random.random() * 2)
     maya.cmds.setAttr(grade_node + '.multiplyG', random.random() * 2)
@@ -107,7 +105,7 @@ def test_d():
     maya.cmds.connectAttr(read_node + '.outStream', tfm_node + '.inStream')
     maya.cmds.connectAttr(tfm_node + '.outStream', image_plane + '.inStream')
 
-    file_path = _get_random_file_path()
+    file_path, start_frame, end_frame = _get_random_file_path()
     maya.cmds.setAttr(read_node + '.filePath', file_path, type='string')
     maya.cmds.setAttr(tfm_node + '.translateX', random.uniform(-1.0, 1.0))
     maya.cmds.setAttr(tfm_node + '.translateY', random.uniform(-1.0, 1.0))
@@ -127,8 +125,46 @@ def test_e():
     maya.cmds.connectAttr('time1.outTime', image_plane + ".time")
     maya.cmds.connectAttr(read_node + '.outStream', image_plane + '.inStream')
 
-    file_path = _get_random_file_path()
+    file_path, start_frame, end_frame = _get_random_file_path()
     maya.cmds.setAttr(read_node + '.filePath', file_path, type='string')
+    return
+
+
+def test_f():
+    """Read an image, grade the colors and then distort it and view it in
+    an image plane, WITH a camera.
+    """
+    read_node = maya.cmds.createNode('ocgImageRead')
+    grade_node = maya.cmds.createNode('ocgColorGrade')
+    lens_node = maya.cmds.createNode('ocgLensDistort')
+    tfm_node = maya.cmds.createNode('ocgImageTransform')
+    cam_tfm = maya.cmds.createNode('transform')
+    cam_shp = maya.cmds.createNode('camera', parent=cam_tfm)
+    image_plane_tfm = maya.cmds.createNode('transform', parent=cam_tfm)
+    image_plane = maya.cmds.createNode('ocgImagePlane', parent=image_plane_tfm)
+
+    maya.cmds.connectAttr('time1.outTime', image_plane + ".time")
+    maya.cmds.connectAttr(read_node + '.outStream', grade_node + '.inStream')
+    maya.cmds.connectAttr(grade_node + '.outStream', lens_node + '.inStream')
+    maya.cmds.connectAttr(lens_node + '.outStream', tfm_node + '.inStream')
+    maya.cmds.connectAttr(tfm_node + '.outStream', image_plane + '.inStream')
+    maya.cmds.connectAttr(cam_shp + '.message', image_plane + '.camera')
+
+    file_path, start_frame, end_frame = _get_random_file_path()
+    maya.cmds.setAttr(read_node + '.filePath', file_path, type='string')
+    maya.cmds.setAttr(grade_node + '.multiplyR', random.uniform(0.1, 2.0))
+    maya.cmds.setAttr(grade_node + '.multiplyG', random.uniform(0.1, 2.0))
+    maya.cmds.setAttr(grade_node + '.multiplyB', random.uniform(0.1, 2.0))
+    maya.cmds.setAttr(grade_node + '.multiplyA', 1.0)
+    maya.cmds.setAttr(lens_node + '.k1', random.uniform(-0.5, 0.5))
+    maya.cmds.setAttr(tfm_node + '.translateX', random.uniform(-0.2, 0.2))
+    maya.cmds.setAttr(tfm_node + '.translateY', random.uniform(-0.2, 0.2))
+    maya.cmds.setAttr(tfm_node + '.rotate', random.random() * 10.0)
+    maya.cmds.setAttr(tfm_node + '.scaleX', random.uniform(0.5, 2.0))
+    maya.cmds.setAttr(tfm_node + '.scaleY', random.uniform(0.5, 2.0))
+    maya.cmds.setAttr(cam_shp + '.displayCameraFrustum', 1)
+
+    maya.cmds.playbackOptions(min=start_frame, max=end_frame)
     return
 
 
@@ -139,6 +175,7 @@ def main():
     test_c()
     test_d()
     test_e()
+    test_f()
 
 
 main()
