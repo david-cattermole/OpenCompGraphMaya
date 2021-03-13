@@ -172,12 +172,6 @@ MStatus LensDistortNode::initialize() {
     MStatus status;
     MFnNumericAttribute nAttr;
     MFnTypedAttribute tAttr;
-    MTypeId stream_data_type_id(OCGM_GRAPH_DATA_TYPE_ID);
-
-    // Create empty string data to be used as attribute default
-    // (string) value.
-    MFnStringData empty_string_data;
-    MObject empty_string_data_obj = empty_string_data.create("");
 
     // Distortion Parameters
     float value_soft_min = -0.1f;
