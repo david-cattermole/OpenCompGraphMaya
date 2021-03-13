@@ -176,6 +176,13 @@ MSelectionMask ShapeNode::getShapeSelectionMask() const {
     return MSelectionMask("ocgImagePlaneSelection");
 }
 
+bool ShapeNode::excludeAsLocator() const {
+    // Returning 'false' here means that when the user toggles
+    // locators on/off with the (per-viewport) "Show" menu, this shape
+    // node will not be affected.
+    return false;
+}
+
 void *ShapeNode::creator() {
     return new ShapeNode();
 }

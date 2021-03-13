@@ -62,6 +62,7 @@ public:
     bool isBounded() const override;
     MBoundingBox boundingBox() const override;
     MSelectionMask getShapeSelectionMask() const override;
+    bool excludeAsLocator() const;
     static void *creator();
     static MStatus initialize();
 
