@@ -48,6 +48,7 @@
 #include <opencompgraphmaya/node_type_ids.h>
 #include "graph_data.h"
 #include "image_plane_shape.h"
+#include "base_node.h"
 
 namespace open_comp_graph_maya {
 namespace image_plane {
@@ -194,26 +195,9 @@ MStatus ShapeNode::initialize() {
     MFnNumericAttribute nAttr;
     MFnEnumAttribute    eAttr;
     MFnMessageAttribute mAttr;
-    MTypeId stream_data_type_id(OCGM_GRAPH_DATA_TYPE_ID);
-
-    // Create empty string data to be used as attribute default
-    // (string) value.
-    MFnStringData empty_string_data;
-    MObject empty_string_data_obj = empty_string_data.create("");
 
     // Camera
     m_camera_attr = mAttr.create("camera", "cam");
-    CHECK_MSTATUS(addAttribute(m_camera_attr));
-
-    // In Stream
-    m_in_stream_attr = tAttr.create(
-        "inStream", "istm",
-        stream_data_type_id);
-    CHECK_MSTATUS(tAttr.setStorable(false));
-    CHECK_MSTATUS(tAttr.setKeyable(false));
-    CHECK_MSTATUS(tAttr.setReadable(true));
-    CHECK_MSTATUS(tAttr.setWritable(true));
-    CHECK_MSTATUS(addAttribute(m_in_stream_attr));
 
     // Geometry Type Attribute
     //
@@ -230,7 +214,7 @@ MStatus ShapeNode::initialize() {
     // // eAttr.addField("Card", kRotate);
     // // eAttr.addField("Sphere", kScale);
     // // eAttr.addField("Custom Mesh", kShear);
-    // // MPxNode::addAttribute(aTransformType);
+    // // addAttribute(aTransformType);
 
     // Card Depth Attribute
     float card_depth_min = -1000.0f;
@@ -240,7 +224,6 @@ MStatus ShapeNode::initialize() {
         MFnUnitAttribute::kDistance);
     CHECK_MSTATUS(uAttr.setMin(card_depth_min));
     CHECK_MSTATUS(uAttr.setDefault(card_depth_default));
-    CHECK_MSTATUS(MPxNode::addAttribute(m_card_depth_attr));
 
     // Card Size Attribute
     float card_size_x_min = 0.0f;
@@ -250,7 +233,6 @@ MStatus ShapeNode::initialize() {
         MFnUnitAttribute::kDistance);
     CHECK_MSTATUS(uAttr.setMin(card_size_x_min));
     CHECK_MSTATUS(uAttr.setDefault(card_size_x_default));
-    CHECK_MSTATUS(MPxNode::addAttribute(m_card_size_x_attr));
 
     // Card Size Attribute
     float card_size_y_default = 1.0f;
@@ -260,7 +242,6 @@ MStatus ShapeNode::initialize() {
         MFnUnitAttribute::kDistance);
     CHECK_MSTATUS(uAttr.setMin(card_size_y_min));
     CHECK_MSTATUS(uAttr.setDefault(card_size_y_default));
-    CHECK_MSTATUS(MPxNode::addAttribute(m_card_size_y_attr));
 
     // Card Resolution X
     uint32_t card_res_x_min = 2;
@@ -275,7 +256,6 @@ MStatus ShapeNode::initialize() {
     CHECK_MSTATUS(nAttr.setMin(card_res_x_min));
     CHECK_MSTATUS(nAttr.setMax(card_res_x_max));
     CHECK_MSTATUS(nAttr.setSoftMax(card_res_x_soft_max));
-    CHECK_MSTATUS(addAttribute(m_card_res_x_attr));
 
     // Card Resolution Y
     uint32_t card_res_y_min = 2;
@@ -290,7 +270,6 @@ MStatus ShapeNode::initialize() {
     CHECK_MSTATUS(nAttr.setMin(card_res_y_min));
     CHECK_MSTATUS(nAttr.setMax(card_res_y_max));
     CHECK_MSTATUS(nAttr.setSoftMax(card_res_y_soft_max));
-    CHECK_MSTATUS(addAttribute(m_card_res_y_attr));
 
     // Camera Plane Depth Attribute
 
@@ -303,16 +282,20 @@ MStatus ShapeNode::initialize() {
     // Time
     m_time_attr = uAttr.create("time", "tm", MFnUnitAttribute::kTime, 0.0);
     CHECK_MSTATUS(uAttr.setStorable(true));
-    CHECK_MSTATUS(MPxNode::addAttribute(m_time_attr));
 
-    // Out Stream
-    m_out_stream_attr = tAttr.create(
-            "outStream", "ostm",
-            stream_data_type_id);
-    CHECK_MSTATUS(tAttr.setStorable(false));
-    CHECK_MSTATUS(tAttr.setKeyable(false));
-    CHECK_MSTATUS(tAttr.setReadable(true));
-    CHECK_MSTATUS(tAttr.setWritable(false));
+    // Create Common Attributes
+    CHECK_MSTATUS(BaseNode::create_input_stream_attribute(m_in_stream_attr));
+    CHECK_MSTATUS(BaseNode::create_output_stream_attribute(m_out_stream_attr));
+
+    // Add Attributes
+    CHECK_MSTATUS(addAttribute(m_camera_attr));
+    CHECK_MSTATUS(addAttribute(m_card_depth_attr));
+    CHECK_MSTATUS(addAttribute(m_card_size_x_attr));
+    CHECK_MSTATUS(addAttribute(m_card_size_y_attr));
+    CHECK_MSTATUS(addAttribute(m_card_res_x_attr));
+    CHECK_MSTATUS(addAttribute(m_card_res_y_attr));
+    CHECK_MSTATUS(addAttribute(m_time_attr));
+    CHECK_MSTATUS(addAttribute(m_in_stream_attr));
     CHECK_MSTATUS(addAttribute(m_out_stream_attr));
 
     // Attribute Affects
