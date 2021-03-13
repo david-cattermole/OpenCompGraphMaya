@@ -34,6 +34,7 @@
 #include <maya/MDagMessage.h>
 #include <maya/MSelectionContext.h>
 #include <maya/M3dView.h>
+#include <maya/MFnCamera.h>
 
 // Maya Viewport 2.0
 #include <maya/MPxSubSceneOverride.h>
@@ -57,12 +58,41 @@
 #include "graph_data.h"
 #include "logger.h"
 
+
+// Radians / Degrees
+#define RADIANS_TO_DEGREES 57.295779513082323 // 180.0/M_PI
+#define DEGREES_TO_RADIANS 0.017453292519943295 // M_PI/180.0
+
+
 namespace ocg = open_comp_graph;
 
 namespace open_comp_graph_maya {
 namespace image_plane {
 
 namespace {
+
+double getAngleOfView(
+        const double filmBackSize, // millimeters
+        const double focalLength,  // millimeters
+        bool asDegrees) {
+    double angleOfView = 2.0 * std::atan(filmBackSize * (0.5 / focalLength));
+    if (asDegrees) {
+        angleOfView *= RADIANS_TO_DEGREES;
+    }
+    return angleOfView;
+}
+
+double getCameraPlaneScale(
+        const double filmBackSize,  // millimeters
+        const double focalLength) { // millimeters
+    const bool asDegrees = true;
+    double aov = getAngleOfView(filmBackSize, focalLength, asDegrees);
+    // Hard-code 'pi' so we don't have cross-platform problems
+    // between Linux and Windows.
+    const double pi = 3.14159265358979323846;
+    double scale = std::tan(aov * 0.5 * pi / 180.0);
+    return scale;
+}
 
 // Get distance attribute value.
 std::tuple<float, bool> get_plug_value_distance_float(MPlug plug, float old_value) {
@@ -194,6 +224,8 @@ MString SubSceneOverride::m_shaded_render_item_name = "ocgImagePlaneShadedTriang
 SubSceneOverride::SubSceneOverride(const MObject &obj)
         : MHWRender::MPxSubSceneOverride(obj),
           m_locator_node(obj),
+          m_focal_length(35.0f),
+          m_card_depth(1.0f),
           m_card_size_x(1.0f),
           m_card_size_y(1.0f),
           m_card_res_x(16),
@@ -279,6 +311,28 @@ void SubSceneOverride::update(
     // input data is valid..
     m_in_stream_node = new_stream_node;
 
+    // TODO: Detect when the camera matrix has changed.
+    bool camera_has_changed = true;
+    bool focal_length_has_changed = true;
+    MPlug camera_plug(m_locator_node, ShapeNode::m_camera_attr);
+    if (!camera_plug.isNull()) {
+        MPlug src_plug = camera_plug.source(&status);
+        if (!src_plug.isNull()) {
+            MObject camera_object = src_plug.node(&status);
+            CHECK_MSTATUS(status);
+            MFnCamera camera_fn(camera_object, &status);
+            CHECK_MSTATUS(status);
+
+            m_focal_length = camera_fn.focalLength(&status);
+            CHECK_MSTATUS(status);
+        }
+    }
+
+    bool card_depth_has_changed = false;
+    MPlug card_depth_plug(m_locator_node, ShapeNode::m_card_depth_attr);
+    std::tie(m_card_depth, card_depth_has_changed) =
+        get_plug_value_distance_float(card_depth_plug, m_card_depth);
+
     bool card_size_x_has_changed = false;
     bool card_size_y_has_changed = false;
     MPlug card_size_x_plug(m_locator_node, ShapeNode::m_card_size_x_attr);
@@ -307,8 +361,13 @@ void SubSceneOverride::update(
     uint32_t shader_border_values_changed = 0;
     uint32_t topology_values_changed = 0;
     uint32_t vertex_values_changed = 0;
+    shader_values_changed += static_cast<uint32_t>(camera_has_changed);
+    shader_values_changed += static_cast<uint32_t>(focal_length_has_changed);
+    shader_values_changed += static_cast<uint32_t>(card_depth_has_changed);
     shader_values_changed += static_cast<uint32_t>(card_size_x_has_changed);
     shader_values_changed += static_cast<uint32_t>(card_size_y_has_changed);
+    shader_border_values_changed += static_cast<uint32_t>(focal_length_has_changed);
+    shader_border_values_changed += static_cast<uint32_t>(card_depth_has_changed);
     shader_border_values_changed += static_cast<uint32_t>(card_size_x_has_changed);
     shader_border_values_changed += static_cast<uint32_t>(card_size_y_has_changed);
     topology_values_changed += static_cast<uint32_t>(card_res_x_has_changed);
@@ -418,21 +477,18 @@ void SubSceneOverride::update(
         // Allow transparency in the shader.
         m_shader.set_is_transparent(true);
 
-        const float identity_transform_values[4][4] = {
-            {1.0, 0.0, 0.0, 0.0},
-            {0.0, 1.0, 0.0, 0.0},
-            {0.0, 0.0, 1.0, 0.0},
-            {0.0, 0.0, 0.0, 1.0},
-        };
-        MFloatMatrix identity_transform(identity_transform_values);
 
-        const float geom_matrix_values[4][4] = {
-            {1.0, 0.0, 0.0, 0.0},
-            {0.0, 1.0, 0.0, 0.0},
-            {0.0, 0.0, 1.0, 0.0},
-            {0.0, 0.0, 0.0, 1.0},
+        auto filmBackWidth = 36.0;
+        auto plane_scale = getCameraPlaneScale(filmBackWidth, m_focal_length);
+
+        const float depth_matrix_values[4][4] = {
+            {m_card_depth * plane_scale, 0.0, 0.0, 0.0}, // Column 0
+            {0.0, m_card_depth * plane_scale, 0.0, 0.0}, // Column 1
+            {0.0, 0.0, m_card_depth, 0.0}, // Column 2
+            {0.0, 0.0, -1.0 * m_card_depth, 1.0}, // Column 3
         };
-        MFloatMatrix geom_matrix(geom_matrix_values);
+        MFloatMatrix depth_matrix(depth_matrix_values);
+        MFloatMatrix geom_matrix(depth_matrix);
 
         const float display_window_color_values[4] = {1.0f, 1.0f, 0.0f, 1.0f};
         status = m_shader_display_window.set_color_param(
@@ -483,14 +539,14 @@ void SubSceneOverride::update(
             auto display_window = stream_data.display_window();
             auto display_width = static_cast<float>(display_window.max_x - display_window.min_x);
             auto display_height = static_cast<float>(display_window.max_y - display_window.min_y);
-            auto display_half_width = display_width / 2.0;
-            auto display_half_height = display_height / 2.0;
+            auto display_half_width = display_width / 2.0f;
+            auto display_half_height = display_height / 2.0f;
             // TODO: Create logic for "film fit" modes. Currently
             // we're using "horizontal" (aka "width").
-            auto display_fit_scale_x = display_width;
-            auto display_fit_scale_y = display_width;
-            auto display_scale_x = 1.0 / display_fit_scale_x;
-            auto display_scale_y = 1.0 / display_fit_scale_y;
+            auto display_fit_scale_x = (display_width / 2.0f);
+            auto display_fit_scale_y = (display_width / 2.0f);
+            auto display_scale_x = 1.0f / display_fit_scale_x;
+            auto display_scale_y = 1.0f / display_fit_scale_y;
             auto display_offset_x = (static_cast<float>(display_window.min_x) - display_half_width) / display_fit_scale_x;
             auto display_offset_y = (static_cast<float>(display_window.min_y) - display_half_height) / display_fit_scale_y;
             const float rescale_display_window_values[4][4] = {

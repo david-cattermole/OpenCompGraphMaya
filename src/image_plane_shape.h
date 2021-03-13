@@ -68,7 +68,9 @@ public:
     static MString nodeName();
 
     // Attribute MObjects
+    static MObject m_camera_attr;
     static MObject m_in_stream_attr;
+    static MObject m_card_depth_attr;
     static MObject m_card_size_x_attr;
     static MObject m_card_size_y_attr;
     static MObject m_card_res_x_attr;

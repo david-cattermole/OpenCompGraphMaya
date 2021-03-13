@@ -51,7 +51,7 @@ GLSLShader VS
 {
     void main()
     {
-        gl_Position = gWVPXf * gRescaleTransform * gGeometryTransform * gImageTransform * vec4(in_position, 1);
+        gl_Position = gWVPXf * gGeometryTransform * gRescaleTransform * gImageTransform * vec4(in_position, 1);
         vsOut.texcoord.x = in_texcoord.x;
         vsOut.texcoord.y = in_texcoord.y;
     }

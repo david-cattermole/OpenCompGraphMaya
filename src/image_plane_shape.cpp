@@ -34,10 +34,12 @@
 #include <maya/MFnTypedAttribute.h>
 #include <maya/MFnNumericAttribute.h>
 #include <maya/MFnEnumAttribute.h>
+#include <maya/MFnMessageAttribute.h>
 #include <maya/MFnDagNode.h>
 #include <maya/MSelectionContext.h>
 #include <maya/MDagMessage.h>
 #include <maya/MFnPluginData.h>
+#include <maya/MFnCamera.h>
 
 // OCG
 #include "opencompgraph.h"
@@ -59,7 +61,9 @@ MString ShapeNode::m_display_filter_name("ocgImagePlaneDisplayFilter");
 MString ShapeNode::m_display_filter_label("OCG ImagePlane");
 
 // Input Attributes
+MObject ShapeNode::m_camera_attr;
 MObject ShapeNode::m_in_stream_attr;
+MObject ShapeNode::m_card_depth_attr;
 MObject ShapeNode::m_card_size_x_attr;
 MObject ShapeNode::m_card_size_y_attr;
 MObject ShapeNode::m_card_res_x_attr;
@@ -182,6 +186,7 @@ MStatus ShapeNode::initialize() {
     MFnTypedAttribute   tAttr;
     MFnNumericAttribute nAttr;
     MFnEnumAttribute    eAttr;
+    MFnMessageAttribute mAttr;
     MTypeId stream_data_type_id(OCGM_GRAPH_DATA_TYPE_ID);
 
     // Create empty string data to be used as attribute default
@@ -189,10 +194,14 @@ MStatus ShapeNode::initialize() {
     MFnStringData empty_string_data;
     MObject empty_string_data_obj = empty_string_data.create("");
 
+    // Camera
+    m_camera_attr = mAttr.create("camera", "cam");
+    CHECK_MSTATUS(addAttribute(m_camera_attr));
+
     // In Stream
     m_in_stream_attr = tAttr.create(
-            "inStream", "istm",
-            stream_data_type_id);
+        "inStream", "istm",
+        stream_data_type_id);
     CHECK_MSTATUS(tAttr.setStorable(false));
     CHECK_MSTATUS(tAttr.setKeyable(false));
     CHECK_MSTATUS(tAttr.setReadable(true));
@@ -215,6 +224,16 @@ MStatus ShapeNode::initialize() {
     // // eAttr.addField("Sphere", kScale);
     // // eAttr.addField("Custom Mesh", kShear);
     // // MPxNode::addAttribute(aTransformType);
+
+    // Card Depth Attribute
+    float card_depth_min = -1000.0f;
+    float card_depth_default = 1.0f;
+    m_card_depth_attr = uAttr.create(
+        "cardDepth", "cdph",
+        MFnUnitAttribute::kDistance);
+    CHECK_MSTATUS(uAttr.setMin(card_depth_min));
+    CHECK_MSTATUS(uAttr.setDefault(card_depth_default));
+    CHECK_MSTATUS(MPxNode::addAttribute(m_card_depth_attr));
 
     // Card Size Attribute
     float card_size_x_min = 0.0f;

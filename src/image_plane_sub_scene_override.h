@@ -144,6 +144,9 @@ private:
     std::shared_ptr<ocg::Cache> m_ocg_cache;
 
     // Cached attribute values
+    MFloatMatrix m_camera_proj_matrix;
+    float m_focal_length;
+    float m_card_depth;
     float m_card_size_x;
     float m_card_size_y;
     uint32_t m_card_res_x;
