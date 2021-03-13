@@ -68,8 +68,7 @@ MObject ImageTransformNode::m_scale_y_attr;
 MObject ImageTransformNode::m_out_stream_attr;
 
 ImageTransformNode::ImageTransformNode()
-    : m_ocg_node(ocg::Node(ocg::NodeType::kNull, 0)),
-      m_ocg_node_hash(0) {}
+    : m_ocg_node(ocg::Node(ocg::NodeType::kNull, 0)) {}
 
 ImageTransformNode::~ImageTransformNode() {}
 
@@ -183,23 +182,6 @@ MStatus ImageTransformNode::compute(const MPlug &plug, MDataBlock &data) {
     return status;
 }
 
-void ImageTransformNode::postConstructor() {
-    // Get the size
-    MObject this_node = ImageTransformNode::thisMObject();
-
-    // Get Node UUID
-    MStatus status = MS::kSuccess;
-    MFnDependencyNode fn_depend_node(this_node, &status);
-    CHECK_MSTATUS(status)
-    MUuid uuid = fn_depend_node.uuid();
-    MString uuid_string = uuid.asString();
-    const char *uuid_char = uuid_string.asChar();
-
-    // Generate a 64-bit hash id from the 128-bit UUID.
-    ImageTransformNode::m_ocg_node_hash =
-        ocg::internal::generate_id_from_name(uuid_char);
-};
-
 void *ImageTransformNode::creator() {
     return (new ImageTransformNode());
 }
@@ -215,24 +197,6 @@ MStatus ImageTransformNode::initialize() {
     MFnStringData empty_string_data;
     MObject empty_string_data_obj = empty_string_data.create("");
 
-    // In Stream
-    m_in_stream_attr = tAttr.create(
-            "inStream", "istm",
-            stream_data_type_id);
-    CHECK_MSTATUS(tAttr.setStorable(false));
-    CHECK_MSTATUS(tAttr.setKeyable(false));
-    CHECK_MSTATUS(tAttr.setReadable(true));
-    CHECK_MSTATUS(tAttr.setWritable(true));
-    CHECK_MSTATUS(addAttribute(m_in_stream_attr));
-
-    // Enable
-    m_enable_attr = nAttr.create(
-            "enable", "enb",
-            MFnNumericData::kBoolean, true);
-    CHECK_MSTATUS(nAttr.setStorable(true));
-    CHECK_MSTATUS(nAttr.setKeyable(true));
-    CHECK_MSTATUS(addAttribute(m_enable_attr));
-
     // Translate X and Y
     float translate_soft_min = -1.0f;
     float translate_soft_max = 1.0f;
@@ -244,7 +208,6 @@ MStatus ImageTransformNode::initialize() {
     CHECK_MSTATUS(nAttr.setKeyable(true));
     CHECK_MSTATUS(nAttr.setSoftMin(translate_soft_min));
     CHECK_MSTATUS(nAttr.setSoftMax(translate_soft_max));
-    CHECK_MSTATUS(addAttribute(m_translate_x_attr));
 
     m_translate_y_attr = nAttr.create(
         "translateY", "ty",
@@ -253,7 +216,6 @@ MStatus ImageTransformNode::initialize() {
     CHECK_MSTATUS(nAttr.setKeyable(true));
     CHECK_MSTATUS(nAttr.setSoftMin(translate_soft_min));
     CHECK_MSTATUS(nAttr.setSoftMax(translate_soft_max));
-    CHECK_MSTATUS(addAttribute(m_translate_y_attr));
 
     // Rotate
     float rotate_soft_min = -180.0f;
@@ -266,7 +228,6 @@ MStatus ImageTransformNode::initialize() {
     CHECK_MSTATUS(nAttr.setKeyable(true));
     CHECK_MSTATUS(nAttr.setSoftMax(rotate_soft_max));
     CHECK_MSTATUS(nAttr.setSoftMin(rotate_soft_min));
-    CHECK_MSTATUS(addAttribute(m_rotate_attr));
 
     // Rotate Center X and Y
     float center_soft_min = -1.0f;
@@ -279,7 +240,6 @@ MStatus ImageTransformNode::initialize() {
     CHECK_MSTATUS(nAttr.setKeyable(true));
     CHECK_MSTATUS(nAttr.setSoftMax(center_soft_max));
     CHECK_MSTATUS(nAttr.setSoftMin(center_soft_min));
-    CHECK_MSTATUS(addAttribute(m_rotate_center_x_attr));
 
     m_rotate_center_y_attr = nAttr.create(
         "rotateCenterY", "ry",
@@ -288,7 +248,6 @@ MStatus ImageTransformNode::initialize() {
     CHECK_MSTATUS(nAttr.setKeyable(true));
     CHECK_MSTATUS(nAttr.setSoftMax(center_soft_max));
     CHECK_MSTATUS(nAttr.setSoftMin(center_soft_min));
-    CHECK_MSTATUS(addAttribute(m_rotate_center_y_attr));
 
     // Scale X and Y
     float scale_min = 0.0f;
@@ -301,7 +260,6 @@ MStatus ImageTransformNode::initialize() {
     CHECK_MSTATUS(nAttr.setKeyable(true));
     CHECK_MSTATUS(nAttr.setMin(scale_min));
     CHECK_MSTATUS(nAttr.setSoftMax(scale_soft_max));
-    CHECK_MSTATUS(addAttribute(m_scale_x_attr));
 
     m_scale_y_attr = nAttr.create(
             "scaleY", "scly",
@@ -310,19 +268,26 @@ MStatus ImageTransformNode::initialize() {
     CHECK_MSTATUS(nAttr.setKeyable(true));
     CHECK_MSTATUS(nAttr.setMin(scale_min));
     CHECK_MSTATUS(nAttr.setSoftMax(scale_soft_max));
-    CHECK_MSTATUS(addAttribute(m_scale_y_attr));
 
-    // Out Stream
-    m_out_stream_attr = tAttr.create(
-            "outStream", "ostm",
-            stream_data_type_id);
-    CHECK_MSTATUS(tAttr.setStorable(false));
-    CHECK_MSTATUS(tAttr.setKeyable(false));
-    CHECK_MSTATUS(tAttr.setReadable(true));
-    CHECK_MSTATUS(tAttr.setWritable(false));
+    // Create Common Attributes
+    CHECK_MSTATUS(create_enable_attribute(m_enable_attr));
+    CHECK_MSTATUS(create_input_stream_attribute(m_in_stream_attr));
+    CHECK_MSTATUS(create_output_stream_attribute(m_out_stream_attr));
+
+    // Add Attributes
+    CHECK_MSTATUS(addAttribute(m_enable_attr));
+    CHECK_MSTATUS(addAttribute(m_translate_x_attr));
+    CHECK_MSTATUS(addAttribute(m_translate_y_attr));
+    CHECK_MSTATUS(addAttribute(m_rotate_attr));
+    CHECK_MSTATUS(addAttribute(m_rotate_center_x_attr));
+    CHECK_MSTATUS(addAttribute(m_rotate_center_y_attr));
+    CHECK_MSTATUS(addAttribute(m_scale_x_attr));
+    CHECK_MSTATUS(addAttribute(m_scale_y_attr));
+    CHECK_MSTATUS(addAttribute(m_in_stream_attr));
     CHECK_MSTATUS(addAttribute(m_out_stream_attr));
 
     // Attribute Affects
+    CHECK_MSTATUS(attributeAffects(m_enable_attr, m_out_stream_attr));
     CHECK_MSTATUS(attributeAffects(m_translate_x_attr, m_out_stream_attr));
     CHECK_MSTATUS(attributeAffects(m_translate_y_attr, m_out_stream_attr));
     CHECK_MSTATUS(attributeAffects(m_rotate_attr, m_out_stream_attr));
@@ -330,8 +295,8 @@ MStatus ImageTransformNode::initialize() {
     CHECK_MSTATUS(attributeAffects(m_rotate_center_y_attr, m_out_stream_attr));
     CHECK_MSTATUS(attributeAffects(m_scale_x_attr, m_out_stream_attr));
     CHECK_MSTATUS(attributeAffects(m_scale_y_attr, m_out_stream_attr));
-    CHECK_MSTATUS(attributeAffects(m_enable_attr, m_out_stream_attr));
     CHECK_MSTATUS(attributeAffects(m_in_stream_attr, m_out_stream_attr));
+    CHECK_MSTATUS(attributeAffects(m_enable_attr, m_out_stream_attr));
 
     return MS::kSuccess;
 }

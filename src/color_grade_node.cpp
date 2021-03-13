@@ -65,8 +65,7 @@ MObject ColorGradeNode::m_multiply_a_attr;
 MObject ColorGradeNode::m_out_stream_attr;
 
 ColorGradeNode::ColorGradeNode()
-    : m_ocg_node(ocg::Node(ocg::NodeType::kNull, 0)),
-      m_ocg_node_hash(0) {}
+    : m_ocg_node(ocg::Node(ocg::NodeType::kNull, 0)) {}
 
 ColorGradeNode::~ColorGradeNode() {}
 
@@ -167,23 +166,6 @@ MStatus ColorGradeNode::compute(const MPlug &plug, MDataBlock &data) {
     return status;
 }
 
-void ColorGradeNode::postConstructor() {
-    // Get the size
-    MObject this_node = ColorGradeNode::thisMObject();
-
-    // Get Node UUID
-    MStatus status = MS::kSuccess;
-    MFnDependencyNode fn_depend_node(this_node, &status);
-    CHECK_MSTATUS(status)
-    MUuid uuid = fn_depend_node.uuid();
-    MString uuid_string = uuid.asString();
-    const char *uuid_char = uuid_string.asChar();
-
-    // Generate a 64-bit hash id from the 128-bit UUID.
-    ColorGradeNode::m_ocg_node_hash =
-        ocg::internal::generate_id_from_name(uuid_char);
-};
-
 void *ColorGradeNode::creator() {
     return (new ColorGradeNode());
 }
@@ -199,24 +181,6 @@ MStatus ColorGradeNode::initialize() {
     MFnStringData empty_string_data;
     MObject empty_string_data_obj = empty_string_data.create("");
 
-    // In Stream
-    m_in_stream_attr = tAttr.create(
-            "inStream", "istm",
-            stream_data_type_id);
-    CHECK_MSTATUS(tAttr.setStorable(false));
-    CHECK_MSTATUS(tAttr.setKeyable(false));
-    CHECK_MSTATUS(tAttr.setReadable(true));
-    CHECK_MSTATUS(tAttr.setWritable(true));
-    CHECK_MSTATUS(addAttribute(m_in_stream_attr));
-
-    // Enable
-    m_enable_attr = nAttr.create(
-            "enable", "enb",
-            MFnNumericData::kBoolean, true);
-    CHECK_MSTATUS(nAttr.setStorable(true));
-    CHECK_MSTATUS(nAttr.setKeyable(true));
-    CHECK_MSTATUS(addAttribute(m_enable_attr));
-
     // Multiply RGBA
     float multiply_min = 0.0f;
     float multiply_soft_max = 10.0f;
@@ -228,7 +192,6 @@ MStatus ColorGradeNode::initialize() {
     CHECK_MSTATUS(nAttr.setKeyable(true));
     CHECK_MSTATUS(nAttr.setMin(multiply_min));
     CHECK_MSTATUS(nAttr.setSoftMax(multiply_soft_max));
-    CHECK_MSTATUS(addAttribute(m_multiply_r_attr));
 
     m_multiply_g_attr = nAttr.create(
         "multiplyG", "mulg",
@@ -237,7 +200,6 @@ MStatus ColorGradeNode::initialize() {
     CHECK_MSTATUS(nAttr.setKeyable(true));
     CHECK_MSTATUS(nAttr.setMin(multiply_min));
     CHECK_MSTATUS(nAttr.setSoftMax(multiply_soft_max));
-    CHECK_MSTATUS(addAttribute(m_multiply_g_attr));
 
     m_multiply_b_attr = nAttr.create(
         "multiplyB", "mulb",
@@ -246,7 +208,6 @@ MStatus ColorGradeNode::initialize() {
     CHECK_MSTATUS(nAttr.setKeyable(true));
     CHECK_MSTATUS(nAttr.setMin(multiply_min));
     CHECK_MSTATUS(nAttr.setSoftMax(multiply_soft_max));
-    CHECK_MSTATUS(addAttribute(m_multiply_b_attr));
 
     m_multiply_a_attr = nAttr.create(
         "multiplyA", "mula",
@@ -255,24 +216,27 @@ MStatus ColorGradeNode::initialize() {
     CHECK_MSTATUS(nAttr.setKeyable(true));
     CHECK_MSTATUS(nAttr.setMin(multiply_min));
     CHECK_MSTATUS(nAttr.setSoftMax(multiply_soft_max));
-    CHECK_MSTATUS(addAttribute(m_multiply_a_attr));
 
-    // Out Stream
-    m_out_stream_attr = tAttr.create(
-            "outStream", "ostm",
-            stream_data_type_id);
-    CHECK_MSTATUS(tAttr.setStorable(false));
-    CHECK_MSTATUS(tAttr.setKeyable(false));
-    CHECK_MSTATUS(tAttr.setReadable(true));
-    CHECK_MSTATUS(tAttr.setWritable(false));
+    // Create Common Attributes
+    CHECK_MSTATUS(create_enable_attribute(m_enable_attr));
+    CHECK_MSTATUS(create_input_stream_attribute(m_in_stream_attr));
+    CHECK_MSTATUS(create_output_stream_attribute(m_out_stream_attr));
+
+    // Add Attributes
+    CHECK_MSTATUS(addAttribute(m_enable_attr));
+    CHECK_MSTATUS(addAttribute(m_multiply_r_attr));
+    CHECK_MSTATUS(addAttribute(m_multiply_g_attr));
+    CHECK_MSTATUS(addAttribute(m_multiply_b_attr));
+    CHECK_MSTATUS(addAttribute(m_multiply_a_attr));
+    CHECK_MSTATUS(addAttribute(m_in_stream_attr));
     CHECK_MSTATUS(addAttribute(m_out_stream_attr));
 
     // Attribute Affects
+    CHECK_MSTATUS(attributeAffects(m_enable_attr, m_out_stream_attr));
     CHECK_MSTATUS(attributeAffects(m_multiply_r_attr, m_out_stream_attr));
     CHECK_MSTATUS(attributeAffects(m_multiply_g_attr, m_out_stream_attr));
     CHECK_MSTATUS(attributeAffects(m_multiply_b_attr, m_out_stream_attr));
     CHECK_MSTATUS(attributeAffects(m_multiply_a_attr, m_out_stream_attr));
-    CHECK_MSTATUS(attributeAffects(m_enable_attr, m_out_stream_attr));
     CHECK_MSTATUS(attributeAffects(m_in_stream_attr, m_out_stream_attr));
 
     return MS::kSuccess;

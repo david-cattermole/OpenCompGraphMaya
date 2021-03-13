@@ -31,12 +31,15 @@
 
 // OCG
 #include "opencompgraph.h"
-namespace ocg = open_comp_graph;
 
+// OCG Maya
+#include "base_node.h"
+
+namespace ocg = open_comp_graph;
 
 namespace open_comp_graph_maya {
 
-class ImageTransformNode : public MPxNode {
+class ImageTransformNode : public BaseNode {
 public:
     ImageTransformNode();
 
@@ -44,14 +47,13 @@ public:
 
     virtual MStatus compute(const MPlug &plug, MDataBlock &data);
 
-    void postConstructor();
-
     static void *creator();
 
     static MStatus initialize();
 
     static MString nodeName();
 
+    // Maya Node Type Id
     static MTypeId m_id;
 
     // Input Attributes
@@ -70,7 +72,6 @@ public:
 
 private:
     ocg::Node m_ocg_node;
-    uint64_t m_ocg_node_hash;
 };
 
 } // namespace open_comp_graph_maya

@@ -63,8 +63,7 @@ MObject ImageReadNode::m_time_attr;
 MObject ImageReadNode::m_out_stream_attr;
 
 ImageReadNode::ImageReadNode()
-        : m_ocg_node(ocg::Node(ocg::NodeType::kNull, 0)),
-          m_ocg_node_hash(0) {}
+        : m_ocg_node(ocg::Node(ocg::NodeType::kNull, 0)) {}
 
 ImageReadNode::~ImageReadNode() {}
 
@@ -139,23 +138,6 @@ MStatus ImageReadNode::compute(const MPlug &plug, MDataBlock &data) {
     return status;
 }
 
-void ImageReadNode::postConstructor() {
-    // Get the size
-    MObject this_node = ImageReadNode::thisMObject();
-
-    // Get Node UUID
-    MStatus status = MS::kSuccess;
-    MFnDependencyNode fn_depend_node(this_node, &status);
-    CHECK_MSTATUS(status)
-    MUuid uuid = fn_depend_node.uuid();
-    MString uuid_string = uuid.asString();
-    const char *uuid_char = uuid_string.asChar();
-
-    // Generate a 64-bit hash id from the 128-bit UUID.
-    ImageReadNode::m_ocg_node_hash =
-        ocg::internal::generate_id_from_name(uuid_char);
-};
-
 void *ImageReadNode::creator() {
     return (new ImageReadNode());
 }
@@ -165,20 +147,11 @@ MStatus ImageReadNode::initialize() {
     MFnUnitAttribute    uAttr;
     MFnNumericAttribute nAttr;
     MFnTypedAttribute   tAttr;
-    MTypeId stream_data_type_id(OCGM_GRAPH_DATA_TYPE_ID);
 
     // Create empty string data to be used as attribute default
     // (string) value.
     MFnStringData empty_string_data;
     MObject empty_string_data_obj = empty_string_data.create("");
-
-    // Enable
-    m_enable_attr = nAttr.create(
-            "enable", "enb",
-            MFnNumericData::kBoolean, true);
-    CHECK_MSTATUS(nAttr.setStorable(true));
-    CHECK_MSTATUS(nAttr.setKeyable(true));
-    CHECK_MSTATUS(addAttribute(m_enable_attr));
 
     // File Path Attribute
     m_file_path_attr = tAttr.create(
@@ -186,28 +159,26 @@ MStatus ImageReadNode::initialize() {
             MFnData::kString, empty_string_data_obj);
     CHECK_MSTATUS(tAttr.setStorable(true));
     CHECK_MSTATUS(tAttr.setUsedAsFilename(true));
-    CHECK_MSTATUS(MPxNode::addAttribute(m_file_path_attr));
 
     // Time
     m_time_attr = uAttr.create("time", "tm", MFnUnitAttribute::kTime, 0.0);
     CHECK_MSTATUS(uAttr.setStorable(true));
     CHECK_MSTATUS(uAttr.setKeyable(true));
-    CHECK_MSTATUS(MPxNode::addAttribute(m_time_attr));
 
-    // Out Stream
-    m_out_stream_attr = tAttr.create(
-            "outStream", "ostm",
-            stream_data_type_id);
-    CHECK_MSTATUS(tAttr.setStorable(false));
-    CHECK_MSTATUS(tAttr.setKeyable(false));
-    CHECK_MSTATUS(tAttr.setReadable(true));
-    CHECK_MSTATUS(tAttr.setWritable(false));
+    // Create Common Attributes
+    CHECK_MSTATUS(create_enable_attribute(m_enable_attr));
+    CHECK_MSTATUS(create_output_stream_attribute(m_out_stream_attr));
+
+    // Add Attributes
+    CHECK_MSTATUS(addAttribute(m_enable_attr));
+    CHECK_MSTATUS(addAttribute(m_file_path_attr));
+    CHECK_MSTATUS(addAttribute(m_time_attr));
     CHECK_MSTATUS(addAttribute(m_out_stream_attr));
 
     // Attribute Affects
+    CHECK_MSTATUS(attributeAffects(m_enable_attr, m_out_stream_attr));
     CHECK_MSTATUS(attributeAffects(m_file_path_attr, m_out_stream_attr));
     CHECK_MSTATUS(attributeAffects(m_time_attr, m_out_stream_attr));
-    CHECK_MSTATUS(attributeAffects(m_enable_attr, m_out_stream_attr));
 
     return MS::kSuccess;
 }

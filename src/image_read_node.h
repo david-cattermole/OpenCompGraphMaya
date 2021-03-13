@@ -32,9 +32,12 @@
 // OCG
 #include "opencompgraph.h"
 
+// OCG Maya
+#include "base_node.h"
+
 namespace open_comp_graph_maya {
 
-class ImageReadNode : public MPxNode {
+class ImageReadNode : public BaseNode {
 public:
     ImageReadNode();
 
@@ -42,14 +45,13 @@ public:
 
     virtual MStatus compute(const MPlug &plug, MDataBlock &data);
 
-    void postConstructor();
-
     static void *creator();
 
     static MStatus initialize();
 
     static MString nodeName();
 
+    // Maya Node Type Id
     static MTypeId m_id;
 
     // Input Attributes
@@ -62,7 +64,6 @@ public:
 
 private:
     ocg::Node m_ocg_node;
-    uint64_t m_ocg_node_hash;
 };
 
 } // namespace open_comp_graph_maya

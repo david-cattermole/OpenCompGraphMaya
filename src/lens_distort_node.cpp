@@ -65,8 +65,7 @@ MObject LensDistortNode::m_center_y_attr;
 MObject LensDistortNode::m_out_stream_attr;
 
 LensDistortNode::LensDistortNode()
-    : m_ocg_node(ocg::Node(ocg::NodeType::kNull, 0)),
-      m_ocg_node_hash(0) {}
+    : m_ocg_node(ocg::Node(ocg::NodeType::kNull, 0)) {}
 
 LensDistortNode::~LensDistortNode() {}
 
@@ -145,7 +144,7 @@ MStatus LensDistortNode::compute(const MPlug &plug, MDataBlock &data) {
                 float temp_a = center_y_handle.asFloat();
                 log->debug("LensDistortNode: k1={} k2={} center_x={} center_y={}",
                            temp_r, temp_g, temp_b, temp_a);
-                     
+
                 shared_graph->set_node_attr_f32(m_ocg_node, "k1", temp_r);
                 shared_graph->set_node_attr_f32(m_ocg_node, "k2", temp_g);
                 shared_graph->set_node_attr_f32(m_ocg_node, "center_x", temp_b);
@@ -165,23 +164,6 @@ MStatus LensDistortNode::compute(const MPlug &plug, MDataBlock &data) {
     return status;
 }
 
-void LensDistortNode::postConstructor() {
-    // Get the size
-    MObject this_node = LensDistortNode::thisMObject();
-
-    // Get Node UUID
-    MStatus status = MS::kSuccess;
-    MFnDependencyNode fn_depend_node(this_node, &status);
-    CHECK_MSTATUS(status)
-    MUuid uuid = fn_depend_node.uuid();
-    MString uuid_string = uuid.asString();
-    const char *uuid_char = uuid_string.asChar();
-
-    // Generate a 64-bit hash id from the 128-bit UUID.
-    LensDistortNode::m_ocg_node_hash =
-        ocg::internal::generate_id_from_name(uuid_char);
-};
-
 void *LensDistortNode::creator() {
     return (new LensDistortNode());
 }
@@ -197,24 +179,6 @@ MStatus LensDistortNode::initialize() {
     MFnStringData empty_string_data;
     MObject empty_string_data_obj = empty_string_data.create("");
 
-    // In Stream
-    m_in_stream_attr = tAttr.create(
-            "inStream", "istm",
-            stream_data_type_id);
-    CHECK_MSTATUS(tAttr.setStorable(false));
-    CHECK_MSTATUS(tAttr.setKeyable(false));
-    CHECK_MSTATUS(tAttr.setReadable(true));
-    CHECK_MSTATUS(tAttr.setWritable(true));
-    CHECK_MSTATUS(addAttribute(m_in_stream_attr));
-
-    // Enable
-    m_enable_attr = nAttr.create(
-            "enable", "enb",
-            MFnNumericData::kBoolean, true);
-    CHECK_MSTATUS(nAttr.setStorable(true));
-    CHECK_MSTATUS(nAttr.setKeyable(true));
-    CHECK_MSTATUS(addAttribute(m_enable_attr));
-
     // Distortion Parameters
     float value_soft_min = -0.1f;
     float value_soft_max = 0.1f;
@@ -226,7 +190,6 @@ MStatus LensDistortNode::initialize() {
     CHECK_MSTATUS(nAttr.setKeyable(true));
     CHECK_MSTATUS(nAttr.setSoftMin(value_soft_min));
     CHECK_MSTATUS(nAttr.setSoftMax(value_soft_max));
-    CHECK_MSTATUS(addAttribute(m_k1_attr));
 
     m_k2_attr = nAttr.create(
         "k2", "k2",
@@ -235,7 +198,6 @@ MStatus LensDistortNode::initialize() {
     CHECK_MSTATUS(nAttr.setKeyable(true));
     CHECK_MSTATUS(nAttr.setSoftMin(value_soft_min));
     CHECK_MSTATUS(nAttr.setSoftMax(value_soft_max));
-    CHECK_MSTATUS(addAttribute(m_k2_attr));
 
     m_center_x_attr = nAttr.create(
         "centerX", "cx",
@@ -244,8 +206,7 @@ MStatus LensDistortNode::initialize() {
     CHECK_MSTATUS(nAttr.setKeyable(true));
     CHECK_MSTATUS(nAttr.setSoftMin(value_soft_min));
     CHECK_MSTATUS(nAttr.setSoftMax(value_soft_max));
-    CHECK_MSTATUS(addAttribute(m_center_x_attr));
-    
+
     m_center_y_attr = nAttr.create(
         "centerY", "cy",
         MFnNumericData::kFloat, value_default);
@@ -253,24 +214,27 @@ MStatus LensDistortNode::initialize() {
     CHECK_MSTATUS(nAttr.setKeyable(true));
     CHECK_MSTATUS(nAttr.setSoftMin(value_soft_min));
     CHECK_MSTATUS(nAttr.setSoftMax(value_soft_max));
+
+    // Create Common Attributes
+    CHECK_MSTATUS(create_enable_attribute(m_enable_attr));
+    CHECK_MSTATUS(create_input_stream_attribute(m_in_stream_attr));
+    CHECK_MSTATUS(create_output_stream_attribute(m_out_stream_attr));
+
+    // Add Attributes
+    CHECK_MSTATUS(addAttribute(m_enable_attr));
+    CHECK_MSTATUS(addAttribute(m_k1_attr));
+    CHECK_MSTATUS(addAttribute(m_k2_attr));
+    CHECK_MSTATUS(addAttribute(m_center_x_attr));
     CHECK_MSTATUS(addAttribute(m_center_y_attr));
-    
-    // Out Stream
-    m_out_stream_attr = tAttr.create(
-            "outStream", "ostm",
-            stream_data_type_id);
-    CHECK_MSTATUS(tAttr.setStorable(false));
-    CHECK_MSTATUS(tAttr.setKeyable(false));
-    CHECK_MSTATUS(tAttr.setReadable(true));
-    CHECK_MSTATUS(tAttr.setWritable(false));
+    CHECK_MSTATUS(addAttribute(m_in_stream_attr));
     CHECK_MSTATUS(addAttribute(m_out_stream_attr));
 
     // Attribute Affects
+    CHECK_MSTATUS(attributeAffects(m_enable_attr, m_out_stream_attr));
     CHECK_MSTATUS(attributeAffects(m_k1_attr, m_out_stream_attr));
     CHECK_MSTATUS(attributeAffects(m_k2_attr, m_out_stream_attr));
     CHECK_MSTATUS(attributeAffects(m_center_x_attr, m_out_stream_attr));
     CHECK_MSTATUS(attributeAffects(m_center_y_attr, m_out_stream_attr));
-    CHECK_MSTATUS(attributeAffects(m_enable_attr, m_out_stream_attr));
     CHECK_MSTATUS(attributeAffects(m_in_stream_attr, m_out_stream_attr));
 
     return MS::kSuccess;

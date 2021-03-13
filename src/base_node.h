@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020 David Cattermole.
+ * Copyright (C) 2020, 2021 David Cattermole.
  *
  * This file is part of OpenCompGraphMaya.
  *
@@ -17,11 +17,11 @@
  * along with OpenCompGraphMaya.  If not, see <https://www.gnu.org/licenses/>.
  * ====================================================================
  *
- * Adjust the color of an image stream.
+ * Base class node for all OCG nodes.
  */
 
-#ifndef OPENCOMPGRAPHMAYA_COLOR_GRADE_NODE_H
-#define OPENCOMPGRAPHMAYA_COLOR_GRADE_NODE_H
+#ifndef OPENCOMPGRAPHMAYA_BASE_NODE_H
+#define OPENCOMPGRAPHMAYA_BASE_NODE_H
 
 // Maya
 #include <maya/MPxNode.h>
@@ -32,45 +32,30 @@
 // OCG
 #include "opencompgraph.h"
 
-// OCG Maya
-#include "base_node.h"
-
-namespace ocg = open_comp_graph;
-
 namespace open_comp_graph_maya {
 
-class ColorGradeNode : public BaseNode {
+class BaseNode : public MPxNode {
 public:
-    ColorGradeNode();
 
-    virtual ~ColorGradeNode();
+    BaseNode();
 
-    virtual MStatus compute(const MPlug &plug, MDataBlock &data);
+    virtual ~BaseNode();
 
-    static void *creator();
+    void postConstructor();
 
-    static MStatus initialize();
+    static MStatus
+    create_enable_attribute(MObject &attr);
 
-    static MString nodeName();
+    static MStatus
+    create_input_stream_attribute(MObject &attr);
 
-    // Maya Node Type Id
-    static MTypeId m_id;
+    static MStatus
+    create_output_stream_attribute(MObject &attr);
 
-    // Input Attributes
-    static MObject m_in_stream_attr;
-    static MObject m_enable_attr;
-    static MObject m_multiply_r_attr;
-    static MObject m_multiply_g_attr;
-    static MObject m_multiply_b_attr;
-    static MObject m_multiply_a_attr;
-
-    // Output Attributes
-    static MObject m_out_stream_attr;
-
-private:
-    ocg::Node m_ocg_node;
+protected:
+    uint64_t m_ocg_node_hash;
 };
 
 } // namespace open_comp_graph_maya
 
-#endif // OPENCOMPGRAPHMAYA_COLOR_GRADE_NODE_H
+#endif // OPENCOMPGRAPHMAYA_BASE_NODE_H
