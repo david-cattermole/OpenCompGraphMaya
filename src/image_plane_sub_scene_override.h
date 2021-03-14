@@ -138,7 +138,6 @@ private:
     bool m_are_ui_drawables_dirty;
 
     // Cached attribute values
-    MFloatMatrix m_camera_proj_matrix;
     float m_focal_length;
     float m_card_depth;
     float m_card_size_x;
