@@ -56,6 +56,7 @@
 #include "image_plane_sub_scene_override.h"
 #include "image_plane_shape.h"
 #include "graph_data.h"
+#include "global_cache.h"
 #include "logger.h"
 
 
@@ -65,6 +66,7 @@
 
 
 namespace ocg = open_comp_graph;
+namespace ocgm_cache = open_comp_graph_maya::cache;
 
 namespace open_comp_graph_maya {
 namespace image_plane {
@@ -235,11 +237,7 @@ SubSceneOverride::SubSceneOverride(const MObject &obj)
           m_are_ui_drawables_dirty(true),
           m_instance_added_cb_id(0),
           m_instance_removed_cb_id(0),
-          m_ocg_cache(std::make_shared<ocg::Cache>()),
           m_in_stream_node(ocg::Node(ocg::NodeType::kNull, 0)) {
-    // 24GB of RAM used for the cache.
-    const size_t bytes_to_gigabytes = 1073741824;
-    m_ocg_cache->set_capacity_bytes(24 * bytes_to_gigabytes);
 
     MDagPath dag_path;
     if (MDagPath::getAPathTo(obj, dag_path)) {
@@ -387,11 +385,12 @@ void SubSceneOverride::update(
         log->debug("ocgImagePlane: m_time={}", m_time);
         int32_t execute_frame = static_cast<int32_t>(std::lround(m_time));
         log->debug("ocgImagePlane: execute_frame={}", execute_frame);
+        auto shared_cache = ocgm_cache::get_shared_cache();
         exec_status = execute_ocg_graph(
             m_in_stream_node,
             execute_frame,
             shared_graph,
-            m_ocg_cache);
+            shared_cache);
 
         // TODO: Get and check if the deformer has changed.
         vertex_values_changed += 1;
@@ -1032,8 +1031,11 @@ SubSceneOverride::execute_ocg_graph(
         "ocgImagePlane: input node status={}",
         static_cast<uint64_t>(input_node_status));
     log->debug(
-        "ColorGraphNode: Graph as string:\n{}",
+        "ocgImagePlane: Graph as string:\n{}",
         shared_graph->data_debug_string());
+    log->debug(
+        "ocgImagePlane: Cache as string:\n{}",
+        shared_cache->data_debug_string());
 
     if (exec_status != ocg::ExecuteStatus::kSuccess) {
         log->error("ocgImagePlane: Failed to execute OCG node network!");

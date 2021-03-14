@@ -41,6 +41,7 @@
 #include <lens_distort_node.h>
 #include <image_transform_node.h>
 #include <graph_data.h>
+#include "global_cache.h"
 #include "logger.h"
 
 namespace ocg = open_comp_graph;
@@ -93,6 +94,16 @@ MStatus initializePlugin(MObject obj) {
     ocgm::log::set_level("warn");
     auto log = ocgm::log::get_logger();
     log->info("Initializing OpenCompGraphMaya plug-in...");
+
+    // Initial size of the cache, when the user loads the plug-in.
+    auto shared_cache = ocgm::cache::get_shared_cache();
+    const size_t bytes_to_gigabytes = 1073741824;
+    // Set RAM used for the cache.
+    //
+    // TODO: Allow user to change this value.
+    // TODO: Use environment variable to configure the default, if given.
+    // TODO: When a scene is closed, the Cache should automatically flush.
+    shared_cache->set_capacity_bytes(20 * bytes_to_gigabytes);  // 20GB of RAM
 
     // Register data types first, so the nodes and commands below can
     // reference them.

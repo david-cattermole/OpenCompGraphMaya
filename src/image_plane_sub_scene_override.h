@@ -137,12 +137,6 @@ private:
     bool m_is_instance_mode;
     bool m_are_ui_drawables_dirty;
 
-    // OCG Internal state.
-    //
-    // TODO: Remove this from the node. All nodes should share the
-    // same cache.
-    std::shared_ptr<ocg::Cache> m_ocg_cache;
-
     // Cached attribute values
     MFloatMatrix m_camera_proj_matrix;
     float m_focal_length;

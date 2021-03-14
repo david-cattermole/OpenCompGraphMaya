@@ -37,6 +37,7 @@ set(SOURCE_FILES
   ${CMAKE_CURRENT_SOURCE_DIR}/graph_data.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/geometry_buffer.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/node_utils.cpp
+  ${CMAKE_CURRENT_SOURCE_DIR}/global_cache.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/logger.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/plugin_main.cpp
   )
