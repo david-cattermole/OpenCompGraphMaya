@@ -18,6 +18,8 @@
  * ====================================================================
  *
  * Apply a 2D Transform to an image (with matrix concatenation)
+ *
+ * TODO: Add 'pivot' point for the transform effect.
  */
 
 // Maya
