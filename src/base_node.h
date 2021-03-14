@@ -23,10 +23,14 @@
 #ifndef OPENCOMPGRAPHMAYA_BASE_NODE_H
 #define OPENCOMPGRAPHMAYA_BASE_NODE_H
 
+// STL
+#include <vector>
+
 // Maya
 #include <maya/MPxNode.h>
 #include <maya/MString.h>
 #include <maya/MObject.h>
+#include <maya/MObjectArray.h>
 #include <maya/MTypeId.h>
 
 // OCG
@@ -43,6 +47,7 @@ public:
 
     void postConstructor();
 
+    // Attribute Creation Helpers.
     static MStatus
     create_enable_attribute(MObject &attr);
 
@@ -51,6 +56,18 @@ public:
 
     static MStatus
     create_output_stream_attribute(MObject &attr);
+
+    // OCG Node Graph Helpers.
+    virtual MStatus computeOcgStream(
+        const MPlug &plug, MDataBlock &data,
+        MObjectArray &in_stream_attr_array,
+        MObject &out_stream_attr);
+
+    virtual MStatus updateOcgNodes(
+        MDataBlock &data,
+        std::shared_ptr<ocg::Graph> &shared_graph,
+        std::vector<ocg::Node> input_ocg_nodes,
+        ocg::Node &output_ocg_node);
 
 protected:
     uint64_t m_ocg_node_hash;

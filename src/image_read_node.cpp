@@ -71,71 +71,56 @@ MString ImageReadNode::nodeName() {
     return MString(OCGM_IMAGE_READ_TYPE_NAME);
 }
 
-MStatus ImageReadNode::compute(const MPlug &plug, MDataBlock &data) {
-    auto log = log::get_logger();
-    MStatus status = MS::kUnknownParameter;
+MStatus ImageReadNode::updateOcgNodes(
+        MDataBlock &data,
+        std::shared_ptr<ocg::Graph> &shared_graph,
+        std::vector<ocg::Node> input_ocg_nodes,
+        ocg::Node &output_ocg_node) {
+    MStatus status = MS::kSuccess;
+    if (input_ocg_nodes.size() != 0) {
+        return MS::kFailure;
+    }
+    bool exists = shared_graph->node_exists(m_ocg_node);
+    if (!exists) {
+        m_ocg_node = shared_graph->create_node(
+            ocg::NodeType::kReadImage,
+            m_ocg_node_hash);
+    }
 
-    if (plug == m_out_stream_attr) {
+    if (m_ocg_node.get_id() != 0) {
+        // Set the output node
+        output_ocg_node = m_ocg_node;
+
         // Enable Attribute toggle
-        MDataHandle enable_handle = data.inputValue(m_enable_attr, &status);
+        MDataHandle enable_handle = data.inputValue(
+            m_enable_attr, &status);
         CHECK_MSTATUS_AND_RETURN_IT(status);
         bool enable = enable_handle.asBool();
+        shared_graph->set_node_attr_i32(
+            m_ocg_node, "enable", static_cast<int32_t>(enable));
 
-        // Create initial plug-in data structure. We don't need to
-        // 'new' the data type directly.
-        MFnPluginData fn_plugin_data;
-        MTypeId data_type_id(OCGM_GRAPH_DATA_TYPE_ID);
-        fn_plugin_data.create(data_type_id, &status);
+        // File Path Attribute
+        MDataHandle file_path_handle = data.inputValue(m_file_path_attr, &status);
         CHECK_MSTATUS_AND_RETURN_IT(status);
+        MString file_path = file_path_handle.asString();
+        shared_graph->set_node_attr_str(m_ocg_node, "file_path", file_path.asChar());
 
-        // This node has no graph input, so we create a new shared OCG Graph
-        // to be used by downstream nodes.
-        auto shared_graph = std::make_shared<ocg::Graph>();
-
-        // Output Stream
-        MDataHandle out_stream_handle = data.outputValue(m_out_stream_attr);
-        GraphData* new_data =
-            static_cast<GraphData*>(fn_plugin_data.data(&status));
-        if (shared_graph) {
-            log->debug("ImageReadNode: enabled and has graph");
-
-            // Modify the OCG Graph, and initialize the node values.
-            bool exists = shared_graph->node_exists(m_ocg_node);
-            log->debug("ImageReadNode: node exists: {}", exists);
-            if (!exists) {
-                m_ocg_node = shared_graph->create_node(
-                    ocg::NodeType::kReadImage,
-                    m_ocg_node_hash);
-            }
-            log->debug("ImageReadNode: node id: {}", m_ocg_node.get_id());
-            if (m_ocg_node.get_id() != 0) {
-                shared_graph->set_node_attr_i32(
-                    m_ocg_node, "enable", static_cast<int32_t>(enable));
-
-                // File Path Attribute
-                MDataHandle file_path_handle = data.inputValue(m_file_path_attr, &status);
-                CHECK_MSTATUS_AND_RETURN_IT(status);
-                MString file_path = file_path_handle.asString();
-                shared_graph->set_node_attr_str(m_ocg_node, "file_path", file_path.asChar());
-                log->debug("ImageReadNode: file path: {}", file_path.asChar());
-
-                // Time Attribute
-                MDataHandle time_handle = data.inputValue(m_time_attr, &status);
-                CHECK_MSTATUS_AND_RETURN_IT(status);
-                float time = time_handle.asFloat();
-                shared_graph->set_node_attr_f32(m_ocg_node, "time", time);
-            }
-        }
-        log->debug(
-            "ImageReadNode: Graph as string:\n{}",
-            shared_graph->data_debug_string());
-        new_data->set_node(m_ocg_node);
-        new_data->set_graph(shared_graph);
-        out_stream_handle.setMPxData(new_data);
-        out_stream_handle.setClean();
-        status = MS::kSuccess;
+        // Time Attribute
+        MDataHandle time_handle = data.inputValue(m_time_attr, &status);
+        CHECK_MSTATUS_AND_RETURN_IT(status);
+        float time = time_handle.asFloat();
+        shared_graph->set_node_attr_f32(m_ocg_node, "time", time);
     }
+
     return status;
+}
+
+MStatus ImageReadNode::compute(const MPlug &plug, MDataBlock &data) {
+    MObjectArray in_attr_array;
+    return computeOcgStream(
+        plug, data,
+        in_attr_array,
+        m_out_stream_attr);
 }
 
 void *ImageReadNode::creator() {

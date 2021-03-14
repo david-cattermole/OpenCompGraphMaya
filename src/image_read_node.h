@@ -51,6 +51,12 @@ public:
 
     static MString nodeName();
 
+    virtual MStatus updateOcgNodes(
+        MDataBlock &data,
+        std::shared_ptr<ocg::Graph> &shared_graph,
+        std::vector<ocg::Node> input_ocg_nodes,
+        ocg::Node &output_ocg_node);
+
     // Maya Node Type Id
     static MTypeId m_id;
 

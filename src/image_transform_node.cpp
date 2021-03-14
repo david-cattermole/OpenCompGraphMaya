@@ -76,110 +76,78 @@ MString ImageTransformNode::nodeName() {
     return MString(OCGM_IMAGE_TRANSFORM_TYPE_NAME);
 }
 
-MStatus ImageTransformNode::compute(const MPlug &plug, MDataBlock &data) {
-    auto log = log::get_logger();
-    MStatus status = MS::kUnknownParameter;
-    if (m_ocg_node_hash == 0) {
-        // No OCG hash has been created yet, this node is not ready
-        // to be computed.
-        return status;
+MStatus ImageTransformNode::updateOcgNodes(
+        MDataBlock &data,
+        std::shared_ptr<ocg::Graph> &shared_graph,
+        std::vector<ocg::Node> input_ocg_nodes,
+        ocg::Node &output_ocg_node) {
+    MStatus status = MS::kSuccess;
+    if (input_ocg_nodes.size() != 1) {
+        return MS::kFailure;
     }
+    bool exists = shared_graph->node_exists(m_ocg_node);
+    if (!exists) {
+        m_ocg_node = shared_graph->create_node(
+            ocg::NodeType::kTransform,
+            m_ocg_node_hash);
+    }
+    auto input_ocg_node = input_ocg_nodes[0];
+    shared_graph->connect(input_ocg_node, m_ocg_node, 0);
 
-    if (plug == m_out_stream_attr) {
+    if (m_ocg_node.get_id() != 0) {
+        // Set the output node
+        output_ocg_node = m_ocg_node;
+
         // Enable Attribute toggle
         MDataHandle enable_handle = data.inputValue(
-                ImageTransformNode::m_enable_attr, &status);
+            m_enable_attr, &status);
         CHECK_MSTATUS_AND_RETURN_IT(status);
         bool enable = enable_handle.asBool();
+        shared_graph->set_node_attr_i32(
+            m_ocg_node, "enable", static_cast<int32_t>(enable));
 
-        // Create initial plug-in data structure. We don't need to
-        // 'new' the data type directly.
-        MFnPluginData fn_plugin_data;
-        MTypeId data_type_id(OCGM_GRAPH_DATA_TYPE_ID);
-        fn_plugin_data.create(data_type_id, &status);
+        MDataHandle translate_x_handle = data.inputValue(m_translate_x_attr, &status);
+        CHECK_MSTATUS_AND_RETURN_IT(status);
+        MDataHandle translate_y_handle = data.inputValue(m_translate_y_attr, &status);
+        CHECK_MSTATUS_AND_RETURN_IT(status);
+        MDataHandle rotate_handle = data.inputValue(m_rotate_attr, &status);
+        CHECK_MSTATUS_AND_RETURN_IT(status);
+        MDataHandle rotate_center_x_handle = data.inputValue(m_rotate_center_x_attr, &status);
+        CHECK_MSTATUS_AND_RETURN_IT(status);
+        MDataHandle rotate_center_y_handle = data.inputValue(m_rotate_center_y_attr, &status);
+        CHECK_MSTATUS_AND_RETURN_IT(status);
+        MDataHandle scale_x_handle = data.inputValue(m_scale_x_attr, &status);
+        CHECK_MSTATUS_AND_RETURN_IT(status);
+        MDataHandle scale_y_handle = data.inputValue(m_scale_y_attr, &status);
         CHECK_MSTATUS_AND_RETURN_IT(status);
 
-        // Get Input Stream
-        MDataHandle in_stream_handle = data.inputValue(m_in_stream_attr, &status);
-        CHECK_MSTATUS_AND_RETURN_IT(status);
-        GraphData* input_stream_data =
-            static_cast<GraphData*>(in_stream_handle.asPluginData());
-        if (input_stream_data == nullptr) {
-            status = MS::kFailure;
-            return status;
-        }
-        std::shared_ptr<ocg::Graph> shared_graph = input_stream_data->get_graph();
-        auto input_ocg_node = input_stream_data->get_node();
+        float tx = translate_x_handle.asFloat();
+        float ty = translate_y_handle.asFloat();
+        float r = rotate_handle.asFloat();
+        float rx = rotate_center_x_handle.asFloat();
+        float ry = rotate_center_y_handle.asFloat();
+        float scale_x = scale_x_handle.asFloat();
+        float scale_y = scale_y_handle.asFloat();
 
-        // Output Stream
-        MDataHandle out_stream_handle = data.outputValue(m_out_stream_attr);
-        GraphData* new_data =
-            static_cast<GraphData*>(fn_plugin_data.data(&status));
-        if (shared_graph) {
-            // Modify the OCG Graph, and initialize the node values.
-            bool exists = shared_graph->node_exists(m_ocg_node);
-            log->debug("ImageTransformNode: node exists: {}", exists);
-            if (!exists) {
-                m_ocg_node = shared_graph->create_node(
-                    ocg::NodeType::kTransform,
-                    m_ocg_node_hash);
-            }
-            shared_graph->connect(input_ocg_node, m_ocg_node, 0);
-
-            log->debug("ImageTransformNode: input id: {}", input_ocg_node.get_id());
-            log->debug("ImageTransformNode: node id: {}", m_ocg_node.get_id());
-            if (m_ocg_node.get_id() != 0) {
-                shared_graph->set_node_attr_i32(
-                    m_ocg_node, "enable", static_cast<int32_t>(enable));
-                log->debug("ImageTransformNode: enable: {}", enable);
-
-                MDataHandle translate_x_handle = data.inputValue(m_translate_x_attr, &status);
-                CHECK_MSTATUS_AND_RETURN_IT(status);
-                MDataHandle translate_y_handle = data.inputValue(m_translate_y_attr, &status);
-                CHECK_MSTATUS_AND_RETURN_IT(status);
-                MDataHandle rotate_handle = data.inputValue(m_rotate_attr, &status);
-                CHECK_MSTATUS_AND_RETURN_IT(status);
-                MDataHandle rotate_center_x_handle = data.inputValue(m_rotate_center_x_attr, &status);
-                CHECK_MSTATUS_AND_RETURN_IT(status);
-                MDataHandle rotate_center_y_handle = data.inputValue(m_rotate_center_y_attr, &status);
-                CHECK_MSTATUS_AND_RETURN_IT(status);
-                MDataHandle scale_x_handle = data.inputValue(m_scale_x_attr, &status);
-                CHECK_MSTATUS_AND_RETURN_IT(status);
-                MDataHandle scale_y_handle = data.inputValue(m_scale_y_attr, &status);
-                CHECK_MSTATUS_AND_RETURN_IT(status);
-
-                float tx = translate_x_handle.asFloat();
-                float ty = translate_y_handle.asFloat();
-                float r = rotate_handle.asFloat();
-                float rx = rotate_center_x_handle.asFloat();
-                float ry = rotate_center_y_handle.asFloat();
-                float scale_x = scale_x_handle.asFloat();
-                float scale_y = scale_y_handle.asFloat();
-
-                log->debug("ImageTransformNode: translate_xy: x={} y={}", tx, ty);
-                log->debug("ImageTransformNode: rotate: r={} rx={} ry={}", r, rx, ry);
-                log->debug("ImageTransformNode: scale_xy: x={} y={}", scale_x, scale_y);
-
-                shared_graph->set_node_attr_f32(m_ocg_node, "translate_x", tx);
-                shared_graph->set_node_attr_f32(m_ocg_node, "translate_y", ty);
-                shared_graph->set_node_attr_f32(m_ocg_node, "rotate", r);
-                shared_graph->set_node_attr_f32(m_ocg_node, "rotate_center_x", rx);
-                shared_graph->set_node_attr_f32(m_ocg_node, "rotate_center_y", ry);
-                shared_graph->set_node_attr_f32(m_ocg_node, "scale_x", scale_x);
-                shared_graph->set_node_attr_f32(m_ocg_node, "scale_y", scale_y);
-            }
-        }
-        log->debug(
-            "ImageTransformNode: Graph as string:\n{}",
-            shared_graph->data_debug_string());
-        new_data->set_node(m_ocg_node);
-        new_data->set_graph(shared_graph);
-        out_stream_handle.setMPxData(new_data);
-        out_stream_handle.setClean();
-        status = MS::kSuccess;
+        shared_graph->set_node_attr_f32(m_ocg_node, "translate_x", tx);
+        shared_graph->set_node_attr_f32(m_ocg_node, "translate_y", ty);
+        shared_graph->set_node_attr_f32(m_ocg_node, "rotate", r);
+        shared_graph->set_node_attr_f32(m_ocg_node, "rotate_center_x", rx);
+        shared_graph->set_node_attr_f32(m_ocg_node, "rotate_center_y", ry);
+        shared_graph->set_node_attr_f32(m_ocg_node, "scale_x", scale_x);
+        shared_graph->set_node_attr_f32(m_ocg_node, "scale_y", scale_y);
     }
 
     return status;
+}
+
+MStatus ImageTransformNode::compute(const MPlug &plug, MDataBlock &data) {
+    MObjectArray in_attr_array;
+    in_attr_array.append(m_in_stream_attr);
+    return computeOcgStream(
+        plug, data,
+        in_attr_array,
+        m_out_stream_attr);
 }
 
 void *ImageTransformNode::creator() {
