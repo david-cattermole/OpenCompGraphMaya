@@ -46,6 +46,7 @@
 #include "logger.h"
 #include "graph_data.h"
 #include "lens_distort_node.h"
+#include "node_utils.h"
 
 namespace ocg = open_comp_graph;
 
@@ -96,34 +97,19 @@ MStatus LensDistortNode::updateOcgNodes(
         output_ocg_node = m_ocg_node;
 
         // Enable Attribute toggle
-        MDataHandle enable_handle = data.inputValue(
-            m_enable_attr, &status);
-        CHECK_MSTATUS_AND_RETURN_IT(status);
-        bool enable = enable_handle.asBool();
+        bool enable = utils::get_attr_value_bool(data, m_enable_attr);
         shared_graph->set_node_attr_i32(
             m_ocg_node, "enable", static_cast<int32_t>(enable));
 
-        // Multiply Attribute RGBA
-        MDataHandle k1_handle = data.inputValue(m_k1_attr, &status);
-        CHECK_MSTATUS_AND_RETURN_IT(status);
-
-        MDataHandle k2_handle = data.inputValue(m_k2_attr, &status);
-        CHECK_MSTATUS_AND_RETURN_IT(status);
-
-        MDataHandle center_x_handle = data.inputValue(m_center_x_attr, &status);
-        CHECK_MSTATUS_AND_RETURN_IT(status);
-
-        MDataHandle center_y_handle = data.inputValue(m_center_y_attr, &status);
-
-        float temp_r = k1_handle.asFloat();
-        float temp_g = k2_handle.asFloat();
-        float temp_b = center_x_handle.asFloat();
-        float temp_a = center_y_handle.asFloat();
-
-        shared_graph->set_node_attr_f32(m_ocg_node, "k1", temp_r);
-        shared_graph->set_node_attr_f32(m_ocg_node, "k2", temp_g);
-        shared_graph->set_node_attr_f32(m_ocg_node, "center_x", temp_b);
-        shared_graph->set_node_attr_f32(m_ocg_node, "center_y", temp_a);
+        // Lens Distortion Coefficients.
+        float k1 = utils::get_attr_value_float(data, m_k1_attr);
+        float k2 = utils::get_attr_value_float(data, m_k2_attr);
+        float center_x = utils::get_attr_value_float(data, m_center_x_attr);
+        float center_y = utils::get_attr_value_float(data, m_center_y_attr);
+        shared_graph->set_node_attr_f32(m_ocg_node, "k1", k1);
+        shared_graph->set_node_attr_f32(m_ocg_node, "k2", k2);
+        shared_graph->set_node_attr_f32(m_ocg_node, "center_x", center_x);
+        shared_graph->set_node_attr_f32(m_ocg_node, "center_y", center_y);
     }
 
     return status;

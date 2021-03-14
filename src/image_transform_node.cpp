@@ -46,6 +46,7 @@
 #include "logger.h"
 #include "graph_data.h"
 #include "image_transform_node.h"
+#include "node_utils.h"
 
 namespace ocg = open_comp_graph;
 
@@ -99,36 +100,18 @@ MStatus ImageTransformNode::updateOcgNodes(
         output_ocg_node = m_ocg_node;
 
         // Enable Attribute toggle
-        MDataHandle enable_handle = data.inputValue(
-            m_enable_attr, &status);
-        CHECK_MSTATUS_AND_RETURN_IT(status);
-        bool enable = enable_handle.asBool();
+        bool enable = utils::get_attr_value_bool(data, m_enable_attr);
         shared_graph->set_node_attr_i32(
             m_ocg_node, "enable", static_cast<int32_t>(enable));
 
-        MDataHandle translate_x_handle = data.inputValue(m_translate_x_attr, &status);
-        CHECK_MSTATUS_AND_RETURN_IT(status);
-        MDataHandle translate_y_handle = data.inputValue(m_translate_y_attr, &status);
-        CHECK_MSTATUS_AND_RETURN_IT(status);
-        MDataHandle rotate_handle = data.inputValue(m_rotate_attr, &status);
-        CHECK_MSTATUS_AND_RETURN_IT(status);
-        MDataHandle rotate_center_x_handle = data.inputValue(m_rotate_center_x_attr, &status);
-        CHECK_MSTATUS_AND_RETURN_IT(status);
-        MDataHandle rotate_center_y_handle = data.inputValue(m_rotate_center_y_attr, &status);
-        CHECK_MSTATUS_AND_RETURN_IT(status);
-        MDataHandle scale_x_handle = data.inputValue(m_scale_x_attr, &status);
-        CHECK_MSTATUS_AND_RETURN_IT(status);
-        MDataHandle scale_y_handle = data.inputValue(m_scale_y_attr, &status);
-        CHECK_MSTATUS_AND_RETURN_IT(status);
-
-        float tx = translate_x_handle.asFloat();
-        float ty = translate_y_handle.asFloat();
-        float r = rotate_handle.asFloat();
-        float rx = rotate_center_x_handle.asFloat();
-        float ry = rotate_center_y_handle.asFloat();
-        float scale_x = scale_x_handle.asFloat();
-        float scale_y = scale_y_handle.asFloat();
-
+        // Translation attributes
+        float tx = utils::get_attr_value_float(data, m_translate_x_attr);
+        float ty = utils::get_attr_value_float(data, m_translate_y_attr);
+        float r = utils::get_attr_value_float(data, m_rotate_attr);
+        float rx = utils::get_attr_value_float(data, m_rotate_center_x_attr);
+        float ry = utils::get_attr_value_float(data, m_rotate_center_y_attr);
+        float scale_x = utils::get_attr_value_float(data, m_scale_x_attr);
+        float scale_y = utils::get_attr_value_float(data, m_scale_y_attr);
         shared_graph->set_node_attr_f32(m_ocg_node, "translate_x", tx);
         shared_graph->set_node_attr_f32(m_ocg_node, "translate_y", ty);
         shared_graph->set_node_attr_f32(m_ocg_node, "rotate", r);

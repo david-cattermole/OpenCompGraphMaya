@@ -47,6 +47,7 @@
 #include "logger.h"
 #include "graph_data.h"
 #include "image_read_node.h"
+#include "node_utils.h"
 
 namespace ocg = open_comp_graph;
 
@@ -92,23 +93,17 @@ MStatus ImageReadNode::updateOcgNodes(
         output_ocg_node = m_ocg_node;
 
         // Enable Attribute toggle
-        MDataHandle enable_handle = data.inputValue(
-            m_enable_attr, &status);
-        CHECK_MSTATUS_AND_RETURN_IT(status);
-        bool enable = enable_handle.asBool();
+        bool enable = utils::get_attr_value_bool(data, m_enable_attr);
         shared_graph->set_node_attr_i32(
             m_ocg_node, "enable", static_cast<int32_t>(enable));
 
         // File Path Attribute
-        MDataHandle file_path_handle = data.inputValue(m_file_path_attr, &status);
-        CHECK_MSTATUS_AND_RETURN_IT(status);
-        MString file_path = file_path_handle.asString();
-        shared_graph->set_node_attr_str(m_ocg_node, "file_path", file_path.asChar());
+        MString file_path = utils::get_attr_value_string(data, m_file_path_attr);
+        shared_graph->set_node_attr_str(
+            m_ocg_node, "file_path", file_path.asChar());
 
         // Time Attribute
-        MDataHandle time_handle = data.inputValue(m_time_attr, &status);
-        CHECK_MSTATUS_AND_RETURN_IT(status);
-        float time = time_handle.asFloat();
+        float time = utils::get_attr_value_float(data, m_time_attr);
         shared_graph->set_node_attr_f32(m_ocg_node, "time", time);
     }
 

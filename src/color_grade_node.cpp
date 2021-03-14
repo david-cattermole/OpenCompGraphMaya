@@ -46,6 +46,7 @@
 #include "logger.h"
 #include "graph_data.h"
 #include "color_grade_node.h"
+#include "node_utils.h"
 
 namespace ocg = open_comp_graph;
 
@@ -96,27 +97,15 @@ MStatus ColorGradeNode::updateOcgNodes(
         output_ocg_node = m_ocg_node;
 
         // Enable Attribute toggle
-        MDataHandle enable_handle = data.inputValue(
-            m_enable_attr, &status);
-        CHECK_MSTATUS_AND_RETURN_IT(status);
-        bool enable = enable_handle.asBool();
+        bool enable = utils::get_attr_value_bool(data, m_enable_attr);
         shared_graph->set_node_attr_i32(
             m_ocg_node, "enable", static_cast<int32_t>(enable));
 
         // Multiply Attribute RGBA
-        MDataHandle multiply_r_handle = data.inputValue(m_multiply_r_attr, &status);
-        CHECK_MSTATUS_AND_RETURN_IT(status);
-        MDataHandle multiply_g_handle = data.inputValue(m_multiply_g_attr, &status);
-        CHECK_MSTATUS_AND_RETURN_IT(status);
-        MDataHandle multiply_b_handle = data.inputValue(m_multiply_b_attr, &status);
-        CHECK_MSTATUS_AND_RETURN_IT(status);
-        MDataHandle multiply_a_handle = data.inputValue(m_multiply_a_attr, &status);
-        CHECK_MSTATUS_AND_RETURN_IT(status);
-        float temp_r = multiply_r_handle.asFloat();
-        float temp_g = multiply_g_handle.asFloat();
-        float temp_b = multiply_b_handle.asFloat();
-        float temp_a = multiply_a_handle.asFloat();
-
+        float temp_r = utils::get_attr_value_float(data, m_multiply_r_attr);
+        float temp_g = utils::get_attr_value_float(data, m_multiply_g_attr);
+        float temp_b = utils::get_attr_value_float(data, m_multiply_b_attr);
+        float temp_a = utils::get_attr_value_float(data, m_multiply_a_attr);
         shared_graph->set_node_attr_f32(m_ocg_node, "multiply_r", temp_r);
         shared_graph->set_node_attr_f32(m_ocg_node, "multiply_g", temp_g);
         shared_graph->set_node_attr_f32(m_ocg_node, "multiply_b", temp_b);
