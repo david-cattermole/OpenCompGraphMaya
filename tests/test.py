@@ -14,7 +14,7 @@ def _get_random_file_path():
     file_path3 = "C:/Users/catte/dev/robotArm/imageSequence/robotArm.####.png"
     file_path4 = "C:/Users/catte/dev/OpenCompGraphMaya/src/OpenCompGraph/tests/data/stills/DSC05345.jpg"
     file_path5 = "C:/Users/catte/dev/OpenCompGraphMaya/src/OpenCompGraph/tests/data/vancouver_jpg/vancouver.####.jpg"
-    file_path6 = "C:/Users/catte/dev/OpenCompGraphMaya/src/OpenCompGraph/tests/data/vancouver_jpg/vancouver.####.jpg"
+    file_path6 = "C:/Users/catte/dev/OpenCompGraphMaya/src/OpenCompGraph/tests/data/color_bars_3840x2160_exr/color_bars.####.exr"
     file_path7 = "C:/Users/catte/dev/OpenCompGraphMaya/src/OpenCompGraph/tests/data/color_bars_3840x2160_jpg/color_bars.####.jpg"
     file_path8 = "C:/Users/catte/dev/OpenCompGraphMaya/src/OpenCompGraph/tests/data/color_bars_3840x2160_png/color_bars.####.png"
     file_path9 = "C:/Users/catte/dev/OpenCompGraphMaya/src/OpenCompGraph/tests/data/openexr-images/Beachball/multipart.####.exr"
