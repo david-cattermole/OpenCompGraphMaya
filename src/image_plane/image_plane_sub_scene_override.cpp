@@ -481,9 +481,67 @@ void SubSceneOverride::update(
         // Allow transparency in the shader.
         m_shader.set_is_transparent(true);
 
+        // const float identity_transform_values[4][4] = {
+        //     {1.0, 0.0, 0.0, 0.0},
+        //     {0.0, 1.0, 0.0, 0.0},
+        //     {0.0, 0.0, 1.0, 0.0},
+        //     {0.0, 0.0, 0.0, 1.0},
+        // };
+        // MFloatMatrix identity_transform(identity_transform_values);
+
+        // auto focal_length = m_focal_length;
+        // auto film_back_width = m_card_size_x;
+        // auto film_back_height = m_card_size_y;
+        // log->warn("focal_length={} film_back_width={} film_back_height={}",
+        //           focal_length, film_back_width, film_back_height);
+        // auto cam_matrix = ocg::internal::camera_plane_transform_matrix(
+        //     focal_length,
+        //     film_back_width,
+        //     film_back_height);
+        // log->warn("m00={} m01={} m02={} m03={}",
+        //           cam_matrix.m00, cam_matrix.m01, cam_matrix.m02, cam_matrix.m03);
+        // log->warn("m10={} m11={} m12={} m13={}",
+        //           cam_matrix.m10, cam_matrix.m11, cam_matrix.m12, cam_matrix.m13);
+        // log->warn("m20={} m21={} m22={} m23={}",
+        //           cam_matrix.m20, cam_matrix.m21, cam_matrix.m22, cam_matrix.m23);
+        // log->warn("m30={} m31={} m32={} m33={}",
+        //           cam_matrix.m30, cam_matrix.m31, cam_matrix.m32, cam_matrix.m33);
+        // const float geom_matrix_values[4][4] = {
+        //     // {cam_matrix.m00, cam_matrix.m10, cam_matrix.m20, cam_matrix.m30},
+        //     // {cam_matrix.m01, cam_matrix.m11, cam_matrix.m21, cam_matrix.m31},
+        //     // {cam_matrix.m02, cam_matrix.m12, -cam_matrix.m22, -cam_matrix.m32},
+        //     // {cam_matrix.m03, cam_matrix.m13, cam_matrix.m23, cam_matrix.m33},
+        //     // {cam_matrix.m00, cam_matrix.m01, cam_matrix.m02, cam_matrix.m03},
+        //     // {cam_matrix.m10, cam_matrix.m11, cam_matrix.m12, cam_matrix.m13},
+        //     // {cam_matrix.m20, cam_matrix.m21, -cam_matrix.m22, cam_matrix.m23},
+        //     // {cam_matrix.m30, cam_matrix.m31, -cam_matrix.m32, cam_matrix.m33},
+        //     {1.0, 0.0, 0.0, 0.0},
+        //     {0.0, 1.0, 0.0, 0.0},
+        //     {0.0, 0.0, 1.0, 0.0},
+        //     {0.0, 0.0, 0.0, 1.0},
+        // };
+        // MFloatMatrix geom_matrix(geom_matrix_values);
 
         auto filmBackWidth = 36.0;
         auto plane_scale = getCameraPlaneScale(filmBackWidth, m_focal_length);
+        // log->warn("--------- plane_scale: {}", plane_scale);
+
+        // const float offset_z_matrix_values[4][4] = {
+        //     {1.0, 0.0, 0.0, 0.0}, // Column 0
+        //     {0.0, 1.0, 0.0, 0.0}, // Column 1
+        //     {0.0, 0.0, 1.0, 0.0}, // Column 2
+        //     {0.0, 0.0, 0.0, 1.0}, // Column 3
+        // };
+        // MFloatMatrix offset_z_matrix(offset_z_matrix_values);
+        // log->warn("Offset_Z matrix:");
+        // log->warn("m00={} m01={} m02={} m03={}",
+        //           offset_z_matrix(0, 0), offset_z_matrix(0, 1), offset_z_matrix(0, 2), offset_z_matrix(0, 3));
+        // log->warn("m10={} m11={} m12={} m13={}",
+        //           offset_z_matrix(1, 0), offset_z_matrix(1, 1), offset_z_matrix(1, 2), offset_z_matrix(1, 3));
+        // log->warn("m20={} m21={} m22={} m23={}",
+        //           offset_z_matrix(2, 0), offset_z_matrix(2, 1), offset_z_matrix(2, 2), offset_z_matrix(2, 3));
+        // log->warn("m30={} m31={} m32={} m33={}",
+        //           offset_z_matrix(3, 0), offset_z_matrix(3, 1), offset_z_matrix(3, 2), offset_z_matrix(3, 3));
 
         const float depth_matrix_values[4][4] = {
             {m_card_depth * plane_scale, 0.0, 0.0, 0.0}, // Column 0
@@ -492,7 +550,36 @@ void SubSceneOverride::update(
             {0.0, 0.0, -1.0 * m_card_depth, 1.0}, // Column 3
         };
         MFloatMatrix depth_matrix(depth_matrix_values);
+        // log->warn("Depth matrix:");
+        // log->warn("m00={} m01={} m02={} m03={}",
+        //           depth_matrix(0, 0), depth_matrix(0, 1), depth_matrix(0, 2), depth_matrix(0, 3));
+        // log->warn("m10={} m11={} m12={} m13={}",
+        //           depth_matrix(1, 0), depth_matrix(1, 1), depth_matrix(1, 2), depth_matrix(1, 3));
+        // log->warn("m20={} m21={} m22={} m23={}",
+        //           depth_matrix(2, 0), depth_matrix(2, 1), depth_matrix(2, 2), depth_matrix(2, 3));
+        // log->warn("m30={} m31={} m32={} m33={}",
+        //           depth_matrix(3, 0), depth_matrix(3, 1), depth_matrix(3, 2), depth_matrix(3, 3));
+
+        // MFloatMatrix geom_matrix(offset_z_matrix * m_camera_proj_matrix * depth_matrix);
+        // MFloatMatrix geom_matrix(offset_z_matrix * depth_matrix);
         MFloatMatrix geom_matrix(depth_matrix);
+        // log->warn("Geom matrix:");
+        // log->warn("m00={} m01={} m02={} m03={}",
+        //           geom_matrix(0, 0), geom_matrix(0, 1), geom_matrix(0, 2), geom_matrix(0, 3));
+        // log->warn("m10={} m11={} m12={} m13={}",
+        //           geom_matrix(1, 0), geom_matrix(1, 1), geom_matrix(1, 2), geom_matrix(1, 3));
+        // log->warn("m20={} m21={} m22={} m23={}",
+        //           geom_matrix(2, 0), geom_matrix(2, 1), geom_matrix(2, 2), geom_matrix(2, 3));
+        // log->warn("m30={} m31={} m32={} m33={}",
+        //           geom_matrix(3, 0), geom_matrix(3, 1), geom_matrix(3, 2), geom_matrix(3, 3));
+
+        // MColor wire_color = MHWRender::MGeometryUtilities::wireframeColor(
+        //     m_instance_dag_paths[0]);
+        // const float wire_color_values[4] = {
+        //     wire_color.r,
+        //     wire_color.g,
+        //     wire_color.b,
+        //     1.0f};
 
         const float display_window_color_values[4] = {1.0f, 1.0f, 0.0f, 1.0f};
         status = m_shader_display_window.set_color_param(
@@ -565,6 +652,16 @@ void SubSceneOverride::update(
             };
             MFloatMatrix rescale_display_window_transform(rescale_display_window_values);
 
+            // log->warn("Rescale matrix:");
+            // log->warn("m00={} m01={} m02={} m03={}",
+            //           rescale_display_window_transform(0, 0), rescale_display_window_transform(0, 1), rescale_display_window_transform(0, 2), rescale_display_window_transform(0, 3));
+            // log->warn("m10={} m11={} m12={} m13={}",
+            //           rescale_display_window_transform(1, 0), rescale_display_window_transform(1, 1), rescale_display_window_transform(1, 2), rescale_display_window_transform(1, 3));
+            // log->warn("m20={} m21={} m22={} m23={}",
+            //           rescale_display_window_transform(2, 0), rescale_display_window_transform(2, 1), rescale_display_window_transform(2, 2), rescale_display_window_transform(2, 3));
+            // log->warn("m30={} m31={} m32={} m33={}",
+            //           rescale_display_window_transform(3, 0), rescale_display_window_transform(3, 1), rescale_display_window_transform(3, 2), rescale_display_window_transform(3, 3));
+
             // Move Canvas to the data window.
             auto data_window = stream_data.data_window();
             auto data_scale_x = static_cast<float>(data_window.max_x - data_window.min_x);
@@ -582,7 +679,27 @@ void SubSceneOverride::update(
                 {data_offset_x, data_offset_y, 0.0, 1.0},
             };
             MFloatMatrix move_data_window_transform(move_data_window_values);
+            // log->warn("Move matrix:");
+            // log->warn("m00={} m01={} m02={} m03={}",
+            //           move_data_window_transform(0, 0), move_data_window_transform(0, 1), move_data_window_transform(0, 2), move_data_window_transform(0, 3));
+            // log->warn("m10={} m11={} m12={} m13={}",
+            //           move_data_window_transform(1, 0), move_data_window_transform(1, 1), move_data_window_transform(1, 2), move_data_window_transform(1, 3));
+            // log->warn("m20={} m21={} m22={} m23={}",
+            //           move_data_window_transform(2, 0), move_data_window_transform(2, 1), move_data_window_transform(2, 2), move_data_window_transform(2, 3));
+            // log->warn("m30={} m31={} m32={} m33={}",
+            //           move_data_window_transform(3, 0), move_data_window_transform(3, 1), move_data_window_transform(3, 2), move_data_window_transform(3, 3));
+
             move_data_window_transform *= rescale_display_window_transform;
+            // log->warn("Move and Rescale matrix:");
+            // log->warn("m00={} m01={} m02={} m03={}",
+            //           move_data_window_transform(0, 0), move_data_window_transform(0, 1), move_data_window_transform(0, 2), move_data_window_transform(0, 3));
+            // log->warn("m10={} m11={} m12={} m13={}",
+            //           move_data_window_transform(1, 0), move_data_window_transform(1, 1), move_data_window_transform(1, 2), move_data_window_transform(1, 3));
+            // log->warn("m20={} m21={} m22={} m23={}",
+            //           move_data_window_transform(2, 0), move_data_window_transform(2, 1), move_data_window_transform(2, 2), move_data_window_transform(2, 3));
+            // log->warn("m30={} m31={} m32={} m33={}",
+            //           move_data_window_transform(3, 0), move_data_window_transform(3, 1), move_data_window_transform(3, 2), move_data_window_transform(3, 3));
+
             status = m_shader_wire.set_float_matrix4x4_param(
                 m_shader_rescale_transform_parameter_name,
                 move_data_window_transform);
@@ -618,6 +735,16 @@ void SubSceneOverride::update(
                 {tfm_matrix.m30, tfm_matrix.m31, tfm_matrix.m32, tfm_matrix.m33},
             };
             MFloatMatrix image_transform(tfm_matrix_values);
+            // log->warn("Image matrix:");
+            // log->warn("m00={} m01={} m02={} m03={}",
+            //           image_transform(0, 0), image_transform(0, 1), image_transform(0, 2), image_transform(0, 3));
+            // log->warn("m10={} m11={} m12={} m13={}",
+            //           image_transform(1, 0), image_transform(1, 1), image_transform(1, 2), image_transform(1, 3));
+            // log->warn("m20={} m21={} m22={} m23={}",
+            //           image_transform(2, 0), image_transform(2, 1), image_transform(2, 2), image_transform(2, 3));
+            // log->warn("m30={} m31={} m32={} m33={}",
+            //           image_transform(3, 0), image_transform(3, 1), image_transform(3, 2), image_transform(3, 3));
+
             status = m_shader_display_window.set_float_matrix4x4_param(
                 m_shader_image_transform_parameter_name,
                 image_transform);
@@ -809,6 +936,8 @@ void SubSceneOverride::update(
         );
         MGeometry::DrawMode draw_mode =
             static_cast<MGeometry::DrawMode>(
+                // MHWRender::MGeometry::kShaded
+                // |
                 MHWRender::MGeometry::kTextured);
         // MGeometry::DrawMode draw_mode = MHWRender::MGeometry::kAll;
         shaded_item->setDrawMode(draw_mode);
@@ -939,6 +1068,7 @@ void SubSceneOverride::update(
             m_is_instance_mode = true;
         }
     }
+    log->debug("SubSceneOverride: end.");
 }
 
 void SubSceneOverride::addUIDrawables(
@@ -947,6 +1077,11 @@ void SubSceneOverride::addUIDrawables(
     MPoint pos(0.0, 0.0, 0.0);
     MColor text_color(0.1f, 0.8f, 0.8f, 1.0f);
     MString text("Open Comp Graph Maya");
+    // TODO: draw the data-window coordinate values for lower-left and
+    // upper-right corners.
+    //
+    // TODO: draw the (display window) resolution of the current
+    // image, including pixel aspect ratio.
 
     draw_manager.beginDrawable();
 

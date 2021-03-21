@@ -34,8 +34,8 @@
 // OCG Maya
 #include <opencompgraphmaya/build_constants.h>  // Build-Time constant values.
 #include <opencompgraphmaya/node_type_ids.h>
-#include <image_plane_shape.h>
-#include <image_plane_sub_scene_override.h>
+#include <image_plane/image_plane_shape.h>
+#include <image_plane/image_plane_sub_scene_override.h>
 #include <comp_nodes/color_grade_node.h>
 #include <comp_nodes/image_read_node.h>
 #include <comp_nodes/image_merge_node.h>

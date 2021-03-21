@@ -295,11 +295,11 @@ Shader::set_texture_param_with_stream_data(
     auto pixel_width = stream_data.pixel_width();
     auto pixel_height = stream_data.pixel_height();
     auto pixel_num_channels = stream_data.pixel_num_channels();
-    log->debug("pixels: {}x{} c={}",
-               pixel_width,  pixel_height,
-               static_cast<uint32_t>(pixel_num_channels));
     auto pixel_data_type = stream_data.pixel_data_type();
     auto channel_num_bytes = ocg::internal::channel_size_bytes(pixel_data_type);
+    // log->warn("pixels: {}x{} c={}",
+    //           pixel_width,  pixel_height,
+    //           static_cast<uint32_t>(pixel_num_channels));
     auto buffer = static_cast<const void*>(pixel_buffer.data());
 
     // Upload Texture data to the GPU using Maya's API.
@@ -314,18 +314,27 @@ Shader::set_texture_param_with_stream_data(
     texture_description.fMipmaps = 1;
 
     if (pixel_data_type == ocg::PixelDataType::kUInt8) {
+        // log->warn("ocg::PixelDataType::kUInt8");
+        // log->warn("MHWRender::kR8G8B8A8_UNORM");
         texture_description.fFormat = MHWRender::kR8G8B8A8_UNORM;
 
     } else if (pixel_data_type == ocg::PixelDataType::kHalf16) {
+        // log->warn("ocg::PixelDataType::kHalf16");
+        // log->warn("MHWRender::kR16G16B16A16_FLOAT");
         texture_description.fFormat = MHWRender::kR16G16B16A16_FLOAT;
 
     } else if (pixel_data_type == ocg::PixelDataType::kUInt16) {
+        // log->warn("ocg::PixelDataType::kUInt16");
+        // log->warn("MHWRender::kR16G16B16A16_UINT");
         texture_description.fFormat = MHWRender::kR16G16B16A16_UINT;
 
     } else if (pixel_data_type == ocg::PixelDataType::kFloat32) {
+        // log->warn("ocg::PixelDataType::kFloat32");
         if (pixel_num_channels == 3) {
             texture_description.fFormat = MHWRender::kR32G32B32_FLOAT;
+            // log->warn("MHWRender::kR32G32B32_FLOAT");
         } else if (pixel_num_channels == 4) {
+            // log->warn("MHWRender::kR32G32B32A32_FLOAT");
             texture_description.fFormat = MHWRender::kR32G32B32A32_FLOAT;
         } else {
             log->error("ocgImagePlane: Invalid number of channels in image.");
