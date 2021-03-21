@@ -243,7 +243,6 @@ MStatus ImageTransformNode::initialize() {
     CHECK_MSTATUS(attributeAffects(m_scale_x_attr, m_out_stream_attr));
     CHECK_MSTATUS(attributeAffects(m_scale_y_attr, m_out_stream_attr));
     CHECK_MSTATUS(attributeAffects(m_in_stream_attr, m_out_stream_attr));
-    CHECK_MSTATUS(attributeAffects(m_enable_attr, m_out_stream_attr));
 
     return MS::kSuccess;
 }
