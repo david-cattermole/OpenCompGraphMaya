@@ -58,7 +58,6 @@ MTypeId ImageReadNode::m_id(OCGM_IMAGE_READ_TYPE_ID);
 // Input Attributes
 MObject ImageReadNode::m_enable_attr;
 MObject ImageReadNode::m_file_path_attr;
-MObject ImageReadNode::m_time_attr;
 
 // Output Attributes
 MObject ImageReadNode::m_out_stream_attr;
@@ -101,10 +100,6 @@ MStatus ImageReadNode::updateOcgNodes(
         MString file_path = utils::get_attr_value_string(data, m_file_path_attr);
         shared_graph->set_node_attr_str(
             m_ocg_node, "file_path", file_path.asChar());
-
-        // Time Attribute
-        float time = utils::get_attr_value_float(data, m_time_attr);
-        shared_graph->set_node_attr_f32(m_ocg_node, "time", time);
     }
 
     return status;
@@ -140,11 +135,6 @@ MStatus ImageReadNode::initialize() {
     CHECK_MSTATUS(tAttr.setStorable(true));
     CHECK_MSTATUS(tAttr.setUsedAsFilename(true));
 
-    // Time
-    m_time_attr = uAttr.create("time", "tm", MFnUnitAttribute::kTime, 0.0);
-    CHECK_MSTATUS(uAttr.setStorable(true));
-    CHECK_MSTATUS(uAttr.setKeyable(true));
-
     // Create Common Attributes
     CHECK_MSTATUS(create_enable_attribute(m_enable_attr));
     CHECK_MSTATUS(create_output_stream_attribute(m_out_stream_attr));
@@ -152,13 +142,11 @@ MStatus ImageReadNode::initialize() {
     // Add Attributes
     CHECK_MSTATUS(addAttribute(m_enable_attr));
     CHECK_MSTATUS(addAttribute(m_file_path_attr));
-    CHECK_MSTATUS(addAttribute(m_time_attr));
     CHECK_MSTATUS(addAttribute(m_out_stream_attr));
 
     // Attribute Affects
     CHECK_MSTATUS(attributeAffects(m_enable_attr, m_out_stream_attr));
     CHECK_MSTATUS(attributeAffects(m_file_path_attr, m_out_stream_attr));
-    CHECK_MSTATUS(attributeAffects(m_time_attr, m_out_stream_attr));
 
     return MS::kSuccess;
 }
