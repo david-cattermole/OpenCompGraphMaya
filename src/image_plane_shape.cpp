@@ -48,7 +48,7 @@
 #include <opencompgraphmaya/node_type_ids.h>
 #include "graph_data.h"
 #include "image_plane_shape.h"
-#include "base_node.h"
+#include "comp_nodes/base_node.h"
 
 namespace open_comp_graph_maya {
 namespace image_plane {

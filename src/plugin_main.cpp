@@ -36,11 +36,11 @@
 #include <opencompgraphmaya/node_type_ids.h>
 #include <image_plane_shape.h>
 #include <image_plane_sub_scene_override.h>
-#include <color_grade_node.h>
-#include <image_read_node.h>
-#include <image_merge_node.h>
-#include <lens_distort_node.h>
-#include <image_transform_node.h>
+#include <comp_nodes/color_grade_node.h>
+#include <comp_nodes/image_read_node.h>
+#include <comp_nodes/image_merge_node.h>
+#include <comp_nodes/lens_distort_node.h>
+#include <comp_nodes/image_transform_node.h>
 #include <graph_data.h>
 #include "global_cache.h"
 #include "logger.h"

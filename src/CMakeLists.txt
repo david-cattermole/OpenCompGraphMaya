@@ -29,12 +29,12 @@ set(SOURCE_FILES
   ${CMAKE_CURRENT_SOURCE_DIR}/image_plane_sub_scene_override.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/image_plane_geometry_canvas.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/image_plane_geometry_window.cpp
-  ${CMAKE_CURRENT_SOURCE_DIR}/base_node.cpp
-  ${CMAKE_CURRENT_SOURCE_DIR}/image_read_node.cpp
-  ${CMAKE_CURRENT_SOURCE_DIR}/image_merge_node.cpp
-  ${CMAKE_CURRENT_SOURCE_DIR}/image_transform_node.cpp
-  ${CMAKE_CURRENT_SOURCE_DIR}/color_grade_node.cpp
-  ${CMAKE_CURRENT_SOURCE_DIR}/lens_distort_node.cpp
+  ${CMAKE_CURRENT_SOURCE_DIR}/comp_nodes/base_node.cpp
+  ${CMAKE_CURRENT_SOURCE_DIR}/comp_nodes/image_read_node.cpp
+  ${CMAKE_CURRENT_SOURCE_DIR}/comp_nodes/image_merge_node.cpp
+  ${CMAKE_CURRENT_SOURCE_DIR}/comp_nodes/image_transform_node.cpp
+  ${CMAKE_CURRENT_SOURCE_DIR}/comp_nodes/color_grade_node.cpp
+  ${CMAKE_CURRENT_SOURCE_DIR}/comp_nodes/lens_distort_node.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/graph_data.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/geometry_buffer.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/node_utils.cpp
