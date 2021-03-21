@@ -85,32 +85,21 @@ MStatus BaseNode::computeOcgStream(const MPlug &plug, MDataBlock &data,
         CHECK_MSTATUS_AND_RETURN_IT(status);
 
         // Get Input Stream
-        std::shared_ptr<ocg::Graph> shared_graph;
         auto input_ocg_nodes = std::vector<ocg::Node>();
         input_ocg_nodes.reserve(in_stream_attr_array.length());
-        if (in_stream_attr_array.length() == 0) {
-            // This node generates data, it does not depend on
-            // upstream inputs at all.
-            shared_graph = std::make_shared<ocg::Graph>();
-        } else {
-            // TODO: What happens when there are two shared graphs from
-            // two different inputs and they need to be merged into one
-            // graph?
-            for (uint32_t i = 0; i < in_stream_attr_array.length(); ++i) {
-                auto in_stream_attr = in_stream_attr_array[i];
-                MDataHandle in_stream_handle = data.inputValue(
-                    in_stream_attr, &status);
-                CHECK_MSTATUS_AND_RETURN_IT(status);
-                GraphData* input_stream_data =
-                    static_cast<GraphData*>(in_stream_handle.asPluginData());
-                if (input_stream_data == nullptr) {
-                    status = MS::kFailure;
-                    return status;
-                }
-                shared_graph = input_stream_data->get_graph();
-                auto input_ocg_node = input_stream_data->get_node();
-                input_ocg_nodes.push_back(input_ocg_node);
+        for (uint32_t i = 0; i < in_stream_attr_array.length(); ++i) {
+            auto in_stream_attr = in_stream_attr_array[i];
+            MDataHandle in_stream_handle = data.inputValue(
+                in_stream_attr, &status);
+            CHECK_MSTATUS_AND_RETURN_IT(status);
+            GraphData* input_stream_data =
+                static_cast<GraphData*>(in_stream_handle.asPluginData());
+            if (input_stream_data == nullptr) {
+                status = MS::kFailure;
+                return status;
             }
+            auto input_ocg_node = input_stream_data->get_node();
+            input_ocg_nodes.push_back(input_ocg_node);
         }
 
         // Output Stream
@@ -120,21 +109,24 @@ MStatus BaseNode::computeOcgStream(const MPlug &plug, MDataBlock &data,
         CHECK_MSTATUS_AND_RETURN_IT(status);
 
         // Update OCG nodes.
+        auto shared_graph = get_shared_graph();
         auto output_ocg_node = ocg::Node(ocg::NodeType::kNull, 0);
         if (shared_graph) {
             // Initialise the OCG Graph, and update OCG node values.
             // The output node is modified via an output variable. The
             // output node is the 'last' node in the graph, and is
             // connected to downstream nodes.
-            status = updateOcgNodes(data, shared_graph, input_ocg_nodes,
-                                    output_ocg_node);
+            status = updateOcgNodes(
+                data,
+                shared_graph,
+                input_ocg_nodes,
+                output_ocg_node);
             CHECK_MSTATUS_AND_RETURN_IT(status);
         }
         log->debug(
             "BaseNode: Graph as string:\n{}",
             shared_graph->data_debug_string());
         new_data->set_node(output_ocg_node);
-        new_data->set_graph(shared_graph);
         out_stream_handle.setMPxData(new_data);
         out_stream_handle.setClean();
         status = MS::kSuccess;
@@ -176,12 +168,22 @@ MStatus BaseNode::create_enable_attribute(MObject &attr) {
 }
 
 MStatus BaseNode::create_input_stream_attribute(MObject &attr) {
+    MString suffix = "";
+    return BaseNode::create_input_stream_attribute(attr, suffix);
+}
+
+
+MStatus BaseNode::create_input_stream_attribute(MObject &attr, const MString &suffix) {
     MStatus status = MS::kFailure;
     MFnTypedAttribute tAttr;
     MTypeId stream_data_type_id(OCGM_GRAPH_DATA_TYPE_ID);
 
+    MString long_name = "inStream";
+    MString short_name = "istm";
+    long_name += suffix;
+    short_name += suffix;
     attr = tAttr.create(
-        "inStream", "istm",
+        long_name, short_name,
         stream_data_type_id);
     CHECK_MSTATUS(tAttr.setStorable(false));
     CHECK_MSTATUS(tAttr.setKeyable(false));

@@ -165,35 +165,34 @@ std::tuple<float, bool> get_plug_value_float(MPlug plug, float old_value) {
 }
 
 // Get the ocgStreamData type from the given plug.
-std::tuple<std::shared_ptr<ocg::Graph>, ocg::Node, bool>
+std::tuple<ocg::Node, bool>
 get_plug_value_stream(MPlug plug, ocg::Node old_value) {
     MStatus status;
     auto log = log::get_logger();
 
-    std::shared_ptr<ocg::Graph> shared_graph;
+    auto shared_graph = get_shared_graph();
     bool has_changed = false;
     ocg::Node value = old_value;
     if (!plug.isNull()) {
+        ocg::Node new_value = ocg::Node(ocg::NodeType::kNull, 0);
         MObject new_object = plug.asMObject(&status);
         if (new_object.isNull() || (status != MS::kSuccess)) {
             log->warn("Input stream is not valid - maybe connect a node?");
-            return std::make_tuple(shared_graph, value, has_changed);
+        } else {
+            // Convert Maya controlled data into the OCG custom MPxData class.
+            // We are ensured this is valid from Maya. The MObject is a smart
+            // pointer and we check the object is valid before-hand too.
+            MFnPluginData fn_plugin_data(new_object);
+            GraphData* input_stream_data =
+                static_cast<GraphData*>(fn_plugin_data.data(&status));
+            CHECK_MSTATUS(status);
+            if (input_stream_data == nullptr) {
+                log->error("Input stream data is not valid.");
+            } else {
+                new_value = input_stream_data->get_node();
+                log->debug("input node id: {}", new_value.get_id());
+            }
         }
-
-        // Convert Maya controlled data into the OCG custom MPxData class.
-        // We are ensured this is valid from Maya. The MObject is a smart
-        // pointer and we check the object is valid before-hand too.
-        MFnPluginData fn_plugin_data(new_object);
-        GraphData* input_stream_data =
-            static_cast<GraphData*>(fn_plugin_data.data(&status));
-        CHECK_MSTATUS(status);
-        if (input_stream_data == nullptr) {
-            log->error("Input stream data is not valid.");
-            return std::make_tuple(shared_graph, value, has_changed);
-        }
-        shared_graph = input_stream_data->get_graph();
-        ocg::Node new_value = input_stream_data->get_node();
-        log->debug("input node id: {}", new_value.get_id());
 
         has_changed =
             (shared_graph->state() != ocg::GraphState::kClean)
@@ -202,7 +201,7 @@ get_plug_value_stream(MPlug plug, ocg::Node old_value) {
             value = new_value;
         }
     }
-    return std::make_tuple(shared_graph, value, has_changed);
+    return std::make_tuple(value, has_changed);
 }
 
 } // namespace anonymous
@@ -287,22 +286,28 @@ void SubSceneOverride::update(
     if (num_instances == 0) {
         if (!MDagPath::getAllPathsTo(m_locator_node, m_instance_dag_paths)) {
             log->error("SubSceneOverride: Failed to get all DAG paths.");
+            // Reset to empty node.
+            m_in_stream_node = ocg::Node(ocg::NodeType::kNull, 0);
             return;
         }
         num_instances = m_instance_dag_paths.length();
     }
     if (num_instances == 0) {
+        // Reset to empty node.
+        m_in_stream_node = ocg::Node(ocg::NodeType::kNull, 0);
         return;
     }
 
     ocg::Node new_stream_node = m_in_stream_node;
     bool in_stream_has_changed = false;
-    std::shared_ptr<ocg::Graph> shared_graph;
     MPlug in_stream_plug(m_locator_node, ShapeNode::m_in_stream_attr);
-    std::tie(shared_graph, new_stream_node, in_stream_has_changed) =
+    std::tie(new_stream_node, in_stream_has_changed) =
         get_plug_value_stream(in_stream_plug, m_in_stream_node);
+    auto shared_graph = get_shared_graph();
     if (!shared_graph) {
         log->error("OCG Graph is not valid.");
+        // Reset to empty node.
+        m_in_stream_node = ocg::Node(ocg::NodeType::kNull, 0);
         return;
     }
     // Only update the internal class variable once we are sure the

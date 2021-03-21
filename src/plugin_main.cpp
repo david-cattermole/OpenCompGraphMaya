@@ -38,6 +38,7 @@
 #include <image_plane_sub_scene_override.h>
 #include <color_grade_node.h>
 #include <image_read_node.h>
+#include <image_merge_node.h>
 #include <lens_distort_node.h>
 #include <image_transform_node.h>
 #include <graph_data.h>
@@ -119,6 +120,13 @@ MStatus initializePlugin(MObject obj) {
                   ocgm::ImageReadNode::m_id,
                   ocgm::ImageReadNode::creator,
                   ocgm::ImageReadNode::initialize,
+                  status);
+
+    REGISTER_NODE(plugin,
+                  ocgm::ImageMergeNode::nodeName(),
+                  ocgm::ImageMergeNode::m_id,
+                  ocgm::ImageMergeNode::creator,
+                  ocgm::ImageMergeNode::initialize,
                   status);
 
     REGISTER_NODE(plugin,
@@ -213,6 +221,9 @@ MStatus uninitializePlugin(MObject obj) {
 
     DEREGISTER_NODE(plugin, ocgm::ImageReadNode::nodeName(),
                     ocgm::ImageReadNode::m_id, status);
+
+    DEREGISTER_NODE(plugin, ocgm::ImageMergeNode::nodeName(),
+                    ocgm::ImageMergeNode::m_id, status);
 
     DEREGISTER_NODE(plugin, ocgm::ImageTransformNode::nodeName(),
                     ocgm::ImageTransformNode::m_id, status);

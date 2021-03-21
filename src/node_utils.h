@@ -30,6 +30,8 @@ namespace utils {
 
 bool get_attr_value_bool(MDataBlock &data_block, MObject &attr);
 
+int16_t get_attr_value_short(MDataBlock &data_block, MObject &attr);
+
 float get_attr_value_float(MDataBlock &data_block, MObject &attr);
 
 MString get_attr_value_string(MDataBlock &data_block, MObject &attr);

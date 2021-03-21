@@ -31,6 +31,7 @@ set(SOURCE_FILES
   ${CMAKE_CURRENT_SOURCE_DIR}/image_plane_geometry_window.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/base_node.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/image_read_node.cpp
+  ${CMAKE_CURRENT_SOURCE_DIR}/image_merge_node.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/image_transform_node.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/color_grade_node.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/lens_distort_node.cpp

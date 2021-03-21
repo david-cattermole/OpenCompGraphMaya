@@ -40,6 +40,9 @@ namespace ocg = open_comp_graph;
 
 namespace open_comp_graph_maya{
 
+// Get the global shared graph.
+std::shared_ptr<ocg::Graph> get_shared_graph();
+
 class GraphData : public MPxData {
 public:
     GraphData();
@@ -54,10 +57,6 @@ public:
     MTypeId typeId() const;
     MString name() const;
 
-    std::shared_ptr<ocg::Graph> get_graph() const;
-    bool is_valid_graph() const;
-    void set_graph(std::shared_ptr<ocg::Graph> value);
-
     ocg::Node get_node() const;
     void set_node(ocg::Node value);
 
@@ -68,7 +67,6 @@ public:
     static void* creator();
 
 private:
-    std::shared_ptr<ocg::Graph> m_graph;
     ocg::Node m_ocg_node;
 };
 

@@ -168,6 +168,85 @@ def test_f():
     return
 
 
+def test_g():
+    """Read 2 images, grade the colors and then distort, and merge images
+    together and view it in an image plane, WITH a camera.
+    """
+    read_a_node = maya.cmds.createNode('ocgImageRead')
+    read_b_node = maya.cmds.createNode('ocgImageRead')
+    merge_node = maya.cmds.createNode('ocgImageMerge')
+    grade_node = maya.cmds.createNode('ocgColorGrade')
+    lens_node = maya.cmds.createNode('ocgLensDistort')
+    tfm_node = maya.cmds.createNode('ocgImageTransform')
+    cam_tfm = maya.cmds.createNode('transform')
+    cam_shp = maya.cmds.createNode('camera', parent=cam_tfm)
+    image_plane_tfm = maya.cmds.createNode('transform', parent=cam_tfm)
+    image_plane = maya.cmds.createNode('ocgImagePlane', parent=image_plane_tfm)
+
+    maya.cmds.connectAttr('time1.outTime', image_plane + ".time")
+    maya.cmds.connectAttr(read_a_node + '.outStream', merge_node + '.inStreamA')
+    maya.cmds.connectAttr(read_b_node + '.outStream', grade_node + '.inStream')
+    maya.cmds.connectAttr(grade_node + '.outStream', lens_node + '.inStream')
+    maya.cmds.connectAttr(lens_node + '.outStream', tfm_node + '.inStream')
+    maya.cmds.connectAttr(tfm_node + '.outStream', merge_node + '.inStreamB')
+    maya.cmds.connectAttr(merge_node + '.outStream', image_plane + '.inStream')
+    maya.cmds.connectAttr(cam_shp + '.message', image_plane + '.camera')
+
+    file_path_a, start_frame_a, end_frame_a = _get_random_file_path()
+    file_path_b, start_frame_b, end_frame_b = _get_random_file_path()
+    start_frame = min(start_frame_a, start_frame_b)
+    end_frame = max(end_frame_a, end_frame_b)
+
+    maya.cmds.setAttr(read_a_node + '.filePath', file_path_a, type='string')
+    maya.cmds.setAttr(read_b_node + '.filePath', file_path_b, type='string')
+    maya.cmds.setAttr(grade_node + '.multiplyR', random.uniform(0.1, 2.0))
+    maya.cmds.setAttr(grade_node + '.multiplyG', random.uniform(0.1, 2.0))
+    maya.cmds.setAttr(grade_node + '.multiplyB', random.uniform(0.1, 2.0))
+    maya.cmds.setAttr(grade_node + '.multiplyA', 1.0)
+    maya.cmds.setAttr(lens_node + '.k1', random.uniform(-0.5, 0.5))
+    maya.cmds.setAttr(tfm_node + '.translateX', random.uniform(-0.2, 0.2))
+    maya.cmds.setAttr(tfm_node + '.translateY', random.uniform(-0.2, 0.2))
+    maya.cmds.setAttr(tfm_node + '.rotate', random.random() * 10.0)
+    maya.cmds.setAttr(tfm_node + '.scaleX', random.uniform(0.5, 2.0))
+    maya.cmds.setAttr(tfm_node + '.scaleY', random.uniform(0.5, 2.0))
+    maya.cmds.setAttr(cam_shp + '.displayCameraFrustum', 1)
+
+    maya.cmds.playbackOptions(min=start_frame, max=end_frame)
+    return
+
+
+def test_h():
+    """Read 2 images, merge them together and view it in an image plane,
+    WITH a camera.
+
+    """
+    read_a_node = maya.cmds.createNode('ocgImageRead')
+    read_b_node = maya.cmds.createNode('ocgImageRead')
+    merge_node = maya.cmds.createNode('ocgImageMerge')
+    cam_tfm = maya.cmds.createNode('transform')
+    cam_shp = maya.cmds.createNode('camera', parent=cam_tfm)
+    image_plane_tfm = maya.cmds.createNode('transform', parent=cam_tfm)
+    image_plane = maya.cmds.createNode('ocgImagePlane', parent=image_plane_tfm)
+
+    maya.cmds.connectAttr('time1.outTime', image_plane + ".time")
+    maya.cmds.connectAttr(read_a_node + '.outStream', merge_node + '.inStreamA')
+    maya.cmds.connectAttr(read_b_node + '.outStream', merge_node + '.inStreamB')
+    maya.cmds.connectAttr(merge_node + '.outStream', image_plane + '.inStream')
+    maya.cmds.connectAttr(cam_shp + '.message', image_plane + '.camera')
+
+    file_path_a, start_frame_a, end_frame_a = _get_random_file_path()
+    file_path_b, start_frame_b, end_frame_b = _get_random_file_path()
+    start_frame = min(start_frame_a, start_frame_b)
+    end_frame = max(end_frame_a, end_frame_b)
+
+    maya.cmds.setAttr(read_a_node + '.filePath', file_path_a, type='string')
+    maya.cmds.setAttr(read_b_node + '.filePath', file_path_b, type='string')
+    maya.cmds.setAttr(cam_shp + '.displayCameraFrustum', 1)
+
+    maya.cmds.playbackOptions(min=start_frame, max=end_frame)
+    return
+
+
 def main():
     maya.cmds.loadPlugin('OpenCompGraphMaya')
     test_a()
@@ -176,6 +255,8 @@ def main():
     test_d()
     test_e()
     test_f()
+    test_g()
+    test_h()
 
 
 main()

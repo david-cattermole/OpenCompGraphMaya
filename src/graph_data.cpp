@@ -34,6 +34,13 @@ namespace ocg = open_comp_graph;
 
 namespace open_comp_graph_maya {
 
+
+std::shared_ptr<ocg::Graph> get_shared_graph() {
+    static std::shared_ptr<ocg::Graph> shared_graph = std::make_shared<ocg::Graph>();
+    return shared_graph;
+}
+
+
 const MTypeId GraphData::m_id(OCGM_GRAPH_DATA_TYPE_ID);
 const MString GraphData::m_type_name(OCGM_GRAPH_DATA_TYPE_NAME);
 
@@ -42,23 +49,10 @@ void* GraphData::creator() {
     return new GraphData;
 }
 
-GraphData::GraphData() : m_graph(),
-                         m_ocg_node(ocg::NodeType::kNull, 0),
+GraphData::GraphData() : m_ocg_node(ocg::NodeType::kNull, 0),
                          MPxData() {}
 
 GraphData::~GraphData() {}
-
-std::shared_ptr<ocg::Graph> GraphData::get_graph() const {
-    return m_graph;
-}
-
-bool GraphData::is_valid_graph() const {
-    return static_cast<bool>(m_graph);
-}
-
-void GraphData::set_graph(std::shared_ptr<ocg::Graph> value) {
-    m_graph = value;
-}
 
 ocg::Node GraphData::get_node() const {
     return m_ocg_node;
@@ -69,7 +63,6 @@ void GraphData::set_node(ocg::Node value) {
 }
 
 void GraphData::copy(const MPxData& other) {
-    m_graph = static_cast<const GraphData&>(other).m_graph;
     m_ocg_node = static_cast<const GraphData&>(other).m_ocg_node;
 }
 
