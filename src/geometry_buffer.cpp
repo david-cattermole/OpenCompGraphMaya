@@ -72,9 +72,7 @@ MHWRender::MVertexBuffer* build_vertex_buffer_positions(
             geom->fill_buffer_vertex_positions(slice);
 
             // Deformer variables required for deformation.
-            //
-            // TODO: Allow the user to set the direction.
-            auto direction = ocg::DeformerDirection::kForward;
+
 
             // TODO: Work out the correct maths to ensure lens
             // distortion considers the deformation relative to the
@@ -90,7 +88,7 @@ MHWRender::MVertexBuffer* build_vertex_buffer_positions(
                 log->warn("canvas window: min_x={} min_y={} max_x={} max_y={}",
                           canvas_window.min_x, canvas_window.min_y,
                           canvas_window.max_x, canvas_window.max_y);
-                stream_data.apply_deformers(slice, canvas_window, direction);
+                stream_data.apply_deformers(slice, canvas_window);
             }
             // for (int i = 0; i < pos_count; ++i) {
             //     int index = i * per_vertex_pos_count;

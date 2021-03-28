@@ -65,6 +65,7 @@ public:
     // Input Attributes
     static MObject m_in_stream_attr;
     static MObject m_enable_attr;
+    static MObject m_direction_attr;
     static MObject m_k1_attr;
     static MObject m_k2_attr;
     static MObject m_center_x_attr;

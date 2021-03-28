@@ -26,6 +26,7 @@
 #include <maya/MDataHandle.h>
 #include <maya/MFnNumericAttribute.h>
 #include <maya/MFnTypedAttribute.h>
+#include <maya/MFnEnumAttribute.h>
 #include <maya/MFnNumericData.h>
 #include <maya/MString.h>
 #include <maya/MTypeId.h>
@@ -52,11 +53,18 @@ namespace ocg = open_comp_graph;
 
 namespace open_comp_graph_maya {
 
+// Precompute index for enum.
+const int32_t kDirectionUndistort =
+    static_cast<int32_t>(ocg::LensDistortDirection::kUndistort);
+const int32_t kDirectionDistort =
+    static_cast<int32_t>(ocg::LensDistortDirection::kDistort);
+
 MTypeId LensDistortNode::m_id(OCGM_LENS_DISTORT_TYPE_ID);
 
 // Input Attributes
 MObject LensDistortNode::m_in_stream_attr;
 MObject LensDistortNode::m_enable_attr;
+MObject LensDistortNode::m_direction_attr;
 MObject LensDistortNode::m_k1_attr;
 MObject LensDistortNode::m_k2_attr;
 MObject LensDistortNode::m_center_x_attr;
@@ -101,6 +109,11 @@ MStatus LensDistortNode::updateOcgNodes(
         shared_graph->set_node_attr_i32(
             m_ocg_node, "enable", static_cast<int32_t>(enable));
 
+        // Distortion Direction
+        int16_t direction = utils::get_attr_value_short(data, m_direction_attr);
+        shared_graph->set_node_attr_i32(
+            m_ocg_node, "direction", static_cast<int32_t>(direction));
+
         // Lens Distortion Coefficients.
         float k1 = utils::get_attr_value_float(data, m_k1_attr);
         float k2 = utils::get_attr_value_float(data, m_k2_attr);
@@ -131,7 +144,19 @@ void *LensDistortNode::creator() {
 MStatus LensDistortNode::initialize() {
     MStatus status;
     MFnNumericAttribute nAttr;
-    MFnTypedAttribute tAttr;
+    MFnTypedAttribute   tAttr;
+    MFnEnumAttribute    eAttr;
+
+    // TODO: Add attribute names for 3DE4 classic lens distortion.
+
+    // Lens Distortion Direction
+    //
+    // 'direction' mode attribute, to do undistortion or
+    // re-distortion.
+    m_direction_attr = eAttr.create("direction", "dir", kDirectionUndistort);
+    CHECK_MSTATUS(eAttr.addField("undistort", kDirectionUndistort));
+    CHECK_MSTATUS(eAttr.addField("distort", kDirectionDistort));
+    CHECK_MSTATUS(eAttr.setStorable(true));
 
     // Distortion Parameters
     float value_soft_min = -0.1f;
@@ -176,6 +201,7 @@ MStatus LensDistortNode::initialize() {
 
     // Add Attributes
     CHECK_MSTATUS(addAttribute(m_enable_attr));
+    CHECK_MSTATUS(addAttribute(m_direction_attr));
     CHECK_MSTATUS(addAttribute(m_k1_attr));
     CHECK_MSTATUS(addAttribute(m_k2_attr));
     CHECK_MSTATUS(addAttribute(m_center_x_attr));
@@ -185,6 +211,7 @@ MStatus LensDistortNode::initialize() {
 
     // Attribute Affects
     CHECK_MSTATUS(attributeAffects(m_enable_attr, m_out_stream_attr));
+    CHECK_MSTATUS(attributeAffects(m_direction_attr, m_out_stream_attr));
     CHECK_MSTATUS(attributeAffects(m_k1_attr, m_out_stream_attr));
     CHECK_MSTATUS(attributeAffects(m_k2_attr, m_out_stream_attr));
     CHECK_MSTATUS(attributeAffects(m_center_x_attr, m_out_stream_attr));

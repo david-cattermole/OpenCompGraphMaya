@@ -64,8 +64,10 @@ MObject ImageTransformNode::m_translate_y_attr;
 MObject ImageTransformNode::m_rotate_attr;
 MObject ImageTransformNode::m_rotate_center_x_attr;
 MObject ImageTransformNode::m_rotate_center_y_attr;
+MObject ImageTransformNode::m_scale_uniform_attr;
 MObject ImageTransformNode::m_scale_x_attr;
 MObject ImageTransformNode::m_scale_y_attr;
+MObject ImageTransformNode::m_invert_attr;
 
 // Output Attributes
 MObject ImageTransformNode::m_out_stream_attr;
@@ -106,12 +108,18 @@ MStatus ImageTransformNode::updateOcgNodes(
         shared_graph->set_node_attr_i32(
             m_ocg_node, "enable", static_cast<int32_t>(enable));
 
+        // Invert Attribute toggle
+        bool invert = utils::get_attr_value_bool(data, m_invert_attr);
+        shared_graph->set_node_attr_i32(
+            m_ocg_node, "invert", static_cast<int32_t>(invert));
+
         // Translation attributes
         float tx = utils::get_attr_value_float(data, m_translate_x_attr);
         float ty = utils::get_attr_value_float(data, m_translate_y_attr);
         float r = utils::get_attr_value_float(data, m_rotate_attr);
         float rx = utils::get_attr_value_float(data, m_rotate_center_x_attr);
         float ry = utils::get_attr_value_float(data, m_rotate_center_y_attr);
+        float scale_uniform = utils::get_attr_value_float(data, m_scale_uniform_attr);
         float scale_x = utils::get_attr_value_float(data, m_scale_x_attr);
         float scale_y = utils::get_attr_value_float(data, m_scale_y_attr);
         shared_graph->set_node_attr_f32(m_ocg_node, "translate_x", tx);
@@ -119,8 +127,8 @@ MStatus ImageTransformNode::updateOcgNodes(
         shared_graph->set_node_attr_f32(m_ocg_node, "rotate", r);
         shared_graph->set_node_attr_f32(m_ocg_node, "rotate_center_x", rx);
         shared_graph->set_node_attr_f32(m_ocg_node, "rotate_center_y", ry);
-        shared_graph->set_node_attr_f32(m_ocg_node, "scale_x", scale_x);
-        shared_graph->set_node_attr_f32(m_ocg_node, "scale_y", scale_y);
+        shared_graph->set_node_attr_f32(m_ocg_node, "scale_x", scale_uniform * scale_x);
+        shared_graph->set_node_attr_f32(m_ocg_node, "scale_y", scale_uniform * scale_y);
     }
 
     return status;
@@ -197,24 +205,39 @@ MStatus ImageTransformNode::initialize() {
     CHECK_MSTATUS(nAttr.setSoftMin(center_soft_min));
 
     // Scale X and Y
-    float scale_min = 0.0f;
+    float scale_soft_min = 0.0f;
     float scale_soft_max = 10.0f;
     float scale_default = 1.0f;
+    m_scale_uniform_attr = nAttr.create(
+        "scaleUniform", "sufm",
+        MFnNumericData::kFloat, scale_default);
+    CHECK_MSTATUS(nAttr.setStorable(true));
+    CHECK_MSTATUS(nAttr.setKeyable(true));
+    CHECK_MSTATUS(nAttr.setSoftMin(scale_soft_min));
+    CHECK_MSTATUS(nAttr.setSoftMax(scale_soft_max));
+
     m_scale_x_attr = nAttr.create(
         "scaleX", "sx",
         MFnNumericData::kFloat, scale_default);
     CHECK_MSTATUS(nAttr.setStorable(true));
     CHECK_MSTATUS(nAttr.setKeyable(true));
-    CHECK_MSTATUS(nAttr.setMin(scale_min));
+    CHECK_MSTATUS(nAttr.setSoftMin(scale_soft_min));
     CHECK_MSTATUS(nAttr.setSoftMax(scale_soft_max));
 
     m_scale_y_attr = nAttr.create(
-            "scaleY", "scly",
-            MFnNumericData::kFloat, scale_default);
+        "scaleY", "sy",
+        MFnNumericData::kFloat, scale_default);
     CHECK_MSTATUS(nAttr.setStorable(true));
     CHECK_MSTATUS(nAttr.setKeyable(true));
-    CHECK_MSTATUS(nAttr.setMin(scale_min));
+    CHECK_MSTATUS(nAttr.setSoftMin(scale_soft_min));
     CHECK_MSTATUS(nAttr.setSoftMax(scale_soft_max));
+
+    // 'invert' toggle, to invert the transform: 'A * invert(A) == A'.
+    m_invert_attr = nAttr.create(
+        "invert", "ivt",
+        MFnNumericData::kBoolean, false);
+    CHECK_MSTATUS(nAttr.setStorable(true));
+    CHECK_MSTATUS(nAttr.setKeyable(true));
 
     // Create Common Attributes
     CHECK_MSTATUS(create_enable_attribute(m_enable_attr));
@@ -228,8 +251,10 @@ MStatus ImageTransformNode::initialize() {
     CHECK_MSTATUS(addAttribute(m_rotate_attr));
     CHECK_MSTATUS(addAttribute(m_rotate_center_x_attr));
     CHECK_MSTATUS(addAttribute(m_rotate_center_y_attr));
+    CHECK_MSTATUS(addAttribute(m_scale_uniform_attr));
     CHECK_MSTATUS(addAttribute(m_scale_x_attr));
     CHECK_MSTATUS(addAttribute(m_scale_y_attr));
+    CHECK_MSTATUS(addAttribute(m_invert_attr));
     CHECK_MSTATUS(addAttribute(m_in_stream_attr));
     CHECK_MSTATUS(addAttribute(m_out_stream_attr));
 
@@ -240,8 +265,10 @@ MStatus ImageTransformNode::initialize() {
     CHECK_MSTATUS(attributeAffects(m_rotate_attr, m_out_stream_attr));
     CHECK_MSTATUS(attributeAffects(m_rotate_center_x_attr, m_out_stream_attr));
     CHECK_MSTATUS(attributeAffects(m_rotate_center_y_attr, m_out_stream_attr));
+    CHECK_MSTATUS(attributeAffects(m_scale_uniform_attr, m_out_stream_attr));
     CHECK_MSTATUS(attributeAffects(m_scale_x_attr, m_out_stream_attr));
     CHECK_MSTATUS(attributeAffects(m_scale_y_attr, m_out_stream_attr));
+    CHECK_MSTATUS(attributeAffects(m_invert_attr, m_out_stream_attr));
     CHECK_MSTATUS(attributeAffects(m_in_stream_attr, m_out_stream_attr));
 
     return MS::kSuccess;

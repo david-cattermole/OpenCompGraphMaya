@@ -210,7 +210,6 @@ get_plug_value_stream(MPlug plug, ocg::Node old_value) {
 MString SubSceneOverride::m_shader_color_parameter_name = "gSolidColor";
 MString SubSceneOverride::m_shader_geometry_transform_parameter_name = "gGeometryTransform";
 MString SubSceneOverride::m_shader_rescale_transform_parameter_name = "gRescaleTransform";
-MString SubSceneOverride::m_shader_image_transform_parameter_name = "gImageTransform";
 MString SubSceneOverride::m_shader_image_color_matrix_parameter_name = "gImageColorMatrix";
 MString SubSceneOverride::m_shader_image_texture_parameter_name = "gImageTexture";
 MString SubSceneOverride::m_shader_image_texture_sampler_parameter_name = "gImageTextureSampler";
@@ -723,51 +722,6 @@ void SubSceneOverride::update(
             status = m_shader_data_window.set_float_matrix4x4_param(
                 m_shader_rescale_transform_parameter_name,
                 rescale_display_window_transform);
-            CHECK_MSTATUS(status);
-
-            // Set the transform matrix parameter expected to move the
-            // geometry buffer into the correct place.
-            auto tfm_matrix = stream_data.transform_matrix();
-            const float tfm_matrix_values[4][4] = {
-                {tfm_matrix.m00, tfm_matrix.m01, tfm_matrix.m02, tfm_matrix.m03},
-                {tfm_matrix.m10, tfm_matrix.m11, tfm_matrix.m12, tfm_matrix.m13},
-                {tfm_matrix.m20, tfm_matrix.m21, tfm_matrix.m22, tfm_matrix.m23},
-                {tfm_matrix.m30, tfm_matrix.m31, tfm_matrix.m32, tfm_matrix.m33},
-            };
-            MFloatMatrix image_transform(tfm_matrix_values);
-            // log->warn("Image matrix:");
-            // log->warn("m00={} m01={} m02={} m03={}",
-            //           image_transform(0, 0), image_transform(0, 1), image_transform(0, 2), image_transform(0, 3));
-            // log->warn("m10={} m11={} m12={} m13={}",
-            //           image_transform(1, 0), image_transform(1, 1), image_transform(1, 2), image_transform(1, 3));
-            // log->warn("m20={} m21={} m22={} m23={}",
-            //           image_transform(2, 0), image_transform(2, 1), image_transform(2, 2), image_transform(2, 3));
-            // log->warn("m30={} m31={} m32={} m33={}",
-            //           image_transform(3, 0), image_transform(3, 1), image_transform(3, 2), image_transform(3, 3));
-
-            status = m_shader_display_window.set_float_matrix4x4_param(
-                m_shader_image_transform_parameter_name,
-                image_transform);
-            CHECK_MSTATUS(status);
-
-            status = m_shader_data_window.set_float_matrix4x4_param(
-                m_shader_image_transform_parameter_name,
-                image_transform);
-            CHECK_MSTATUS(status);
-
-            status = m_shader_wire.set_float_matrix4x4_param(
-                m_shader_image_transform_parameter_name,
-                image_transform);
-            CHECK_MSTATUS(status);
-
-            status = m_shader_border.set_float_matrix4x4_param(
-                m_shader_image_transform_parameter_name,
-                image_transform);
-            CHECK_MSTATUS(status);
-
-            status = m_shader.set_float_matrix4x4_param(
-                m_shader_image_transform_parameter_name,
-                image_transform);
             CHECK_MSTATUS(status);
 
             // Set the matrix parameter expected to adjust the colors

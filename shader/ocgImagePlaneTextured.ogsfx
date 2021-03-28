@@ -27,7 +27,6 @@ uniform sampler2D gImageTextureSampler = sampler_state
 };
 
 // Transforms to be applied to the vertices in various ways.
-uniform float4x4 gImageTransform < string UIWidget = "None"; >;
 uniform float4x4 gRescaleTransform < string UIWidget = "None"; >;
 uniform float4x4 gGeometryTransform < string UIWidget = "None"; >;
 
@@ -51,7 +50,7 @@ GLSLShader VS
 {
     void main()
     {
-        gl_Position = gWVPXf * gGeometryTransform * gRescaleTransform * gImageTransform * vec4(in_position, 1);
+        gl_Position = gWVPXf * gGeometryTransform * gRescaleTransform * vec4(in_position, 1);
         vsOut.texcoord.x = in_texcoord.x;
         vsOut.texcoord.y = in_texcoord.y;
     }

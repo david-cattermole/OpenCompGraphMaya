@@ -70,8 +70,10 @@ public:
     static MObject m_rotate_attr;
     static MObject m_rotate_center_x_attr;
     static MObject m_rotate_center_y_attr;
+    static MObject m_scale_uniform_attr;
     static MObject m_scale_x_attr;
     static MObject m_scale_y_attr;
+    static MObject m_invert_attr;
 
     // Output Attributes
     static MObject m_out_stream_attr;
