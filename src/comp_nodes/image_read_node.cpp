@@ -27,6 +27,7 @@
 #include <maya/MFnNumericAttribute.h>
 #include <maya/MFnUnitAttribute.h>
 #include <maya/MFnTypedAttribute.h>
+#include <maya/MFnEnumAttribute.h>
 #include <maya/MFnNumericData.h>
 #include <maya/MString.h>
 #include <maya/MTypeId.h>
@@ -57,6 +58,10 @@ MTypeId ImageReadNode::m_id(OCGM_IMAGE_READ_TYPE_ID);
 
 // Input Attributes
 MObject ImageReadNode::m_enable_attr;
+MObject ImageReadNode::m_frame_start_attr;
+MObject ImageReadNode::m_frame_end_attr;
+MObject ImageReadNode::m_frame_after_attr;
+MObject ImageReadNode::m_frame_before_attr;
 MObject ImageReadNode::m_file_path_attr;
 
 // Output Attributes
@@ -96,6 +101,24 @@ MStatus ImageReadNode::updateOcgNodes(
         shared_graph->set_node_attr_i32(
             m_ocg_node, "enable", static_cast<int32_t>(enable));
 
+        // Start / End Frame Attribute
+        auto start_frame = utils::get_attr_value_int(data, m_frame_start_attr);
+        auto end_frame = utils::get_attr_value_int(data, m_frame_end_attr);
+        shared_graph->set_node_attr_i32(m_ocg_node, "start_frame", start_frame);
+        shared_graph->set_node_attr_i32(m_ocg_node, "end_frame", end_frame);
+
+        // Before Frame Attribute
+        int16_t before_frame =
+            utils::get_attr_value_short(data, m_frame_before_attr);
+        shared_graph->set_node_attr_i32(
+            m_ocg_node, "before_frame", static_cast<int32_t>(before_frame));
+
+        // After Frame Attribute
+        int16_t after_frame =
+            utils::get_attr_value_short(data, m_frame_after_attr);
+        shared_graph->set_node_attr_i32(
+            m_ocg_node, "after_frame", static_cast<int32_t>(after_frame));
+
         // File Path Attribute
         MString file_path = utils::get_attr_value_string(data, m_file_path_attr);
         shared_graph->set_node_attr_str(
@@ -122,6 +145,7 @@ MStatus ImageReadNode::initialize() {
     MFnUnitAttribute    uAttr;
     MFnNumericAttribute nAttr;
     MFnTypedAttribute   tAttr;
+    MFnEnumAttribute    eAttr;
 
     // Create empty string data to be used as attribute default
     // (string) value.
@@ -135,6 +159,39 @@ MStatus ImageReadNode::initialize() {
     CHECK_MSTATUS(tAttr.setStorable(true));
     CHECK_MSTATUS(tAttr.setUsedAsFilename(true));
 
+    // Start Frame
+    uint32_t frame_default = 0;
+    m_frame_start_attr = nAttr.create(
+        "startFrame", "sfr",
+        MFnNumericData::kInt, frame_default);
+    CHECK_MSTATUS(nAttr.setStorable(true));
+    CHECK_MSTATUS(nAttr.setKeyable(false));
+
+    // End Frame
+    m_frame_end_attr = nAttr.create(
+        "endFrame", "efr",
+        MFnNumericData::kInt, frame_default);
+    CHECK_MSTATUS(nAttr.setStorable(true));
+    CHECK_MSTATUS(nAttr.setKeyable(false));
+
+    // Before Frame
+    m_frame_before_attr = eAttr.create("beforeFrame", "beffrm", 0);
+    CHECK_MSTATUS(eAttr.addField("hold", 0));
+    CHECK_MSTATUS(eAttr.addField("loop", 1));
+    CHECK_MSTATUS(eAttr.addField("bounce", 2));
+    CHECK_MSTATUS(eAttr.addField("black", 3));
+    CHECK_MSTATUS(eAttr.addField("error", 4));
+    CHECK_MSTATUS(eAttr.setStorable(true));
+
+    // After Frame
+    m_frame_after_attr = eAttr.create("afterFrame", "aftfrm", 0);
+    CHECK_MSTATUS(eAttr.addField("hold", 0));
+    CHECK_MSTATUS(eAttr.addField("loop", 1));
+    CHECK_MSTATUS(eAttr.addField("bounce", 2));
+    CHECK_MSTATUS(eAttr.addField("black", 3));
+    CHECK_MSTATUS(eAttr.addField("error", 4));
+    CHECK_MSTATUS(eAttr.setStorable(true));
+
     // Create Common Attributes
     CHECK_MSTATUS(create_enable_attribute(m_enable_attr));
     CHECK_MSTATUS(create_output_stream_attribute(m_out_stream_attr));
@@ -142,10 +199,16 @@ MStatus ImageReadNode::initialize() {
     // Add Attributes
     CHECK_MSTATUS(addAttribute(m_enable_attr));
     CHECK_MSTATUS(addAttribute(m_file_path_attr));
+    CHECK_MSTATUS(addAttribute(m_frame_start_attr));
+    CHECK_MSTATUS(addAttribute(m_frame_end_attr));
+    CHECK_MSTATUS(addAttribute(m_frame_after_attr));
+    CHECK_MSTATUS(addAttribute(m_frame_before_attr));
     CHECK_MSTATUS(addAttribute(m_out_stream_attr));
 
     // Attribute Affects
     CHECK_MSTATUS(attributeAffects(m_enable_attr, m_out_stream_attr));
+    CHECK_MSTATUS(attributeAffects(m_frame_start_attr, m_out_stream_attr));
+    CHECK_MSTATUS(attributeAffects(m_frame_end_attr, m_out_stream_attr));
     CHECK_MSTATUS(attributeAffects(m_file_path_attr, m_out_stream_attr));
 
     return MS::kSuccess;

@@ -63,6 +63,10 @@ public:
     // Input Attributes
     static MObject m_enable_attr;
     static MObject m_file_path_attr;
+    static MObject m_frame_start_attr;
+    static MObject m_frame_end_attr;
+    static MObject m_frame_before_attr;
+    static MObject m_frame_after_attr;
 
     // Output Attributes
     static MObject m_out_stream_attr;
