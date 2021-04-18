@@ -43,6 +43,13 @@ int16_t get_attr_value_short(MDataBlock &data_block, MObject &attr) {
     return handle.asShort();
 }
 
+int32_t get_attr_value_int(MDataBlock &data_block, MObject &attr) {
+    MStatus status;
+    MDataHandle handle = data_block.inputValue(attr, &status);
+    CHECK_MSTATUS(status);
+    return handle.asInt();
+}
+
 float get_attr_value_float(MDataBlock &data_block, MObject &attr) {
     MStatus status;
     MDataHandle handle = data_block.inputValue(attr, &status);
