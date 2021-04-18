@@ -1,0 +1,164 @@
+//
+// Copyright (C) 2021 David Cattermole.
+//
+// This file is part of OpenCompGraphMaya.
+//
+// OpenCompGraphMaya is free software: you can redistribute it and/or modify it
+// under the terms of the GNU Lesser General Public License as
+// published by the Free Software Foundation, either version 3 of the
+// License, or (at your option) any later version.
+//
+// OpenCompGraphMaya is distributed in the hope that it will be useful,
+// but WITHOUT ANY WARRANTY; without even the implied warranty of
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+// GNU Lesser General Public License for more details.
+//
+// You should have received a copy of the GNU Lesser General Public License
+// along with OpenCompGraphMaya.  If not, see <https://www.gnu.org/licenses/>.
+// ---------------------------------------------------------------------
+//
+// Image Plane Attribute Template file.
+//
+
+global proc AEocgImagePlaneTemplate(string $nodeName)
+{
+    editorTemplate -beginScrollLayout;
+
+    editorTemplate -beginLayout "Display" -collapse 0;
+    editorTemplate -addControl "camera";
+    editorTemplate -beginNoOptimize;
+    editorTemplate -addControl "visibility";
+    editorTemplate -endNoOptimize;
+    editorTemplate -addSeparator;
+    editorTemplate -addControl "imageMode"; // None, Luminance, RGB, RGBA, etc.
+    editorTemplate -addControl "color"; // multiplier color for the viewer only.
+    editorTemplate -addControl "alpha"; // "opacity" or "transparency"?
+    editorTemplate -addControl "exposure"; // EVs multiplier for the viewer only.
+    editorTemplate -addControl "gamma"; // gamma correction
+    editorTemplate -addControl "softClip"; // prevent over-bright values.
+    editorTemplate -endLayout;
+
+    // TODO: Button to open the Node Editor with connected nodes.
+
+    editorTemplate -beginLayout "Read Image" -collapse 0;
+    //
+    // TODO: Dynamically displays "read file" node options.
+    //
+    // - File Path + Browse File Path button.
+    // - Input Color Space
+    // - Start Frame
+    // - End Frame
+    // - Before Start Frame
+    // - After End Frame
+    // - On Missing Frame:
+    //     - "Color Bars"
+    //     - "Black"
+    //     - "Last"
+    //     - "Nearest"
+    //     - "Invisible"
+    //
+    editorTemplate -endLayout;
+
+    editorTemplate -beginLayout "Image Reformat" -collapse 0;
+    // TODO: Dynamically displays "reformat" node options.
+    //
+    // - Scale: 1.0
+    // - Width / Height.
+    editorTemplate -endLayout;
+
+    editorTemplate -beginLayout "Color Grade" -collapse 0;
+    // TODO: Dynamically displays "color grade" node options.
+    //
+    // - Color Multiply.
+    // - Color Offset.
+    //
+    editorTemplate -endLayout;
+
+    editorTemplate -beginLayout "Lens Distortion" -collapse 0;
+    // TODO: Dynamically displays "lens distortion" node options.
+    //
+    // - Model name
+    // - Degree 2
+    // - Degree 4
+    //
+    editorTemplate -endLayout;
+
+    editorTemplate -beginLayout "Write Image" -collapse 0;
+    // TODO: Dynamically displays "write image" node options. By
+    // default there will not be a write image node created, but the
+    // user can click "create" and it will be displayed here.
+    editorTemplate -endLayout;
+
+    // Goemetry
+    editorTemplate -beginLayout "Geometry" -collapse 1;
+    editorTemplate -addControl "geometryType"; // Card, Camera Plane, Sphere, Custom.
+
+    // Geometry - Camera Plane
+    editorTemplate -addControl "focalLength";
+    editorTemplate -addSeparator;
+    editorTemplate -addControl "filmBackWidth";
+    editorTemplate -addControl "filmBackHeight";
+    editorTemplate -addSeparator;
+    editorTemplate -addControl "lensCenterOffsetX";
+    editorTemplate -addControl "lensCenterOffsetY";
+    editorTemplate -addSeparator;
+    editorTemplate -addControl "cardDepth";
+
+    // Geometry - Card
+    editorTemplate -addControl "cardSizeX";
+    editorTemplate -addControl "cardSizeY";
+    editorTemplate -addControl "cardResolutionX";
+    editorTemplate -addControl "cardResolutionY";
+
+    // Geometry resolution.
+    editorTemplate -addControl "cardResX";
+    editorTemplate -addControl "cardResY";
+
+    editorTemplate -endLayout;
+
+    editorTemplate -beginLayout "Time" -collapse 1;
+    // TODO: Add button to open the Graph Editor with the image plane
+    // selected. The user is expected to change the animCurve as
+    // needed.
+    //
+    // Floating point "time" value, to allow reading and blending of
+    // images.
+    editorTemplate -addControl "time";
+    editorTemplate -endLayout;
+
+    // Specifics to the viewport.
+    editorTemplate -beginLayout "Viewport" -collapse 1;
+    editorTemplate -addControl "viewportTextureFilterMode";
+    editorTemplate -addControl "viewportDepthEnable";
+    editorTemplate -addControl "viewportDepth";  // 0.0% to 100.0%
+    editorTemplate -endLayout;
+
+    editorTemplate -beginLayout "Cache" -collapse 1;
+    // TODO: Display information about the cached images.
+    // TODO: Add button to "export buffer compression file".
+    // TODO: Add button to open cache options.
+    editorTemplate -endLayout;
+
+    editorTemplate -beginLayout "Miscellaneous" -collapse 1;
+    // TODO: Add "default image"; the default image that is displayed
+    // when no node/image is connected to the image plane;
+    editorTemplate -addControl "displayWindowVisible";
+    editorTemplate -addControl "dataWindowVisible";
+    editorTemplate -addControl "displayWindowColor";
+    editorTemplate -addControl "dataWindowColor";
+    editorTemplate -addControl "canvasAreaVisible";
+    editorTemplate -addControl "canvasEdgeVisible";
+    editorTemplate -addControl "canvasWireframeVisible";
+    editorTemplate -endLayout;
+
+    // include/call base class/node attributes
+    AEabstractBaseCreateTemplate $nodeName;
+
+    editorTemplate -addExtraControls;
+    
+    editorTemplate -endScrollLayout;
+
+    editorTemplate -suppress "inStream";
+    editorTemplate -suppress "outStream";
+
+}
