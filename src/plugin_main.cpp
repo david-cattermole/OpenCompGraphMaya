@@ -41,6 +41,7 @@
 #include <comp_nodes/image_merge_node.h>
 #include <comp_nodes/lens_distort_node.h>
 #include <comp_nodes/image_transform_node.h>
+#include <comp_nodes/image_crop_node.h>
 #include <graph_data.h>
 #include "global_cache.h"
 #include "logger.h"
@@ -127,6 +128,13 @@ MStatus initializePlugin(MObject obj) {
                   ocgm::ImageMergeNode::m_id,
                   ocgm::ImageMergeNode::creator,
                   ocgm::ImageMergeNode::initialize,
+                  status);
+
+    REGISTER_NODE(plugin,
+                  ocgm::ImageCropNode::nodeName(),
+                  ocgm::ImageCropNode::m_id,
+                  ocgm::ImageCropNode::creator,
+                  ocgm::ImageCropNode::initialize,
                   status);
 
     REGISTER_NODE(plugin,
@@ -224,6 +232,9 @@ MStatus uninitializePlugin(MObject obj) {
 
     DEREGISTER_NODE(plugin, ocgm::ImageMergeNode::nodeName(),
                     ocgm::ImageMergeNode::m_id, status);
+
+    DEREGISTER_NODE(plugin, ocgm::ImageCropNode::nodeName(),
+                    ocgm::ImageCropNode::m_id, status);
 
     DEREGISTER_NODE(plugin, ocgm::ImageTransformNode::nodeName(),
                     ocgm::ImageTransformNode::m_id, status);
