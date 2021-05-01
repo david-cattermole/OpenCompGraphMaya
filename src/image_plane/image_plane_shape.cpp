@@ -55,11 +55,11 @@ namespace image_plane {
 
 // Constants for the shape node.
 MTypeId ShapeNode::m_id(OCGM_IMAGE_PLANE_SHAPE_TYPE_ID);
-MString ShapeNode::m_draw_db_classification("drawdb/subscene/OpenCompGraph/ocgImagePlane");
-MString ShapeNode::m_draw_registrant_id("ocgImagePlaneSubSceneOverride");
-MString ShapeNode::m_selection_type_name("ocgImagePlaneSelection");
-MString ShapeNode::m_display_filter_name("ocgImagePlaneDisplayFilter");
-MString ShapeNode::m_display_filter_label("OCG ImagePlane");
+MString ShapeNode::m_draw_db_classification(OCGM_IMAGE_PLANE_DRAW_CLASSIFY);
+MString ShapeNode::m_draw_registrant_id(OCGM_IMAGE_PLANE_DRAW_REGISTRANT_ID);
+MString ShapeNode::m_selection_type_name(OCGM_IMAGE_PLANE_SHAPE_SELECTION_TYPE_NAME);
+MString ShapeNode::m_display_filter_name(OCGM_IMAGE_PLANE_SHAPE_DISPLAY_FILTER_NAME);
+MString ShapeNode::m_display_filter_label(OCGM_IMAGE_PLANE_SHAPE_DISPLAY_FILTER_LABEL);
 
 // Input Attributes
 MObject ShapeNode::m_camera_attr;
