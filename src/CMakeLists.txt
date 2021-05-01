@@ -24,6 +24,7 @@ add_subdirectory(OpenCompGraph)
 
 # Source
 set(SOURCE_FILES
+  ${CMAKE_CURRENT_SOURCE_DIR}/image_plane/image_plane_utils.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/image_plane/image_plane_shape.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/image_plane/image_plane_shader.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/image_plane/image_plane_sub_scene_override.cpp
@@ -37,6 +38,7 @@ set(SOURCE_FILES
   ${CMAKE_CURRENT_SOURCE_DIR}/comp_nodes/color_grade_node.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/comp_nodes/lens_distort_node.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/graph_data.cpp
+  ${CMAKE_CURRENT_SOURCE_DIR}/graph_execute.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/geometry_buffer.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/node_utils.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/global_cache.cpp

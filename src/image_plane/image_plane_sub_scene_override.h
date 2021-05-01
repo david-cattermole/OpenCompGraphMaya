@@ -110,12 +110,6 @@ private:
     GeometryWindow m_geometry_window_display;
     GeometryWindow m_geometry_window_data;
 
-    ocg::ExecuteStatus execute_ocg_graph(
-        ocg::Node stream_ocg_node,
-        int32_t execute_frame,
-        std::shared_ptr<ocg::Graph> shared_graph,
-        std::shared_ptr<ocg::Cache> shared_cache);
-
     // Shaders
     Shader m_shader_wire;
     Shader m_shader_border;
