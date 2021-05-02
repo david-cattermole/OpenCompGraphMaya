@@ -18,21 +18,19 @@
 // ---------------------------------------------------------------------
 
 
-global proc AEocgImageCropTemplate(string $nodeName)
+global proc AEocgLensDistortTemplate(string $nodeName)
 {
     editorTemplate -beginScrollLayout;
 
-    editorTemplate -beginLayout "Image Crop" -collapse 0;
+    editorTemplate -beginLayout "Lens Distort" -collapse 0;
     editorTemplate -addControl "enable";
     editorTemplate -addSeparator;
-    editorTemplate -addControl "windowMinX";
-    editorTemplate -addControl "windowMinY";
-    editorTemplate -addControl "windowMaxX";
-    editorTemplate -addControl "windowMaxY";
+    editorTemplate -addControl "direction";
     editorTemplate -addSeparator;
-    editorTemplate -addControl "reformat";
-    editorTemplate -addControl "blackOutside";
-    editorTemplate -addControl "intersect";
+    editorTemplate -addControl "k1";
+    editorTemplate -addControl "k2";
+    editorTemplate -addControl "centerX";
+    editorTemplate -addControl "centerY";
     editorTemplate -endLayout;
 
     // include/call base class/node attributes

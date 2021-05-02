@@ -18,21 +18,20 @@
 // ---------------------------------------------------------------------
 
 
-global proc AEocgImageCropTemplate(string $nodeName)
+global proc AEocgImageReadTemplate(string $nodeName)
 {
     editorTemplate -beginScrollLayout;
 
-    editorTemplate -beginLayout "Image Crop" -collapse 0;
+    editorTemplate -beginLayout "Image Read" -collapse 0;
     editorTemplate -addControl "enable";
     editorTemplate -addSeparator;
-    editorTemplate -addControl "windowMinX";
-    editorTemplate -addControl "windowMinY";
-    editorTemplate -addControl "windowMaxX";
-    editorTemplate -addControl "windowMaxY";
+    editorTemplate -addControl "filePath";
     editorTemplate -addSeparator;
-    editorTemplate -addControl "reformat";
-    editorTemplate -addControl "blackOutside";
-    editorTemplate -addControl "intersect";
+    editorTemplate -addControl "startFrame";
+    editorTemplate -addControl "endFrame";
+    editorTemplate -addSeparator;
+    editorTemplate -addControl "beforeFrame";
+    editorTemplate -addControl "afterFrame";
     editorTemplate -endLayout;
 
     // include/call base class/node attributes
@@ -42,7 +41,6 @@ global proc AEocgImageCropTemplate(string $nodeName)
 
     editorTemplate -endScrollLayout;
 
-    editorTemplate -suppress "inStream";
     editorTemplate -suppress "outStream";
 
 }

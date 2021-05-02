@@ -23,8 +23,9 @@ global proc AEocgImageTransformTemplate(string $nodeName)
     editorTemplate -beginScrollLayout;
 
     editorTemplate -beginLayout "Image Transform" -collapse 0;
+    editorTemplate -addSeparator;
     editorTemplate -addControl "enable";
-    editorTemplate -beginNoOptimize;
+    editorTemplate -addSeparator;
     editorTemplate -addControl "translateX";
     editorTemplate -addControl "translateY";
     editorTemplate -addSeparator;
@@ -33,7 +34,7 @@ global proc AEocgImageTransformTemplate(string $nodeName)
     editorTemplate -addControl "scaleUniform";
     editorTemplate -addControl "scaleX";
     editorTemplate -addControl "scaleY";
-    editorTemplate -endNoOptimize;
+    editorTemplate -addSeparator;
     editorTemplate -addControl "invert";
     editorTemplate -endLayout;
 
