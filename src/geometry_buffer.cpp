@@ -76,10 +76,10 @@ void generate_vertex_positions(
         canvas_window.max_y = +1.0;
 
         if (stream_data.deformers_len() > 0) {
-            log->warn("applying lens distortion!");
-            log->warn("canvas window: min_x={} min_y={} max_x={} max_y={}",
-                      canvas_window.min_x, canvas_window.min_y,
-                      canvas_window.max_x, canvas_window.max_y);
+            log->debug("applying lens distortion!");
+            log->debug("canvas window: min_x={} min_y={} max_x={} max_y={}",
+                       canvas_window.min_x, canvas_window.min_y,
+                       canvas_window.max_x, canvas_window.max_y);
             stream_data.apply_deformers(slice, canvas_window);
         }
         vertex_buffer->commit(buffer);
