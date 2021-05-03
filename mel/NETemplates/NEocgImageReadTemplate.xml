@@ -1,0 +1,29 @@
+
+<?xml version='1.0' encoding='UTF-8'?>
+<templates>
+    <using package='maya'/>
+    <template name='NEocgImageRead'>
+        <attribute name='outStream' type='maya.TdataCompound'>
+            <label>Out Stream</label>
+        </attribute>
+        <attribute name='enable' type='maya.boolean'>
+            <label>Enable</label>
+        </attribute>
+        <attribute name='startFrame' type='maya.integer'>
+            <label>Start Frame</label>
+        </attribute>
+        <attribute name='endFrame' type='maya.integer'>
+            <label>End Frame</label>
+        </attribute>
+    </template>
+    <view name='NEDefault' template='NEocgImageRead'>
+        <property name='outStream'/>
+        <property name='enable'/>
+        <property name='filePath'/>
+        <property name='startFrame'/>
+        <property name='endFrame'/>
+    </view>
+    <view name='NEDefaultSoloOutput' template='NEocgImageRead'>
+        <property name='outStream'/>
+    </view>
+</templates>
