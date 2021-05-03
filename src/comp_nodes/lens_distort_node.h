@@ -66,10 +66,13 @@ public:
     static MObject m_in_stream_attr;
     static MObject m_enable_attr;
     static MObject m_direction_attr;
-    static MObject m_k1_attr;
-    static MObject m_k2_attr;
-    static MObject m_center_x_attr;
-    static MObject m_center_y_attr;
+    static MObject m_distortion_attr;
+    static MObject m_anamorphic_squeeze_attr;
+    static MObject m_curvature_x_attr;
+    static MObject m_curvature_y_attr;
+    static MObject m_quartic_distortion_attr;
+    static MObject m_lens_center_offset_x_attr;
+    static MObject m_lens_center_offset_y_attr;
 
     // Output Attributes
     static MObject m_out_stream_attr;

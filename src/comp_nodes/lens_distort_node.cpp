@@ -65,10 +65,13 @@ MTypeId LensDistortNode::m_id(OCGM_LENS_DISTORT_TYPE_ID);
 MObject LensDistortNode::m_in_stream_attr;
 MObject LensDistortNode::m_enable_attr;
 MObject LensDistortNode::m_direction_attr;
-MObject LensDistortNode::m_k1_attr;
-MObject LensDistortNode::m_k2_attr;
-MObject LensDistortNode::m_center_x_attr;
-MObject LensDistortNode::m_center_y_attr;
+MObject LensDistortNode::m_distortion_attr;
+MObject LensDistortNode::m_anamorphic_squeeze_attr;
+MObject LensDistortNode::m_curvature_x_attr;
+MObject LensDistortNode::m_curvature_y_attr;
+MObject LensDistortNode::m_quartic_distortion_attr;
+MObject LensDistortNode::m_lens_center_offset_x_attr;
+MObject LensDistortNode::m_lens_center_offset_y_attr;
 
 // Output Attributes
 MObject LensDistortNode::m_out_stream_attr;
@@ -115,14 +118,20 @@ MStatus LensDistortNode::updateOcgNodes(
             m_ocg_node, "direction", static_cast<int32_t>(direction));
 
         // Lens Distortion Coefficients.
-        float k1 = utils::get_attr_value_float(data, m_k1_attr);
-        float k2 = utils::get_attr_value_float(data, m_k2_attr);
-        float center_x = utils::get_attr_value_float(data, m_center_x_attr);
-        float center_y = utils::get_attr_value_float(data, m_center_y_attr);
-        shared_graph->set_node_attr_f32(m_ocg_node, "k1", k1);
-        shared_graph->set_node_attr_f32(m_ocg_node, "k2", k2);
-        shared_graph->set_node_attr_f32(m_ocg_node, "center_x", center_x);
-        shared_graph->set_node_attr_f32(m_ocg_node, "center_y", center_y);
+        float distortion = utils::get_attr_value_float(data, m_distortion_attr);
+        float anamorphic_squeeze = utils::get_attr_value_float(data, m_anamorphic_squeeze_attr);
+        float curvature_x = utils::get_attr_value_float(data, m_curvature_x_attr);
+        float curvature_y = utils::get_attr_value_float(data, m_curvature_y_attr);
+        float quartic_distortion = utils::get_attr_value_float(data, m_quartic_distortion_attr);
+        float lco_x = utils::get_attr_value_float(data, m_lens_center_offset_x_attr);
+        float lco_y = utils::get_attr_value_float(data, m_lens_center_offset_y_attr);
+        shared_graph->set_node_attr_f32(m_ocg_node, "distortion", distortion);
+        shared_graph->set_node_attr_f32(m_ocg_node, "anamorphic_squeeze", anamorphic_squeeze);
+        shared_graph->set_node_attr_f32(m_ocg_node, "curvature_x", curvature_x);
+        shared_graph->set_node_attr_f32(m_ocg_node, "curvature_y", curvature_y);
+        shared_graph->set_node_attr_f32(m_ocg_node, "quartic_distortion", quartic_distortion);
+        shared_graph->set_node_attr_f32(m_ocg_node, "lens_center_offset_x", lco_x);
+        shared_graph->set_node_attr_f32(m_ocg_node, "lens_center_offset_y", lco_y);
     }
 
     return status;
@@ -158,36 +167,64 @@ MStatus LensDistortNode::initialize() {
     CHECK_MSTATUS(eAttr.addField("distort", kDirectionDistort));
     CHECK_MSTATUS(eAttr.setStorable(true));
 
+    // Camera Parameters
+    float lens_offset_soft_min = -1.0f;
+    float lens_offset_soft_max = 1.0f;
+    float lens_offset_default = 0.0f;
+    m_lens_center_offset_x_attr = nAttr.create(
+        "lensCenterOffsetX", "lcox",
+        MFnNumericData::kFloat, lens_offset_default);
+    CHECK_MSTATUS(nAttr.setStorable(true));
+    CHECK_MSTATUS(nAttr.setKeyable(true));
+    CHECK_MSTATUS(nAttr.setSoftMin(lens_offset_soft_min));
+    CHECK_MSTATUS(nAttr.setSoftMax(lens_offset_soft_max));
+
+    m_lens_center_offset_y_attr = nAttr.create(
+        "lensCenterOffsetY", "lcoy",
+        MFnNumericData::kFloat, lens_offset_default);
+    CHECK_MSTATUS(nAttr.setStorable(true));
+    CHECK_MSTATUS(nAttr.setKeyable(true));
+    CHECK_MSTATUS(nAttr.setSoftMin(lens_offset_soft_min));
+    CHECK_MSTATUS(nAttr.setSoftMax(lens_offset_soft_max));
+
     // Distortion Parameters
-    float value_soft_min = -0.1f;
-    float value_soft_max = 0.1f;
+    float value_soft_min = -0.5f;
+    float value_soft_max = 0.5f;
     float value_default = 0.0f;
-    m_k1_attr = nAttr.create(
-        "k1", "k1",
+    m_distortion_attr = nAttr.create(
+        "distortion", "dist",
         MFnNumericData::kFloat, value_default);
     CHECK_MSTATUS(nAttr.setStorable(true));
     CHECK_MSTATUS(nAttr.setKeyable(true));
     CHECK_MSTATUS(nAttr.setSoftMin(value_soft_min));
     CHECK_MSTATUS(nAttr.setSoftMax(value_soft_max));
 
-    m_k2_attr = nAttr.create(
-        "k2", "k2",
+    m_anamorphic_squeeze_attr = nAttr.create(
+        "anamorphicSqueeze", "anasqz",
+        MFnNumericData::kFloat, 1.0f);
+    CHECK_MSTATUS(nAttr.setStorable(true));
+    CHECK_MSTATUS(nAttr.setKeyable(true));
+    CHECK_MSTATUS(nAttr.setSoftMin(0.25f));
+    CHECK_MSTATUS(nAttr.setSoftMax(4.0f));
+
+    m_curvature_x_attr = nAttr.create(
+        "curvatureX", "crvx",
         MFnNumericData::kFloat, value_default);
     CHECK_MSTATUS(nAttr.setStorable(true));
     CHECK_MSTATUS(nAttr.setKeyable(true));
     CHECK_MSTATUS(nAttr.setSoftMin(value_soft_min));
     CHECK_MSTATUS(nAttr.setSoftMax(value_soft_max));
 
-    m_center_x_attr = nAttr.create(
-        "centerX", "cx",
+    m_curvature_y_attr = nAttr.create(
+        "curvatureY", "crvy",
         MFnNumericData::kFloat, value_default);
     CHECK_MSTATUS(nAttr.setStorable(true));
     CHECK_MSTATUS(nAttr.setKeyable(true));
     CHECK_MSTATUS(nAttr.setSoftMin(value_soft_min));
     CHECK_MSTATUS(nAttr.setSoftMax(value_soft_max));
 
-    m_center_y_attr = nAttr.create(
-        "centerY", "cy",
+    m_quartic_distortion_attr = nAttr.create(
+        "quarticDistortion", "qrtdist",
         MFnNumericData::kFloat, value_default);
     CHECK_MSTATUS(nAttr.setStorable(true));
     CHECK_MSTATUS(nAttr.setKeyable(true));
@@ -202,20 +239,26 @@ MStatus LensDistortNode::initialize() {
     // Add Attributes
     CHECK_MSTATUS(addAttribute(m_enable_attr));
     CHECK_MSTATUS(addAttribute(m_direction_attr));
-    CHECK_MSTATUS(addAttribute(m_k1_attr));
-    CHECK_MSTATUS(addAttribute(m_k2_attr));
-    CHECK_MSTATUS(addAttribute(m_center_x_attr));
-    CHECK_MSTATUS(addAttribute(m_center_y_attr));
+    CHECK_MSTATUS(addAttribute(m_lens_center_offset_x_attr));
+    CHECK_MSTATUS(addAttribute(m_lens_center_offset_y_attr));
+    CHECK_MSTATUS(addAttribute(m_distortion_attr));
+    CHECK_MSTATUS(addAttribute(m_anamorphic_squeeze_attr));
+    CHECK_MSTATUS(addAttribute(m_curvature_x_attr));
+    CHECK_MSTATUS(addAttribute(m_curvature_y_attr));
+    CHECK_MSTATUS(addAttribute(m_quartic_distortion_attr));
     CHECK_MSTATUS(addAttribute(m_in_stream_attr));
     CHECK_MSTATUS(addAttribute(m_out_stream_attr));
 
     // Attribute Affects
     CHECK_MSTATUS(attributeAffects(m_enable_attr, m_out_stream_attr));
     CHECK_MSTATUS(attributeAffects(m_direction_attr, m_out_stream_attr));
-    CHECK_MSTATUS(attributeAffects(m_k1_attr, m_out_stream_attr));
-    CHECK_MSTATUS(attributeAffects(m_k2_attr, m_out_stream_attr));
-    CHECK_MSTATUS(attributeAffects(m_center_x_attr, m_out_stream_attr));
-    CHECK_MSTATUS(attributeAffects(m_center_y_attr, m_out_stream_attr));
+    CHECK_MSTATUS(attributeAffects(m_lens_center_offset_x_attr, m_out_stream_attr));
+    CHECK_MSTATUS(attributeAffects(m_lens_center_offset_y_attr, m_out_stream_attr));
+    CHECK_MSTATUS(attributeAffects(m_distortion_attr, m_out_stream_attr));
+    CHECK_MSTATUS(attributeAffects(m_anamorphic_squeeze_attr, m_out_stream_attr));
+    CHECK_MSTATUS(attributeAffects(m_curvature_x_attr, m_out_stream_attr));
+    CHECK_MSTATUS(attributeAffects(m_curvature_y_attr, m_out_stream_attr));
+    CHECK_MSTATUS(attributeAffects(m_quartic_distortion_attr, m_out_stream_attr));
     CHECK_MSTATUS(attributeAffects(m_in_stream_attr, m_out_stream_attr));
 
     return MS::kSuccess;

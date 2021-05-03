@@ -89,7 +89,7 @@ def test_c():
     maya.cmds.setAttr(grade_node + '.multiplyG', random.random() * 2)
     maya.cmds.setAttr(grade_node + '.multiplyB', random.random() * 2)
     maya.cmds.setAttr(grade_node + '.multiplyA', 1.0)
-    maya.cmds.setAttr(lens_node + '.k1', random.uniform(-1.0, 1.0))
+    maya.cmds.setAttr(lens_node + '.distortion', random.uniform(-1.0, 1.0))
     return
 
 
@@ -156,7 +156,7 @@ def test_f():
     maya.cmds.setAttr(grade_node + '.multiplyG', random.uniform(0.1, 2.0))
     maya.cmds.setAttr(grade_node + '.multiplyB', random.uniform(0.1, 2.0))
     maya.cmds.setAttr(grade_node + '.multiplyA', 1.0)
-    maya.cmds.setAttr(lens_node + '.k1', random.uniform(-0.5, 0.5))
+    maya.cmds.setAttr(lens_node + '.distortion', random.uniform(-0.5, 0.5))
     maya.cmds.setAttr(tfm_node + '.translateX', random.uniform(-0.2, 0.2))
     maya.cmds.setAttr(tfm_node + '.translateY', random.uniform(-0.2, 0.2))
     maya.cmds.setAttr(tfm_node + '.rotate', random.random() * 10.0)
@@ -203,7 +203,7 @@ def test_g():
     maya.cmds.setAttr(grade_node + '.multiplyG', random.uniform(0.1, 2.0))
     maya.cmds.setAttr(grade_node + '.multiplyB', random.uniform(0.1, 2.0))
     maya.cmds.setAttr(grade_node + '.multiplyA', 1.0)
-    maya.cmds.setAttr(lens_node + '.k1', random.uniform(-0.5, 0.5))
+    maya.cmds.setAttr(lens_node + '.distortion', random.uniform(-0.5, 0.5))
     maya.cmds.setAttr(tfm_node + '.translateX', random.uniform(-0.2, 0.2))
     maya.cmds.setAttr(tfm_node + '.translateY', random.uniform(-0.2, 0.2))
     maya.cmds.setAttr(tfm_node + '.rotate', random.random() * 10.0)

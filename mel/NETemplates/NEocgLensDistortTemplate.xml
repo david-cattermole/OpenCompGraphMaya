@@ -1,0 +1,24 @@
+
+<?xml version='1.0' encoding='UTF-8'?>
+<templates>
+    <using package='maya'/>
+    <template name='NEocgLensDistort'>
+        <attribute name='inStream' type='maya.TdataCompound'>
+            <label>In Stream</label>
+        </attribute>
+        <attribute name='outStream' type='maya.TdataCompound'>
+            <label>Out Stream</label>
+        </attribute>
+        <attribute name='enable' type='maya.boolean'>
+            <label>Enable</label>
+        </attribute>
+    </template>
+    <view name='NEDefault' template='NEocgLensDistort'>
+        <property name='outStream'/>
+        <property name='inStream'/>
+        <property name='enable'/>
+    </view>
+    <view name='NEDefaultSoloOutput' template='NEocgLensDistort'>
+        <property name='outStream'/>
+    </view>
+</templates>
