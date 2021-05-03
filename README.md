@@ -27,9 +27,10 @@ library (currently in development).
 | ocgImageRead     | Reads an image from disk.                        | In progress         |
 | ocgImageWrite    | Write an image to disk.                          | Not implemented yet |
 | ocgImageMerge    | Merge two images together.                       | In progress         |
+| ocgImageCrop     | Crop an image to a sub-window.                   | In progress         |
 | ocgImageReformat | Change the resolution of images.                 | Not implemented yet |
 | ocgImageRetime   | Perform time-based frame blending                | Not implemented yet |
-| ocgImageKeyer    | Perform time-based frame blending                | Not implemented yet |
+| ocgImageKeyer    | Create a green-screen matte.                     | Not implemented yet |
 | ocgColorGrade    | Perform colour grading to an image.              | In progress         |
 | ocgLensDistort   | Deform an image using brownian lens distortion.  | In progress         |
 | ocgNull          | An empty image operation - null operation.       | Not implemented yet |
@@ -40,8 +41,8 @@ worked on.
 
 | Feature Description                                                  |        Status |
 |:---------------------------------------------------------------------|--------------:|
-| Draw live image on a flat plane.                                     | To be started |
-| Draw live image on a camera image plane.                             | To be started |
+| Draw live image on a flat plane.                                     |          Done |
+| Draw live image on a camera image plane.                             |          Done |
 | Draw live image on a sphere.                                         | To be started |
 | Draw live image on a cylinder.                                       | To be started |
 | Draw live image on a cube.                                           | To be started |
@@ -55,7 +56,7 @@ worked on.
 | Control OCG caching preferences from Maya nodes.                     | To be started |
 | Display which frames are cached in the Maya timeline (with a color). | To be started |
 | Render the image plane natively in Software renderers (e.g. Arnold)  | To be started |
-| Transform node matching image space, with effect of deformer         | To be started |
+| Transform node matching image space, with effect of deformer         |          Done |
 
 ## Installation / Building
 
