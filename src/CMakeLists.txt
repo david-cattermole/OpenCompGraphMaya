@@ -28,6 +28,7 @@ set(SOURCE_FILES
   ${CMAKE_CURRENT_SOURCE_DIR}/image_plane/image_plane_shape.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/image_plane/image_plane_shader.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/image_plane/image_plane_sub_scene_override.cpp
+  ${CMAKE_CURRENT_SOURCE_DIR}/image_plane/image_plane_geometry_override.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/image_plane/image_plane_geometry_canvas.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/image_plane/image_plane_geometry_window.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/comp_nodes/base_node.cpp

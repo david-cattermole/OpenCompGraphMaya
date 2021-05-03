@@ -34,6 +34,41 @@ namespace ocg = open_comp_graph;
 namespace open_comp_graph_maya {
 namespace geometry_buffer {
 
+void generate_vertex_positions(
+    MHWRender::MVertexBuffer *vertex_buffer,
+    const size_t divisions_x,
+    const size_t divisions_y,
+    ocg::StreamData &stream_data);
+
+void generate_vertex_uvs(
+    MHWRender::MVertexBuffer *vertex_buffer,
+    const size_t divisions_x,
+    const size_t divisions_y);
+
+void generate_index_triangles(
+    MHWRender::MIndexBuffer *index_buffer,
+    const size_t divisions_x,
+    const size_t divisions_y);
+
+void generate_index_border_lines(
+    MHWRender::MIndexBuffer *index_buffer,
+    const size_t divisions_x,
+    const size_t divisions_y);
+
+void generate_index_wire_lines(
+    MHWRender::MIndexBuffer *index_buffer,
+    const size_t divisions_x,
+    const size_t divisions_y);
+
+void generate_window_vertex_positions(
+    MHWRender::MVertexBuffer* vertex_buffer,
+    const ocg::BBox2Di bounding_box);
+
+void generate_window_index_border_lines(
+    MHWRender::MIndexBuffer* index_buffer);
+
+//////////////////////////////////////////////
+
 MHWRender::MVertexBuffer* build_vertex_buffer_positions(
     const size_t divisions_x,
     const size_t divisions_y,

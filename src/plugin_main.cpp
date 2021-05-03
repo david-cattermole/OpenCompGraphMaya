@@ -35,7 +35,11 @@
 #include <opencompgraphmaya/build_constants.h>  // Build-Time constant values.
 #include <opencompgraphmaya/node_type_ids.h>
 #include <image_plane/image_plane_shape.h>
-#include <image_plane/image_plane_sub_scene_override.h>
+#if OCG_USE_SUB_SCENE_OVERRIDE == 1
+    #include <image_plane/image_plane_sub_scene_override.h>
+#else
+    #include <image_plane/image_plane_geometry_override.h>
+#endif
 #include <comp_nodes/color_grade_node.h>
 #include <comp_nodes/image_read_node.h>
 #include <comp_nodes/image_merge_node.h>
@@ -172,6 +176,7 @@ MStatus initializePlugin(MObject obj) {
     }
 
     // Image Plane (Viewport 2.0)
+#if OCG_USE_SUB_SCENE_OVERRIDE == 1
     status = MHWRender::MDrawRegistry::registerSubSceneOverrideCreator(
         ocgm::image_plane::ShapeNode::m_draw_db_classification,
         ocgm::image_plane::ShapeNode::m_draw_registrant_id,
@@ -180,6 +185,16 @@ MStatus initializePlugin(MObject obj) {
         status.perror("registerSubSceneOverrideCreator");
         return status;
     }
+#else
+    status = MHWRender::MDrawRegistry::registerGeometryOverrideCreator(
+        ocgm::image_plane::ShapeNode::m_draw_db_classification,
+        ocgm::image_plane::ShapeNode::m_draw_registrant_id,
+        ocgm::image_plane::GeometryOverride::Creator);
+    if (!status) {
+        status.perror("registerGeometryOverrideCreator");
+        return status;
+    }
+#endif
 
     // Register a custom selection mask with priority 2 (same as
     // locators by default).
@@ -209,6 +224,8 @@ MStatus uninitializePlugin(MObject obj) {
     const MString displayFilterLabel("ocgImagePlaneDisplayFilter");
     plugin.deregisterDisplayFilter(displayFilterLabel);
 
+    // Viewport 2.0 override.
+#if OCG_USE_SUB_SCENE_OVERRIDE == 1
     status = MHWRender::MDrawRegistry::deregisterSubSceneOverrideCreator(
         ocgm::image_plane::ShapeNode::m_draw_db_classification,
         ocgm::image_plane::ShapeNode::m_draw_registrant_id);
@@ -216,6 +233,15 @@ MStatus uninitializePlugin(MObject obj) {
         status.perror("deregisterSubSceneOverrideCreator");
         return status;
     }
+#else
+    status = MHWRender::MDrawRegistry::deregisterGeometryOverrideCreator(
+        ocgm::image_plane::ShapeNode::m_draw_db_classification,
+        ocgm::image_plane::ShapeNode::m_draw_registrant_id);
+    if (!status) {
+        status.perror("deregisterGeometryOverrideCreator");
+        return status;
+    }
+#endif
 
     status = plugin.deregisterNode(ocgm::image_plane::ShapeNode::m_id);
     if (!status) {

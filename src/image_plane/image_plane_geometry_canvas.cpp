@@ -41,12 +41,14 @@ namespace ocg = open_comp_graph;
 namespace open_comp_graph_maya {
 namespace image_plane {
 
-GeometryCanvas::GeometryCanvas() : m_divisions_x(16), m_divisions_y(16),
-                                   m_position_buffer(nullptr),
-                                   m_uv_buffer(nullptr),
-                                   m_wire_lines_index_buffer(nullptr),
-                                   m_border_lines_index_buffer(nullptr),
-                                   m_shaded_index_buffer(nullptr) {}
+GeometryCanvas::GeometryCanvas()
+        : m_divisions_x(16)
+        , m_divisions_y(16)
+        , m_position_buffer(nullptr)
+        , m_uv_buffer(nullptr)
+        , m_wire_lines_index_buffer(nullptr)
+        , m_border_lines_index_buffer(nullptr)
+        , m_shaded_index_buffer(nullptr) {}
 
 GeometryCanvas::~GeometryCanvas() {
     this->clear_all();
@@ -69,60 +71,113 @@ void GeometryCanvas::set_divisions_y(size_t value) {
     m_divisions_y = std::max<size_t>(2, value);
 }
 
-MHWRender::MVertexBuffer* GeometryCanvas::vertex_positions() const noexcept {
+///////////////////////////////////////////////////////////////////////////////
+
+void GeometryCanvas::fill_vertex_buffer_positions(
+        MHWRender::MVertexBuffer *vertex_buffer,
+        ocg::StreamData &stream_data) {
+    geometry_buffer::generate_vertex_positions(
+        vertex_buffer,
+        m_divisions_x,
+        m_divisions_y,
+        std::move(stream_data));
+    return;
+}
+
+void GeometryCanvas::fill_vertex_buffer_uvs(
+        MHWRender::MVertexBuffer *vertex_buffer) {
+    geometry_buffer::generate_vertex_uvs(
+        vertex_buffer,
+        m_divisions_x,
+        m_divisions_y);
+    return;
+}
+
+void GeometryCanvas::fill_index_buffer_triangles(
+        MHWRender::MIndexBuffer* index_buffer) {
+    geometry_buffer::generate_index_triangles(
+        index_buffer,
+        m_divisions_x,
+        m_divisions_y);
+    return;
+}
+
+void GeometryCanvas::fill_index_buffer_border_lines(
+        MHWRender::MIndexBuffer* index_buffer) {
+    geometry_buffer::generate_index_border_lines(
+        index_buffer,
+        m_divisions_x,
+        m_divisions_y);
+    return;
+}
+
+void GeometryCanvas::fill_index_buffer_wire_lines(
+        MHWRender::MIndexBuffer* index_buffer) {
+    geometry_buffer::generate_index_wire_lines(
+        index_buffer,
+        m_divisions_x,
+        m_divisions_y);
+    return;
+}
+
+///////////////////////////////////////////////////////////////////////////////
+
+MHWRender::MVertexBuffer* GeometryCanvas::vertex_buffer_positions() const noexcept {
     return GeometryCanvas::m_position_buffer;
 }
 
-MHWRender::MVertexBuffer* GeometryCanvas::vertex_uvs() const noexcept {
+MHWRender::MVertexBuffer* GeometryCanvas::vertex_buffer_uvs() const noexcept {
     return GeometryCanvas::m_uv_buffer;
 }
 
-MHWRender::MIndexBuffer* GeometryCanvas::index_triangles() const noexcept {
+MHWRender::MIndexBuffer* GeometryCanvas::index_buffer_triangles() const noexcept {
     return GeometryCanvas::m_shaded_index_buffer;
 }
 
-MHWRender::MIndexBuffer* GeometryCanvas::index_border_lines() const noexcept {
+MHWRender::MIndexBuffer* GeometryCanvas::index_buffer_border_lines() const noexcept {
     return GeometryCanvas::m_border_lines_index_buffer;
 }
 
-MHWRender::MIndexBuffer* GeometryCanvas::index_wire_lines() const noexcept {
+MHWRender::MIndexBuffer* GeometryCanvas::index_buffer_wire_lines() const noexcept {
     return GeometryCanvas::m_wire_lines_index_buffer;
 }
 
-void GeometryCanvas::rebuild_vertex_positions(ocg::StreamData &stream_data) {
+///////////////////////////////////////////////////////////////////////////////
+
+void GeometryCanvas::rebuild_vertex_buffer_positions(ocg::StreamData &stream_data) {
     this->clear_vertex_positions();
     m_position_buffer = geometry_buffer::build_vertex_buffer_positions(
         m_divisions_x, m_divisions_y, std::move(stream_data));
 }
 
-void GeometryCanvas::rebuild_vertex_uvs() {
+void GeometryCanvas::rebuild_vertex_buffer_uvs() {
     this->clear_vertex_uvs();
     m_uv_buffer = geometry_buffer::build_vertex_buffer_uvs(
         m_divisions_x, m_divisions_y);
 }
 
-void GeometryCanvas::rebuild_index_triangles() {
+void GeometryCanvas::rebuild_index_buffer_triangles() {
     this->clear_index_triangles();
     m_shaded_index_buffer = geometry_buffer::build_index_buffer_triangles(
         m_divisions_x, m_divisions_y);
 }
 
-void GeometryCanvas::rebuild_index_border_lines() {
+void GeometryCanvas::rebuild_index_buffer_border_lines() {
     this->clear_index_border_lines();
     m_border_lines_index_buffer = geometry_buffer::build_index_buffer_border_lines(
         m_divisions_x, m_divisions_y);
 }
 
-void GeometryCanvas::rebuild_index_wire_lines() {
+void GeometryCanvas::rebuild_index_buffer_wire_lines() {
     this->clear_index_wire_lines();
     m_wire_lines_index_buffer = geometry_buffer::build_index_buffer_wire_lines(
         m_divisions_x, m_divisions_y);
 }
 
-void GeometryCanvas::rebuild_all(ocg::StreamData &stream_data) {
+void GeometryCanvas::rebuild_buffer_all(ocg::StreamData &stream_data) {
     auto log = log::get_logger();
     this->clear_all();
-    log->debug("rebuild_all geometry buffers");
+    log->debug("rebuild_buffer_all geometry buffers");
     log->debug("divisions: {}x{}", m_divisions_x, m_divisions_y);
     m_position_buffer = geometry_buffer::build_vertex_buffer_positions(
         m_divisions_x, m_divisions_y, std::move(stream_data));
@@ -134,8 +189,9 @@ void GeometryCanvas::rebuild_all(ocg::StreamData &stream_data) {
         m_divisions_x, m_divisions_y);
     m_wire_lines_index_buffer = geometry_buffer::build_index_buffer_wire_lines(
         m_divisions_x, m_divisions_y);
-
 }
+
+///////////////////////////////////////////////////////////////////////////////
 
 void GeometryCanvas::clear_vertex_positions() {
     delete m_position_buffer;

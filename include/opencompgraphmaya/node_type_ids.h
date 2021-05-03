@@ -37,13 +37,22 @@
 #define MM_LENS_MODEL_TOGGLE_TYPE_ID 0x0012F188
 #define MM_MARKER_TRANSFORM_TYPE_ID 0x0012F189
 #define MM_MARKER_TRANSFORM_MATRIX_TYPE_ID 0x0012F18A
+
+// Set to '1' to use the 'MPxSubSceneOverride' implementation.
+#define OCG_USE_SUB_SCENE_OVERRIDE 0
+
 #define OCGM_IMAGE_PLANE_SHAPE_TYPE_ID 0x0012F18B
 #define OCGM_IMAGE_PLANE_SHAPE_TYPE_NAME "ocgImagePlane"
+#if OCG_USE_SUB_SCENE_OVERRIDE == 1
 #define OCGM_IMAGE_PLANE_DRAW_CLASSIFY "drawdb/subscene/OpenCompGraph/ocgImagePlane"
+#else
+#define OCGM_IMAGE_PLANE_DRAW_CLASSIFY "drawdb/geometry/OpenCompGraph/ocgImagePlane"
+#endif
 #define OCGM_IMAGE_PLANE_DRAW_REGISTRANT_ID "ocgImagePlaneSubSceneOverride"
 #define OCGM_IMAGE_PLANE_SHAPE_SELECTION_TYPE_NAME "ocgImagePlaneSelection"
 #define OCGM_IMAGE_PLANE_SHAPE_DISPLAY_FILTER_NAME "ocgImagePlaneDisplayFilter"
 #define OCGM_IMAGE_PLANE_SHAPE_DISPLAY_FILTER_LABEL "OCG ImagePlane"
+
 #define MM_MARKER_BUNDLE_SHAPE_TYPE_ID 0x0012F18C
 #define OCGM_GRAPH_DATA_TYPE_ID 0x0012F18D
 #define OCGM_GRAPH_DATA_TYPE_NAME "ocgGraphData"

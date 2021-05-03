@@ -63,30 +63,43 @@ void GeometryWindow::set_bounding_box(ocg::BBox2Di value) {
     m_bbox = value;
 }
 
-MHWRender::MVertexBuffer* GeometryWindow::vertex_positions() const noexcept {
+void GeometryWindow::fill_vertex_buffer_positions(
+        MHWRender::MVertexBuffer *vertex_buffer) {
+    geometry_buffer::generate_window_vertex_positions(
+        vertex_buffer, m_bbox);
+    return;
+}
+
+void GeometryWindow::fill_index_buffer_border_lines(
+        MHWRender::MIndexBuffer *index_buffer) {
+    geometry_buffer::generate_window_index_border_lines(index_buffer);
+    return;
+}
+
+MHWRender::MVertexBuffer* GeometryWindow::vertex_buffer_positions() const noexcept {
     return GeometryWindow::m_position_buffer;
 }
 
-MHWRender::MIndexBuffer* GeometryWindow::index_border_lines() const noexcept {
+MHWRender::MIndexBuffer* GeometryWindow::index_buffer_border_lines() const noexcept {
     return GeometryWindow::m_border_lines_index_buffer;
 }
 
-void GeometryWindow::rebuild_vertex_positions() {
+void GeometryWindow::rebuild_vertex_buffer_positions() {
     this->clear_vertex_positions();
     m_position_buffer =
         geometry_buffer::build_window_vertex_buffer_positions(m_bbox);
 }
 
-void GeometryWindow::rebuild_index_border_lines() {
+void GeometryWindow::rebuild_index_buffer_border_lines() {
     this->clear_index_border_lines();
     m_border_lines_index_buffer =
         geometry_buffer::build_window_index_buffer_border_lines();
 }
 
-void GeometryWindow::rebuild_all() {
+void GeometryWindow::rebuild_buffer_all() {
     auto log = log::get_logger();
     this->clear_all();
-    log->debug("rebuild_all geometry buffers");
+    log->debug("rebuild_buffer_all geometry buffers");
     log->debug("bbox: {},{} to {},{}",
                m_bbox.min_x, m_bbox.min_y,
                m_bbox.max_x, m_bbox.max_y);

@@ -32,11 +32,12 @@
 #include <maya/MColor.h>
 #include <maya/M3dView.h>
 #include <maya/MDistance.h>
-#include <maya/MFnUnitAttribute.h>
-#include <maya/MGlobal.h>
-#include <maya/MFnDagNode.h>
-#include <maya/MSelectionContext.h>
 #include <maya/MDagMessage.h>
+#include <maya/MSelectionContext.h>
+#include <maya/MGlobal.h>
+#include <maya/MEvaluationNode.h>
+#include <maya/MFnUnitAttribute.h>
+#include <maya/MFnDagNode.h>
 
 // Maya Viewport 2.0
 #include <maya/MDrawRegistry.h>
@@ -63,6 +64,13 @@ public:
     MBoundingBox boundingBox() const override;
     MSelectionMask getShapeSelectionMask() const override;
     bool excludeAsLocator() const;
+    MStatus preEvaluation(
+        const MDGContext& context,
+        const MEvaluationNode& evaluationNode) override;
+    MStatus postEvaluation(
+        const MDGContext& context,
+        const MEvaluationNode& evaluationNode,
+        PostEvaluationType evalType) override;
     static void *creator();
     static MStatus initialize();
 

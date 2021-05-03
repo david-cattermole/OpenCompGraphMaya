@@ -63,19 +63,26 @@ public:
     void set_divisions_x(size_t value);
     void set_divisions_y(size_t value);
 
-    MHWRender::MVertexBuffer* vertex_positions() const noexcept;
-    MHWRender::MVertexBuffer* vertex_uvs() const noexcept;
-    MHWRender::MIndexBuffer* index_triangles() const noexcept;
-    MHWRender::MIndexBuffer* index_border_lines() const noexcept;
-    MHWRender::MIndexBuffer* index_wire_lines() const noexcept;
+    void fill_vertex_buffer_positions(MHWRender::MVertexBuffer* vertex_buffer,
+                                      ocg::StreamData &stream_data);
+    void fill_vertex_buffer_uvs(MHWRender::MVertexBuffer *vertex_buffer);
+    void fill_index_buffer_triangles(MHWRender::MIndexBuffer* index_buffer);
+    void fill_index_buffer_border_lines(MHWRender::MIndexBuffer* index_buffer);
+    void fill_index_buffer_wire_lines(MHWRender::MIndexBuffer* index_buffer);
+
+    MHWRender::MVertexBuffer* vertex_buffer_positions() const noexcept;
+    MHWRender::MVertexBuffer* vertex_buffer_uvs() const noexcept;
+    MHWRender::MIndexBuffer* index_buffer_triangles() const noexcept;
+    MHWRender::MIndexBuffer* index_buffer_border_lines() const noexcept;
+    MHWRender::MIndexBuffer* index_buffer_wire_lines() const noexcept;
 
     // Create VertexBuffers and Index Buffers.
-    void rebuild_vertex_positions(ocg::StreamData &stream_data);
-    void rebuild_vertex_uvs();
-    void rebuild_index_triangles();
-    void rebuild_index_border_lines();
-    void rebuild_index_wire_lines();
-    void rebuild_all(ocg::StreamData &stream_data);
+    void rebuild_vertex_buffer_positions(ocg::StreamData &stream_data);
+    void rebuild_vertex_buffer_uvs();
+    void rebuild_index_buffer_triangles();
+    void rebuild_index_buffer_border_lines();
+    void rebuild_index_buffer_wire_lines();
+    void rebuild_buffer_all(ocg::StreamData &stream_data);
 
     // delete VertexBuffers and Index Buffers.
     void clear_vertex_positions();

@@ -60,17 +60,20 @@ public:
     ocg::BBox2Di bounding_box() const noexcept;
     void set_bounding_box(ocg::BBox2Di value);
 
-    MHWRender::MVertexBuffer* vertex_positions() const noexcept;
-    MHWRender::MIndexBuffer* index_border_lines() const noexcept;
+    void fill_vertex_buffer_positions(MHWRender::MVertexBuffer* vertex_buffer);
+    void fill_index_buffer_border_lines(MHWRender::MIndexBuffer *index_buffer);
+
+    MHWRender::MVertexBuffer* vertex_buffer_positions() const noexcept;
+    MHWRender::MIndexBuffer* index_buffer_border_lines() const noexcept;
 
     // Create VertexBuffers and Index Buffers.
-    void rebuild_vertex_positions();
-    void rebuild_index_border_lines();
-    void rebuild_all();
+    void rebuild_vertex_buffer_positions();
+    void rebuild_index_buffer_border_lines();
+    void rebuild_buffer_all();
 
     // delete VertexBuffers and Index Buffers.
     void clear_vertex_positions();
-    void clear_index_border_lines();    
+    void clear_index_border_lines();
     void clear_all();
 
 private:

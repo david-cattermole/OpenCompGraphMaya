@@ -29,6 +29,9 @@
 #include <maya/MColor.h>
 #include <maya/M3dView.h>
 #include <maya/MDistance.h>
+#include <maya/MSelectionContext.h>
+#include <maya/MDagMessage.h>
+#include <maya/MEvaluationNode.h>
 #include <maya/MFnStringData.h>
 #include <maya/MFnUnitAttribute.h>
 #include <maya/MFnTypedAttribute.h>
@@ -36,10 +39,8 @@
 #include <maya/MFnEnumAttribute.h>
 #include <maya/MFnMessageAttribute.h>
 #include <maya/MFnDagNode.h>
-#include <maya/MSelectionContext.h>
-#include <maya/MDagMessage.h>
-#include <maya/MFnPluginData.h>
 #include <maya/MFnCamera.h>
+#include <maya/MFnPluginData.h>
 
 // OCG
 #include "opencompgraph.h"
@@ -84,6 +85,7 @@ ShapeNode::ShapeNode() {}
 ShapeNode::~ShapeNode() {}
 
 MStatus ShapeNode::compute(const MPlug & /*plug*/, MDataBlock & /*data*/ ) {
+    MHWRender::MRenderer::setGeometryDrawDirty(thisMObject());
     return MS::kUnknownParameter;
 }
 
@@ -182,6 +184,39 @@ bool ShapeNode::excludeAsLocator() const {
     // locators on/off with the (per-viewport) "Show" menu, this shape
     // node will not be affected.
     return false;
+}
+
+// Called before this node is evaluated by Evaluation Manager.
+//
+// Helps to trigger the node to be evaluated in viewport 2.0.
+MStatus ShapeNode::preEvaluation(
+        const MDGContext& context,
+        const MEvaluationNode& evaluationNode) {
+    if (context.isNormal()) {
+        MStatus status;
+        if ((evaluationNode.dirtyPlugExists(m_in_stream_attr, &status) && status)
+            || (evaluationNode.dirtyPlugExists(m_out_stream_attr, &status) && status)) {
+            MHWRender::MRenderer::setGeometryDrawDirty(thisMObject());
+        }
+    }
+    return MStatus::kSuccess;
+}
+
+// Called before this node is evaluated by Evaluation Manager.
+//
+// Helps to trigger the node to be evaluated in viewport 2.0.
+MStatus ShapeNode::postEvaluation(
+        const MDGContext& context,
+        const MEvaluationNode& evaluationNode,
+        PostEvaluationType evalType) {
+    if (context.isNormal() && evalType != kLeaveDirty) {
+        MStatus status;
+        if ((evaluationNode.dirtyPlugExists(m_in_stream_attr, &status) && status)
+            || (evaluationNode.dirtyPlugExists(m_out_stream_attr, &status) && status)) {
+            MHWRender::MRenderer::setGeometryDrawDirty(thisMObject());
+        }
+    }
+    return MStatus::kSuccess;
 }
 
 void *ShapeNode::creator() {

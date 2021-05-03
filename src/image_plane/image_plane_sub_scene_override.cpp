@@ -306,9 +306,10 @@ void SubSceneOverride::update(
         m_geometry_window_display.set_bounding_box(display_window);
         m_geometry_window_data.set_bounding_box(data_window);
 
-        m_geometry_window_display.rebuild_vertex_positions();
-        m_geometry_window_data.rebuild_vertex_positions();
-        m_geometry_canvas.rebuild_vertex_positions(std::move(stream_data));
+        m_geometry_window_display.rebuild_vertex_buffer_positions();
+        m_geometry_window_data.rebuild_vertex_buffer_positions();
+        m_geometry_canvas.rebuild_vertex_buffer_positions(
+            std::move(stream_data));
     }
 
     // Update Geometry.
@@ -322,9 +323,9 @@ void SubSceneOverride::update(
         m_geometry_canvas.set_divisions_x(m_card_res_x);
         m_geometry_canvas.set_divisions_y(m_card_res_y);
 
-        m_geometry_window_display.rebuild_all();
-        m_geometry_window_data.rebuild_all();
-        m_geometry_canvas.rebuild_all(std::move(stream_data));
+        m_geometry_window_display.rebuild_buffer_all();
+        m_geometry_window_data.rebuild_buffer_all();
+        m_geometry_canvas.rebuild_buffer_all(std::move(stream_data));
 
         // The vertices have been updated already, so there's no need
         // to do it again.
@@ -790,11 +791,11 @@ void SubSceneOverride::update(
         MBoundingBox *bounds = fp ? new MBoundingBox(fp->boundingBox()) : nullptr;
 
         // Canvas
-        auto position_buffer = m_geometry_canvas.vertex_positions();
-        auto uv_buffer = m_geometry_canvas.vertex_uvs();
-        auto wire_lines_index_buffer = m_geometry_canvas.index_wire_lines();
-        auto border_lines_index_buffer = m_geometry_canvas.index_border_lines();
-        auto shaded_index_buffer = m_geometry_canvas.index_triangles();
+        auto position_buffer = m_geometry_canvas.vertex_buffer_positions();
+        auto uv_buffer = m_geometry_canvas.vertex_buffer_uvs();
+        auto wire_lines_index_buffer = m_geometry_canvas.index_buffer_wire_lines();
+        auto border_lines_index_buffer = m_geometry_canvas.index_buffer_border_lines();
+        auto shaded_index_buffer = m_geometry_canvas.index_buffer_triangles();
 
         MHWRender::MVertexBufferArray vertex_buffers;
         vertex_buffers.addBuffer("positions", position_buffer);
@@ -811,9 +812,9 @@ void SubSceneOverride::update(
 
         // Display Window
         auto display_window_position_buffer =
-            m_geometry_window_display.vertex_positions();
+            m_geometry_window_display.vertex_buffer_positions();
         auto display_window_lines_index_buffer =
-            m_geometry_window_display.index_border_lines();
+            m_geometry_window_display.index_buffer_border_lines();
         MHWRender::MVertexBufferArray window_display_vertex_buffers;
         window_display_vertex_buffers.addBuffer(
                 "positions", display_window_position_buffer);
@@ -823,9 +824,9 @@ void SubSceneOverride::update(
 
         // Data window
         auto data_window_position_buffer =
-            m_geometry_window_data.vertex_positions();
+            m_geometry_window_data.vertex_buffer_positions();
         auto data_window_lines_index_buffer =
-            m_geometry_window_data.index_border_lines();
+            m_geometry_window_data.index_buffer_border_lines();
         MHWRender::MVertexBufferArray window_data_vertex_buffers;
         window_data_vertex_buffers.addBuffer(
                 "positions", data_window_position_buffer);
