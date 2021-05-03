@@ -322,13 +322,17 @@ void GeometryOverride::updateRenderItems(const MDagPath &path,
         auto filmBackWidth = 36.0;
         auto plane_scale = utils::getCameraPlaneScale(filmBackWidth, m_focal_length);
 
+        const float depth_scale = m_card_depth * plane_scale;
+        const float inv_card_depth = -1.0f * m_card_depth;
         const float depth_matrix_values[4][4] = {
-            {m_card_depth * plane_scale, 0.0,         0.0,          0.0}, // Column 0
-            {0.0,                        m_card_depth *
-                                         plane_scale, 0.0,          0.0}, // Column 1
-            {0.0,                        0.0,         m_card_depth, 0.0}, // Column 2
-            {0.0,                        0.0,         -1.0 *
-                                                      m_card_depth, 1.0}, // Column 3
+            // Column 0
+            {depth_scale, 0.0,         0.0,            0.0},
+            // Column 1
+            {0.0,         depth_scale, 0.0,            0.0},
+            // Column 2
+            {0.0,         0.0,         m_card_depth,   0.0},
+            // Column 3
+            {0.0,         0.0,         inv_card_depth, 1.0},
         };
         MFloatMatrix depth_matrix(depth_matrix_values);
         MFloatMatrix geom_matrix(depth_matrix);
