@@ -49,6 +49,7 @@ add_subdirectory(src)
 install(FILES
   ${CMAKE_CURRENT_SOURCE_DIR}/LICENSE
   ${CMAKE_CURRENT_SOURCE_DIR}/README.md
+  ${CMAKE_CURRENT_SOURCE_DIR}/INSTALL.md
   DESTINATION "${MODULE_FULL_NAME}/")
 
 # Package Configuration.
