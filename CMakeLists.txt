@@ -27,7 +27,7 @@ project(OpenCompGraphMaya
 set(PROJECT_HOMEPAGE_URL "https://github.com/david-cattermole/OpenCompGraphMaya")
 set(PROJECT_DESCRIPTION "Compositing Graph nodes inside Autodesk Maya.")
 set(PROJECT_AUTHOR "David Cattermole and others (see AUTHORS.txt file)")
-set(PROJECT_COPYRIGHT "2020, David Cattermole.")
+set(PROJECT_COPYRIGHT "2020, 2021, David Cattermole.")
 
 # Add custom modules to the module path
 set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} ${CMAKE_CURRENT_SOURCE_DIR}/cmake/modules)
