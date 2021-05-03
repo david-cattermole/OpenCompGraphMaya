@@ -38,56 +38,56 @@ global proc AEocgImagePlaneTemplate(string $nodeName)
     editorTemplate -addControl "softClip"; // prevent over-bright values.
     editorTemplate -endLayout;
 
-    // TODO: Button to open the Node Editor with connected nodes.
+    // // TODO: Button to open the Node Editor with connected nodes.
 
-    editorTemplate -beginLayout "Read Image" -collapse 0;
-    //
-    // TODO: Dynamically displays "read file" node options.
-    //
-    // - File Path + Browse File Path button.
-    // - Input Color Space
-    // - Start Frame
-    // - End Frame
-    // - Before Start Frame
-    // - After End Frame
-    // - On Missing Frame:
-    //     - "Color Bars"
-    //     - "Black"
-    //     - "Last"
-    //     - "Nearest"
-    //     - "Invisible"
-    //
-    editorTemplate -endLayout;
+    // editorTemplate -beginLayout "Read Image" -collapse 0;
+    // //
+    // // TODO: Dynamically displays "read file" node options.
+    // //
+    // // - File Path + Browse File Path button.
+    // // - Input Color Space
+    // // - Start Frame
+    // // - End Frame
+    // // - Before Start Frame
+    // // - After End Frame
+    // // - On Missing Frame:
+    // //     - "Color Bars"
+    // //     - "Black"
+    // //     - "Last"
+    // //     - "Nearest"
+    // //     - "Invisible"
+    // //
+    // editorTemplate -endLayout;
 
-    editorTemplate -beginLayout "Image Reformat" -collapse 0;
-    // TODO: Dynamically displays "reformat" node options.
-    //
-    // - Scale: 1.0
-    // - Width / Height.
-    editorTemplate -endLayout;
+    // editorTemplate -beginLayout "Image Reformat" -collapse 0;
+    // // TODO: Dynamically displays "reformat" node options.
+    // //
+    // // - Scale: 1.0
+    // // - Width / Height.
+    // editorTemplate -endLayout;
 
-    editorTemplate -beginLayout "Color Grade" -collapse 0;
-    // TODO: Dynamically displays "color grade" node options.
-    //
-    // - Color Multiply.
-    // - Color Offset.
-    //
-    editorTemplate -endLayout;
+    // editorTemplate -beginLayout "Color Grade" -collapse 0;
+    // // TODO: Dynamically displays "color grade" node options.
+    // //
+    // // - Color Multiply.
+    // // - Color Offset.
+    // //
+    // editorTemplate -endLayout;
 
-    editorTemplate -beginLayout "Lens Distortion" -collapse 0;
-    // TODO: Dynamically displays "lens distortion" node options.
-    //
-    // - Model name
-    // - Degree 2
-    // - Degree 4
-    //
-    editorTemplate -endLayout;
+    // editorTemplate -beginLayout "Lens Distortion" -collapse 0;
+    // // TODO: Dynamically displays "lens distortion" node options.
+    // //
+    // // - Model name
+    // // - Degree 2
+    // // - Degree 4
+    // //
+    // editorTemplate -endLayout;
 
-    editorTemplate -beginLayout "Write Image" -collapse 0;
-    // TODO: Dynamically displays "write image" node options. By
-    // default there will not be a write image node created, but the
-    // user can click "create" and it will be displayed here.
-    editorTemplate -endLayout;
+    // editorTemplate -beginLayout "Write Image" -collapse 0;
+    // // TODO: Dynamically displays "write image" node options. By
+    // // default there will not be a write image node created, but the
+    // // user can click "create" and it will be displayed here.
+    // editorTemplate -endLayout;
 
     // Goemetry
     editorTemplate -beginLayout "Geometry" -collapse 1;
@@ -139,17 +139,17 @@ global proc AEocgImagePlaneTemplate(string $nodeName)
     // TODO: Add button to open cache options.
     editorTemplate -endLayout;
 
-    editorTemplate -beginLayout "Miscellaneous" -collapse 1;
-    // TODO: Add "default image"; the default image that is displayed
-    // when no node/image is connected to the image plane;
-    editorTemplate -addControl "displayWindowVisible";
-    editorTemplate -addControl "dataWindowVisible";
-    editorTemplate -addControl "displayWindowColor";
-    editorTemplate -addControl "dataWindowColor";
-    editorTemplate -addControl "canvasAreaVisible";
-    editorTemplate -addControl "canvasEdgeVisible";
-    editorTemplate -addControl "canvasWireframeVisible";
-    editorTemplate -endLayout;
+    // editorTemplate -beginLayout "Miscellaneous" -collapse 1;
+    // // TODO: Add "default image"; the default image that is displayed
+    // // when no node/image is connected to the image plane;
+    // editorTemplate -addControl "displayWindowVisible";
+    // editorTemplate -addControl "dataWindowVisible";
+    // editorTemplate -addControl "displayWindowColor";
+    // editorTemplate -addControl "dataWindowColor";
+    // editorTemplate -addControl "canvasAreaVisible";
+    // editorTemplate -addControl "canvasEdgeVisible";
+    // editorTemplate -addControl "canvasWireframeVisible";
+    // editorTemplate -endLayout;
 
     // include/call base class/node attributes
     AEabstractBaseCreateTemplate $nodeName;
