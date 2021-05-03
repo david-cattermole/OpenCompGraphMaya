@@ -2,7 +2,6 @@
 OPENCOMPGRAPHMAYA_LOCATION :=
 OPENCOMPGRAPHMAYA_DEBUG = 0
 MAYA_CUSTOM_TEMPLATE_PATH +:= scripts/AETemplates
-PATH +:= lib
 PATH +:= bin
 PYTHONPATH +:= python
 [r] scripts: scripts
