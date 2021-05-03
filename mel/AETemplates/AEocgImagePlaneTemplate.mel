@@ -126,18 +126,18 @@ global proc AEocgImagePlaneTemplate(string $nodeName)
     editorTemplate -addControl "time";
     editorTemplate -endLayout;
 
-    // Specifics to the viewport.
-    editorTemplate -beginLayout "Viewport" -collapse 1;
-    editorTemplate -addControl "viewportTextureFilterMode";
-    editorTemplate -addControl "viewportDepthEnable";
-    editorTemplate -addControl "viewportDepth";  // 0.0% to 100.0%
-    editorTemplate -endLayout;
+    // // Specifics to the viewport.
+    // editorTemplate -beginLayout "Viewport" -collapse 1;
+    // editorTemplate -addControl "viewportTextureFilterMode";
+    // editorTemplate -addControl "viewportDepthEnable";
+    // editorTemplate -addControl "viewportDepth";  // 0.0% to 100.0%
+    // editorTemplate -endLayout;
 
-    editorTemplate -beginLayout "Cache" -collapse 1;
-    // TODO: Display information about the cached images.
-    // TODO: Add button to "export buffer compression file".
-    // TODO: Add button to open cache options.
-    editorTemplate -endLayout;
+    // editorTemplate -beginLayout "Cache" -collapse 1;
+    // // TODO: Display information about the cached images.
+    // // TODO: Add button to "export buffer compression file".
+    // // TODO: Add button to open cache options.
+    // editorTemplate -endLayout;
 
     // editorTemplate -beginLayout "Miscellaneous" -collapse 1;
     // // TODO: Add "default image"; the default image that is displayed
