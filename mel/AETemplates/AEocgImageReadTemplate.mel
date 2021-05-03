@@ -26,12 +26,12 @@ global proc AEocgImageReadTemplate(string $nodeName)
     editorTemplate -addControl "enable";
     editorTemplate -addSeparator;
     editorTemplate -addControl "filePath";
-    editorTemplate -addSeparator;
-    editorTemplate -addControl "startFrame";
-    editorTemplate -addControl "endFrame";
-    editorTemplate -addSeparator;
-    editorTemplate -addControl "beforeFrame";
-    editorTemplate -addControl "afterFrame";
+    // editorTemplate -addSeparator;
+    // editorTemplate -addControl "startFrame";
+    // editorTemplate -addControl "endFrame";
+    // editorTemplate -addSeparator;
+    // editorTemplate -addControl "beforeFrame";
+    // editorTemplate -addControl "afterFrame";
     editorTemplate -endLayout;
 
     // include/call base class/node attributes
@@ -42,5 +42,8 @@ global proc AEocgImageReadTemplate(string $nodeName)
     editorTemplate -endScrollLayout;
 
     editorTemplate -suppress "outStream";
-
+    editorTemplate -suppress "startFrame";
+    editorTemplate -suppress "endFrame";
+    editorTemplate -suppress "beforeFrame";
+    editorTemplate -suppress "afterFrame";
 }
