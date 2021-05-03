@@ -147,6 +147,12 @@ private:
     uint32_t m_card_res_y;
     float m_time;
     ocg::Node m_in_stream_node;
+    int m_display_window_width;
+    int m_display_window_height;
+    int m_data_window_min_x;
+    int m_data_window_min_y;
+    int m_data_window_max_x;
+    int m_data_window_max_y;
 
     // Viewport 2.0 render item names
     static MString m_data_window_render_item_name;

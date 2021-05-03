@@ -105,6 +105,12 @@ GeometryOverride::GeometryOverride(const MObject &obj)
         , m_card_res_x(16)
         , m_card_res_y(16)
         , m_time(0.0f)
+        , m_display_window_width(0)
+        , m_display_window_height(0)
+        , m_data_window_min_x(0)
+        , m_data_window_min_y(0)
+        , m_data_window_max_x(0)
+        , m_data_window_max_y(0)
         , m_in_stream_node(ocg::Node(ocg::NodeType::kNull, 0)) {
 }
 
@@ -373,8 +379,17 @@ void GeometryOverride::updateRenderItems(const MDagPath &path,
             auto shared_graph = get_shared_graph();
             auto stream_data = shared_graph->output_stream();
 
-            // Move display window to the image plane.
             auto display_window = stream_data.display_window();
+            auto data_window = stream_data.data_window();
+
+            m_display_window_width = display_window.max_x - display_window.min_x;
+            m_display_window_height = display_window.max_y - display_window.min_y;
+            m_data_window_min_x = data_window.min_x;
+            m_data_window_min_y = data_window.min_y;
+            m_data_window_max_x = data_window.max_x;
+            m_data_window_max_y = data_window.max_y;
+
+            // Move display window to the image plane.
             auto display_width = static_cast<float>(display_window.max_x -
                                                     display_window.min_x);
             auto display_height = static_cast<float>(display_window.max_y -
@@ -405,7 +420,6 @@ void GeometryOverride::updateRenderItems(const MDagPath &path,
                 rescale_display_window_values);
 
             // Move Canvas to the data window.
-            auto data_window = stream_data.data_window();
             auto data_scale_x = static_cast<float>(data_window.max_x -
                                                    data_window.min_x);
             auto data_scale_y = static_cast<float>(data_window.max_y -
@@ -608,20 +622,47 @@ void GeometryOverride::addUIDrawables(
         const MDagPath &path,
         MHWRender::MUIDrawManager &draw_manager,
         const MHWRender::MFrameContext &/*frame_context*/) {
-    MPoint pos(0.0, 0.0, 0.0);
+    // TODO Calculate the correct positions for the image window.
+    MPoint center_pos(0.0, 0.0, 0.0);
+    MPoint upper_right(1.0, 1.0, 0.0);
+    MPoint lower_left(-1.0, -1.0, 0.0);
+    MPoint lower_right(1.0, -1.0, 0.0);
     MColor text_color(0.1f, 0.8f, 0.8f, 1.0f);
+
     MString text("Open Comp Graph Maya");
 
-    // TODO: draw the data-window coordinate values for lower-left and
-    // upper-right corners.
+    // Draw Display Window
     //
-    // TODO: draw the (display window) resolution of the current
-    // image, including pixel aspect ratio.
+    // TODO: draw the pixel aspect ratio.
+    MString display_window_width = "";
+    MString display_window_height = "";
+    display_window_width.set(m_display_window_width, 0);
+    display_window_height.set(m_display_window_height, 0);
+    MString display_window =
+        display_window_width + " x " + display_window_height;
+
+    // Draw the data-window coordinate values for lower-left and
+    // upper-right corners.
+    MString data_window_min_x = "";
+    MString data_window_min_y = "";
+    MString data_window_max_x = "";
+    MString data_window_max_y = "";
+    data_window_min_x.set(m_data_window_min_x, 0);
+    data_window_min_y.set(m_data_window_min_y, 0);
+    data_window_max_x.set(m_data_window_max_x, 0);
+    data_window_max_y.set(m_data_window_max_y, 0);
+    MString data_window_min =
+        data_window_min_x + " x " + data_window_min_y;
+    MString data_window_max =
+        data_window_max_x + " x " + data_window_max_y;
 
     draw_manager.beginDrawable();
     draw_manager.setColor(text_color);
-    draw_manager.setFontSize(MHWRender::MUIDrawManager::kSmallFontSize);
-    draw_manager.text(pos, text, MHWRender::MUIDrawManager::kCenter);
+    draw_manager.setFontSize(MHWRender::MUIDrawManager::kDefaultFontSize);
+    draw_manager.text(center_pos, text, MHWRender::MUIDrawManager::kCenter);
+    draw_manager.text(lower_left, data_window_min, MHWRender::MUIDrawManager::kRight);
+    draw_manager.text(upper_right, data_window_max, MHWRender::MUIDrawManager::kLeft);
+    draw_manager.text(lower_right, display_window, MHWRender::MUIDrawManager::kLeft);
     draw_manager.endDrawable();
 }
 
