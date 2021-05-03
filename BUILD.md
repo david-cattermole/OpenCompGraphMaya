@@ -5,10 +5,15 @@ It is provided for basic information and will be finished at a later date.
 
 On Windows (in a Visual Studio 20XX "Cross Tools" Command Prompt):
 ```
-$ cd path/to/folder
-$ git clone --recursive https://github.com/david-cattermole/OpenCompGraphMaya.git
-$ cd OpenCompGraphMaya
-$ build_OpenCompGraphMaya_windows64_maya2018.bat
+> CHDIR path\to\folder
+> git clone --recursive https://github.com/david-cattermole/OpenCompGraphMaya.git
+> CHDIR OpenCompGraphMaya
+
+> CHDIR src\OpenCompGraph\thirdparty
+> build_thirdparty_windows64.bat
+> CHDIR ..\..\..
+
+> build_OpenCompGraphMaya_windows64_maya2018.bat
 ```
 
 # Dependencies
