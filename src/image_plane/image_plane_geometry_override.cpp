@@ -111,7 +111,8 @@ GeometryOverride::GeometryOverride(const MObject &obj)
         , m_data_window_min_y(0)
         , m_data_window_max_x(0)
         , m_data_window_max_y(0)
-        , m_in_stream_node(ocg::Node(ocg::NodeType::kNull, 0)) {
+        , m_in_stream_node(ocg::Node(ocg::NodeType::kNull, 0))
+        , m_viewer_node(ocg::Node(ocg::NodeType::kNull, 0)) {
 }
 
 GeometryOverride::~GeometryOverride() {
@@ -144,6 +145,25 @@ void GeometryOverride::updateDG() {
     // Only update the internal class variable once we are sure the
     // input data is valid..
     m_in_stream_node = new_stream_node;
+
+    // Create Viewer node.
+    bool viewer_exists = shared_graph->node_exists(m_viewer_node);
+    log->warn("viewer_exists={}==============================", viewer_exists);
+    if (!viewer_exists) {
+        MFnDagNode node(m_locator_node, &status);
+        ShapeNode *fp = status ? dynamic_cast<ShapeNode *>(node.userNode()) : nullptr;
+
+        auto viewer_node_hash = fp->m_viewer_node_hash;
+        log->warn("viewer_node_hash={}", viewer_node_hash);
+
+        m_viewer_node = shared_graph->create_node(
+            ocg::NodeType::kViewer,
+            viewer_node_hash);
+        log->warn("m_viewer_node={}", m_viewer_node.get_id());
+
+        // Connect viewer.
+        shared_graph->connect(m_in_stream_node, m_viewer_node, 0);
+    }
 
     // TODO: Detect when the camera matrix has changed.
     //
@@ -240,7 +260,7 @@ void GeometryOverride::updateDG() {
         log->debug("ocgImagePlane: execute_frame={}", execute_frame);
         auto shared_cache = ocgm_cache::get_shared_cache();
         m_exec_status = ocgm_graph::execute_ocg_graph(
-            m_in_stream_node,
+            m_viewer_node,
             execute_frame,
             shared_graph,
             shared_cache);

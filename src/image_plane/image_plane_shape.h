@@ -54,6 +54,8 @@ public:
     ShapeNode();
     ~ShapeNode() override;
 
+    void postConstructor();
+
     MStatus compute(const MPlug &plug, MDataBlock &data) override;
 
     // void draw(M3dView &view, const MDagPath &path,
@@ -84,6 +86,8 @@ public:
     static MObject m_card_size_y_attr;
     static MObject m_card_res_x_attr;
     static MObject m_card_res_y_attr;
+    static MObject m_cache_option_attr;
+    static MObject m_cache_crop_on_format_attr;
     static MObject m_time_attr;
     static MObject m_out_stream_attr;
 
@@ -94,6 +98,9 @@ public:
     static MString m_selection_type_name;
     static MString m_display_filter_name;
     static MString m_display_filter_label;
+
+    // Unique hash for the viewer OCG node.
+    uint64_t m_viewer_node_hash;
 };
 
 } // namespace image_plane

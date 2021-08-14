@@ -41,6 +41,7 @@
 #include <maya/MFnDagNode.h>
 #include <maya/MFnCamera.h>
 #include <maya/MFnPluginData.h>
+#include <maya/MUuid.h>
 
 // OCG
 #include "opencompgraph.h"
@@ -50,6 +51,8 @@
 #include "graph_data.h"
 #include "image_plane_shape.h"
 #include "comp_nodes/base_node.h"
+
+namespace ocg = open_comp_graph;
 
 namespace open_comp_graph_maya {
 namespace image_plane {
@@ -62,6 +65,12 @@ MString ShapeNode::m_selection_type_name(OCGM_IMAGE_PLANE_SHAPE_SELECTION_TYPE_N
 MString ShapeNode::m_display_filter_name(OCGM_IMAGE_PLANE_SHAPE_DISPLAY_FILTER_NAME);
 MString ShapeNode::m_display_filter_label(OCGM_IMAGE_PLANE_SHAPE_DISPLAY_FILTER_LABEL);
 
+// Precompute index for enum.
+const int32_t kBakeOptionNothing = static_cast<int32_t>(ocg::BakeOption::kNothing);
+const int32_t kBakeOptionColorSpace = static_cast<int32_t>(ocg::BakeOption::kColorSpace);
+const int32_t kBakeOptionColorSpaceAndGrade = static_cast<int32_t>(ocg::BakeOption::kColorSpaceAndGrade);
+const int32_t kBakeOptionAll = static_cast<int32_t>(ocg::BakeOption::kAll);
+
 // Input Attributes
 MObject ShapeNode::m_camera_attr;
 MObject ShapeNode::m_in_stream_attr;
@@ -70,6 +79,8 @@ MObject ShapeNode::m_card_size_x_attr;
 MObject ShapeNode::m_card_size_y_attr;
 MObject ShapeNode::m_card_res_x_attr;
 MObject ShapeNode::m_card_res_y_attr;
+MObject ShapeNode::m_cache_option_attr;
+MObject ShapeNode::m_cache_crop_on_format_attr;
 MObject ShapeNode::m_time_attr;
 
 // Output Attributes
@@ -80,9 +91,27 @@ MString ShapeNode::nodeName() {
     return MString(OCGM_IMAGE_PLANE_SHAPE_TYPE_NAME);
 }
 
-ShapeNode::ShapeNode() {}
+ShapeNode::ShapeNode() : m_viewer_node_hash(0) {}
 
 ShapeNode::~ShapeNode() {}
+
+// Called after the node is created.
+void ShapeNode::postConstructor() {
+    // Get the size
+    MObject this_node = ShapeNode::thisMObject();
+
+    // Get Node UUID
+    MStatus status = MS::kSuccess;
+    MFnDependencyNode fn_depend_node(this_node, &status);
+    CHECK_MSTATUS(status);
+    MUuid uuid = fn_depend_node.uuid();
+    MString uuid_string = uuid.asString();
+    const char *uuid_char = uuid_string.asChar();
+
+    // Generate a 64-bit hash id from the 128-bit UUID.
+    ShapeNode::m_viewer_node_hash =
+        ocg::internal::generate_id_from_name(uuid_char);
+};
 
 MStatus ShapeNode::compute(const MPlug & /*plug*/, MDataBlock & /*data*/ ) {
     MHWRender::MRenderer::setGeometryDrawDirty(thisMObject());
@@ -314,6 +343,23 @@ MStatus ShapeNode::initialize() {
 
     // Screen Depth Attribute
 
+    // Cache - Option
+    m_cache_option_attr = eAttr.create(
+        "cacheOption", "cchopt", kBakeOptionColorSpace);
+    CHECK_MSTATUS(eAttr.addField("none", kBakeOptionNothing));
+    CHECK_MSTATUS(eAttr.addField("colorSpace", kBakeOptionColorSpace));
+    CHECK_MSTATUS(eAttr.addField("colorSpaceAndGrade", kBakeOptionColorSpaceAndGrade));
+    CHECK_MSTATUS(eAttr.addField("all", kBakeOptionAll));
+    CHECK_MSTATUS(eAttr.setStorable(true));
+
+    // Cache - Crop on Format
+    bool cache_crop_on_format_default = true;
+    m_cache_crop_on_format_attr = nAttr.create(
+        "cacheCropOnFormat", "cchcpofmt",
+        MFnNumericData::kBoolean, cache_crop_on_format_default);
+    CHECK_MSTATUS(nAttr.setStorable(true));
+    CHECK_MSTATUS(nAttr.setKeyable(false));
+
     // Time
     m_time_attr = uAttr.create("time", "tm", MFnUnitAttribute::kTime, 0.0);
     CHECK_MSTATUS(uAttr.setStorable(true));
@@ -329,6 +375,8 @@ MStatus ShapeNode::initialize() {
     CHECK_MSTATUS(addAttribute(m_card_size_y_attr));
     CHECK_MSTATUS(addAttribute(m_card_res_x_attr));
     CHECK_MSTATUS(addAttribute(m_card_res_y_attr));
+    CHECK_MSTATUS(addAttribute(m_cache_option_attr));
+    CHECK_MSTATUS(addAttribute(m_cache_crop_on_format_attr));
     CHECK_MSTATUS(addAttribute(m_time_attr));
     CHECK_MSTATUS(addAttribute(m_in_stream_attr));
     CHECK_MSTATUS(addAttribute(m_out_stream_attr));
