@@ -302,9 +302,15 @@ Shader::set_float_matrix4x4_param(
 }
 
 MStatus
-Shader::set_texture_param_with_stream_data(
+Shader::set_texture_param_with_image_data(
         const MString parameter_name,
-        ocg::StreamData stream_data) {
+        const MHWRender::MTextureType texture_type,
+        const int32_t pixel_width,
+        const int32_t pixel_height,
+        const int32_t pixel_depth,
+        const int32_t pixel_num_channels,
+        const ocg::PixelDataType pixel_data_type,
+        const void* buffer) {
     auto log = log::get_logger();
     MStatus status = MS::kSuccess;
 
@@ -321,17 +327,6 @@ Shader::set_texture_param_with_stream_data(
         return MS::kFailure;
     }
 
-    auto pixel_buffer = stream_data.pixel_buffer();
-    auto pixel_width = stream_data.pixel_width();
-    auto pixel_height = stream_data.pixel_height();
-    auto pixel_num_channels = stream_data.pixel_num_channels();
-    auto pixel_data_type = stream_data.pixel_data_type();
-    auto channel_num_bytes = ocg::internal::channel_size_bytes(pixel_data_type);
-    // log->warn("pixels: {}x{} c={}",
-    //           pixel_width,  pixel_height,
-    //           static_cast<uint32_t>(pixel_num_channels));
-    auto buffer = static_cast<const void*>(pixel_buffer.data());
-
     // Upload Texture data to the GPU using Maya's API.
     //
     // See for details of values:
@@ -340,7 +335,8 @@ Shader::set_texture_param_with_stream_data(
     texture_description.setToDefault2DTexture();
     texture_description.fWidth = pixel_width;
     texture_description.fHeight = pixel_height;
-    texture_description.fDepth = 1;
+    texture_description.fDepth = pixel_depth;
+    texture_description.fTextureType = texture_type;
     texture_description.fMipmaps = 1;
 
     if (pixel_data_type == ocg::PixelDataType::kUInt8) {
@@ -400,6 +396,37 @@ Shader::set_texture_param_with_stream_data(
     // Release our reference now that it is set on the shader
     texture_manager->releaseTexture(texture);
     return status;
+}
+
+MStatus
+Shader::set_texture_param_with_stream_data(
+        const MString parameter_name,
+        ocg::StreamData stream_data) {
+    auto log = log::get_logger();
+    MStatus status = MS::kSuccess;
+
+    auto pixel_buffer = stream_data.pixel_buffer();
+    auto pixel_width = stream_data.pixel_width();
+    auto pixel_height = stream_data.pixel_height();
+    auto pixel_depth = 1;
+    auto pixel_num_channels = stream_data.pixel_num_channels();
+    auto pixel_data_type = stream_data.pixel_data_type();
+    // auto channel_num_bytes = ocg::internal::channel_size_bytes(pixel_data_type);
+
+    // log->warn("pixels: {}x{} c={}",
+    //           pixel_width,  pixel_height,
+    //           static_cast<uint32_t>(pixel_num_channels));
+    auto buffer = static_cast<const void*>(pixel_buffer.data());
+
+    return set_texture_param_with_image_data(
+        parameter_name,
+        MHWRender::kImage2D,
+        pixel_width,
+        pixel_height,
+        pixel_depth,
+        pixel_num_channels,
+        pixel_data_type,
+        buffer);
 }
 
 // Acquire and bind the default texture sampler.

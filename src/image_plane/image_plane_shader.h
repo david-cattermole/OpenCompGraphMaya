@@ -87,6 +87,17 @@ public:
         const MString parameter_name,
         MHWRender::MSamplerStateDesc sampler_description);
 
+    MStatus
+    set_texture_param_with_image_data(
+        const MString parameter_name,
+        const MHWRender::MTextureType texture_type,
+        const int32_t pixel_width,
+        const int32_t pixel_height,
+        const int32_t pixel_depth,
+        const int32_t pixel_num_channels,
+        const ocg::PixelDataType pixel_data_type,
+        const void* buffer);
+
     MStatus set_texture_param_with_stream_data(
         const MString parameter_name,
         ocg::StreamData stream_data);
