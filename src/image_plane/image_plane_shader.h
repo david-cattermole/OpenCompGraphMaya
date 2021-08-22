@@ -67,6 +67,14 @@ public:
     MStatus set_is_transparent(const bool value);
 
     // Set Parameters
+    MStatus set_bool_param(
+        const MString parameter_name,
+        const bool value);
+
+    MStatus set_int_param(
+        const MString parameter_name,
+        const int32_t value);
+
     MStatus set_color_param(
         const MString parameter_name,
         const float color_values[4]);

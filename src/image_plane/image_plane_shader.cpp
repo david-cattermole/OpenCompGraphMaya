@@ -241,6 +241,36 @@ MStatus Shader::set_is_transparent(const bool value) {
 }
 
 
+// Set a boolean parameter.
+MStatus
+Shader::set_bool_param(
+        const MString parameter_name,
+        const bool value) {
+    MStatus status = m_shader->setParameter(
+        parameter_name,
+        value);
+    if (status != MStatus::kSuccess) {
+        auto log = log::get_logger();
+        log->error("ocgImagePlane: Failed to set boolean parameter!");
+    }
+    return status;
+}
+
+// Set a signed integer 32-bit parameter.
+MStatus
+Shader::set_int_param(
+        const MString parameter_name,
+        const int32_t value) {
+    MStatus status = m_shader->setParameter(
+        parameter_name,
+        value);
+    if (status != MStatus::kSuccess) {
+        auto log = log::get_logger();
+        log->error("ocgImagePlane: Failed to set integer parameter!");
+    }
+    return status;
+}
+
 // Set a color parameter.
 MStatus
 Shader::set_color_param(
