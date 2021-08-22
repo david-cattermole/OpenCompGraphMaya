@@ -55,12 +55,21 @@ get_plug_value_distance_float(MPlug plug, float old_value);
 std::tuple<float, bool>
 get_plug_value_frame_float(MPlug plug, float old_value);
 
+// Get boolean attribute value.
+std::tuple<bool, bool>
+get_plug_value_bool(MPlug plug, bool old_value);
+
 // Get unsigned integer attribute value.
 std::tuple<uint32_t, bool>
 get_plug_value_uint32(MPlug plug, uint32_t old_value);
 
 // Get floating point attribute value.
-std::tuple<float, bool> get_plug_value_float(MPlug plug, float old_value);
+std::tuple<float, bool>
+get_plug_value_float(MPlug plug, float old_value);
+
+// Get String attribute value.
+std::tuple<MString, bool>
+get_plug_value_string(MPlug plug, MString old_value);
 
 // Get the ocgStreamData type from the given plug.
 std::tuple<ocg::Node, bool>

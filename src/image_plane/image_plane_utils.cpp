@@ -115,6 +115,23 @@ get_plug_value_frame_float(MPlug plug, float old_value) {
     return std::make_tuple(value, has_changed);
 }
 
+// Get boolean attribute value.
+std::tuple<bool, bool>
+get_plug_value_bool(MPlug plug, bool old_value) {
+    MStatus status;
+    bool has_changed = false;
+    bool value = old_value;
+    if (!plug.isNull()) {
+        bool new_value = plug.asBool(&status);
+        CHECK_MSTATUS(status);
+        has_changed = old_value != new_value;
+        if (has_changed) {
+            value = new_value;
+        }
+    }
+    return std::make_tuple(value, has_changed);
+}
+
 // Get unsigned integer attribute value.
 std::tuple<uint32_t, bool>
 get_plug_value_uint32(MPlug plug, uint32_t old_value) {
@@ -140,6 +157,22 @@ std::tuple<float, bool> get_plug_value_float(MPlug plug, float old_value) {
     if (!plug.isNull()) {
         float new_value = plug.asFloat(&status);
         CHECK_MSTATUS(status);
+        has_changed = old_value != new_value;
+        if (has_changed) {
+            value = new_value;
+        }
+    }
+    return std::make_tuple(value, has_changed);
+}
+
+// Get String attribute value.
+std::tuple<MString, bool>
+get_plug_value_string(MPlug plug, MString old_value) {
+    MStatus status;
+    bool has_changed = false;
+    MString value = old_value;
+    if (!plug.isNull()) {
+        MString new_value = plug.asString();
         has_changed = old_value != new_value;
         if (has_changed) {
             value = new_value;
