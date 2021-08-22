@@ -208,7 +208,7 @@ MStatus initializePlugin(MObject obj) {
     status = MGlobal::executeCommand(mel_cmd);
 
     // Register plugin display filter.
-    // The filter is registered in both interactive and match mode (Hardware 2.0)
+    // The filter is registered in both interactive and batch mode (Hardware 2.0)
     plugin.registerDisplayFilter(
         ocgm::image_plane::ShapeNode::m_display_filter_name,
         ocgm::image_plane::ShapeNode::m_display_filter_label,
