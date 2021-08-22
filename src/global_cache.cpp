@@ -39,5 +39,11 @@ std::shared_ptr<ocg::Cache> &get_shared_cache() {
     return shared_cache;
 }
 
+std::shared_ptr<ocg::Cache> &get_shared_color_transform_cache() {
+    static std::shared_ptr<ocg::Cache> shared_color_transform_cache = \
+        std::make_shared<ocg::Cache>();
+    return shared_color_transform_cache;
+}
+
 } // namespace cache
 } // namespace open_comp_graph_maya

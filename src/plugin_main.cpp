@@ -103,6 +103,7 @@ MStatus initializePlugin(MObject obj) {
 
     // Initial size of the cache, when the user loads the plug-in.
     auto shared_cache = ocgm::cache::get_shared_cache();
+    auto shared_color_tfm_cache = ocgm::cache::get_shared_color_transform_cache();
     const size_t bytes_to_gigabytes = 1073741824;
     // Set RAM used for the cache.
     //
@@ -110,6 +111,7 @@ MStatus initializePlugin(MObject obj) {
     // TODO: Use environment variable to configure the default, if given.
     // TODO: When a scene is closed, the Cache should automatically flush.
     shared_cache->set_capacity_bytes(20 * bytes_to_gigabytes);  // 20GB of RAM
+    shared_color_tfm_cache->set_capacity_bytes(0.1 * bytes_to_gigabytes);  // 100MB of RAM
 
     // Register data types first, so the nodes and commands below can
     // reference them.
