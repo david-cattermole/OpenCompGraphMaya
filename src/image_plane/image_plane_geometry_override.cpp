@@ -76,6 +76,10 @@ MString GeometryOverride::m_shader_rescale_transform_parameter_name = "gRescaleT
 MString GeometryOverride::m_shader_image_color_matrix_parameter_name = "gImageColorMatrix";
 MString GeometryOverride::m_shader_image_texture_parameter_name = "gImageTexture";
 MString GeometryOverride::m_shader_image_texture_sampler_parameter_name = "gImageTextureSampler";
+MString GeometryOverride::m_shader_3d_lut_enable_parameter_name = "g3dLutEnable";
+MString GeometryOverride::m_shader_3d_lut_edge_size_parameter_name = "g3dLutEdgeSize";
+MString GeometryOverride::m_shader_3d_lut_texture_parameter_name = "g3dLutTexture";
+MString GeometryOverride::m_shader_3d_lut_texture_sampler_parameter_name = "g3dLutTextureSampler";
 
 // Item Names
 MString GeometryOverride::m_data_window_render_item_name = "ocgImagePlaneDataWindow";
@@ -111,6 +115,11 @@ GeometryOverride::GeometryOverride(const MObject &obj)
         , m_data_window_min_y(0)
         , m_data_window_max_x(0)
         , m_data_window_max_y(0)
+        , m_lut_edge_size(0)
+        , m_from_color_space_name()
+        , m_color_space_name()
+        , m_disk_cache_enable(false)
+        , m_disk_cache_dir()
         , m_in_stream_node(ocg::Node(ocg::NodeType::kNull, 0))
         , m_viewer_node(ocg::Node(ocg::NodeType::kNull, 0)) {
 }
@@ -148,21 +157,59 @@ void GeometryOverride::updateDG() {
 
     // Create Viewer node.
     bool viewer_exists = shared_graph->node_exists(m_viewer_node);
-    log->warn("viewer_exists={}==============================", viewer_exists);
     if (!viewer_exists) {
         MFnDagNode node(m_locator_node, &status);
         ShapeNode *fp = status ? dynamic_cast<ShapeNode *>(node.userNode()) : nullptr;
 
         auto viewer_node_hash = fp->m_viewer_node_hash;
-        log->warn("viewer_node_hash={}", viewer_node_hash);
-
         m_viewer_node = shared_graph->create_node(
             ocg::NodeType::kViewer,
             viewer_node_hash);
-        log->warn("m_viewer_node={}", m_viewer_node.get_id());
 
-        // Connect viewer.
         shared_graph->connect(m_in_stream_node, m_viewer_node, 0);
+    }
+
+    // Set attributes on Viewer
+    bool cache_option_has_changed = false;
+    bool cache_crop_on_format_has_changed = false;
+    bool disk_cache_enable_has_changed = false;
+    bool disk_cache_dir_has_changed = false;
+    MPlug cache_option_plug(
+        m_locator_node, ShapeNode::m_cache_option_attr);
+    MPlug cache_crop_on_format_plug(
+        m_locator_node, ShapeNode::m_cache_crop_on_format_attr);
+    MPlug disk_cache_enable_plug(
+        m_locator_node, ShapeNode::m_disk_cache_enable_attr);
+    MPlug disk_cache_dir_plug(
+        m_locator_node, ShapeNode::m_disk_cache_dir_attr);
+
+    std::tie(m_cache_option, cache_option_has_changed) =
+        utils::get_plug_value_uint32(cache_option_plug, m_cache_option);
+
+    std::tie(m_cache_crop_on_format, cache_crop_on_format_has_changed) =
+        utils::get_plug_value_bool(cache_crop_on_format_plug, m_cache_crop_on_format);
+    std::tie(m_disk_cache_enable, disk_cache_enable_has_changed) =
+        utils::get_plug_value_bool(disk_cache_enable_plug, m_disk_cache_enable);
+
+    std::tie(m_disk_cache_dir, disk_cache_dir_has_changed) =
+        utils::get_plug_value_string(disk_cache_dir_plug, m_disk_cache_dir);
+
+    if (cache_option_has_changed) {
+        shared_graph->set_node_attr_i32(
+            m_viewer_node, "bake_option", m_cache_option);
+    }
+    if (cache_crop_on_format_has_changed) {
+        shared_graph->set_node_attr_i32(
+            m_viewer_node, "crop_to_format", m_cache_crop_on_format);
+    }
+    if (disk_cache_enable_has_changed) {
+        shared_graph->set_node_attr_i32(
+            m_viewer_node, "disk_cache", m_disk_cache_enable);
+    }
+    if (disk_cache_dir_has_changed) {
+        auto dir_name = rust::String(m_disk_cache_dir.asChar());
+        shared_graph->set_node_attr_str(
+            m_viewer_node, "disk_cache_dir", dir_name);
     }
 
     // TODO: Detect when the camera matrix has changed.
@@ -339,7 +386,7 @@ void GeometryOverride::updateRenderItems(const MDagPath &path,
         // Allow transparency in the shader.
         m_shader.set_is_transparent(true);
 
-        auto filmBackWidth = 36.0;
+        auto filmBackWidth = 36.0f;  // 35mm film width is 36 x 24 millimetres.
         auto plane_scale = utils::getCameraPlaneScale(filmBackWidth, m_focal_length);
 
         const float depth_scale = m_card_depth * plane_scale;
@@ -487,6 +534,107 @@ void GeometryOverride::updateRenderItems(const MDagPath &path,
                 m_shader_rescale_transform_parameter_name,
                 rescale_display_window_transform);
             CHECK_MSTATUS(status);
+
+            // The image color space.
+            auto from_color_space = stream_data.clone_image_spec().color_space;
+            auto from_color_space_str = std::string(from_color_space);
+            bool from_color_space_changed = m_from_color_space_name.compare(from_color_space_str) != 0;
+
+            // Size of the 3D LUT
+            bool lut_edge_size_has_changed = false;
+            MPlug lut_edge_size_plug(m_locator_node, ShapeNode::m_lut_edge_size_attr);
+            std::tie(m_lut_edge_size, lut_edge_size_has_changed) =
+                utils::get_plug_value_uint32(lut_edge_size_plug, m_lut_edge_size);
+
+            // Color Space Name
+            bool color_space_name_has_changed = false;
+            MPlug color_space_name_plug(
+                m_locator_node, ShapeNode::m_color_space_name_attr);
+            std::tie(m_color_space_name, color_space_name_has_changed) =
+                utils::get_plug_value_string(color_space_name_plug, m_color_space_name);
+
+            // Generate a 3D volume texture to be used to look
+            // up colour space transforms.
+            if (lut_edge_size_has_changed
+                || color_space_name_has_changed
+                || from_color_space_changed) {
+                m_from_color_space_name = from_color_space_str;
+
+                // Color Space Conersation values
+                auto to_color_space = m_color_space_name.asChar();
+
+                auto use_3dlut = from_color_space != to_color_space;
+                log->warn("GeometryOverride:: use 3D LUT: {}", use_3dlut);
+                log->warn("GeometryOverride:: 3D LUT Edge Size: {}", m_lut_edge_size);
+                log->warn("GeometryOverride:: Color Space: {} to {}", from_color_space_str, to_color_space);
+
+                if (use_3dlut && (m_lut_edge_size > 0)) {
+                    auto shared_color_transform_cache = \
+                        ocgm_cache::get_shared_color_transform_cache();
+                    auto lut_image = ocg::get_color_transform_3dlut(
+                        from_color_space, to_color_space,
+                        m_lut_edge_size, shared_color_transform_cache);
+
+                    // 3D LUT Texture Sampler.
+                    MHWRender::MSamplerStateDesc sampler_description;
+                    sampler_description.filter = MSamplerState::TextureFilter::kMinMagMipLinear;
+                    sampler_description.addressU = MSamplerState::TextureAddress::kTexClamp;
+                    sampler_description.addressV = MSamplerState::TextureAddress::kTexClamp;
+                    sampler_description.addressW = MSamplerState::TextureAddress::kTexClamp;
+                    sampler_description.minLOD = 0;
+                    sampler_description.maxLOD = 0;
+                    status = m_shader.set_texture_sampler_param(
+                        m_shader_3d_lut_texture_sampler_parameter_name,
+                        sampler_description
+                    );
+                    CHECK_MSTATUS(status);
+
+                    // 3D LUT Texture.
+                    //
+                    // Texture is a cube and assumed to be lut_edge_size^3
+                    // (eg, 20 * 20 * 20).
+                    auto pixel_width = m_lut_edge_size;
+                    auto pixel_height = m_lut_edge_size;
+                    auto pixel_depth = m_lut_edge_size;
+                    auto pixel_num_channels = lut_image.pixel_block->num_channels();
+                    auto pixel_data_type = lut_image.pixel_block->pixel_data_type();
+                    auto pixel_buffer = lut_image.pixel_block->as_slice();
+                    auto buffer = static_cast<const void*>(pixel_buffer.data());
+
+                    log->warn("GeometryOverride:: lut_edge_size: {}", m_lut_edge_size);
+                    log->warn("GeometryOverride:: pixel_num_channels: {}", pixel_num_channels);
+                    log->warn("GeometryOverride:: pixel count: {}", pixel_buffer.length());
+                    // for (auto i = 0; i < pixel_buffer.length(); ++i) {
+                    //     log->warn("num: {}={}", i, pixel_buffer[i]);
+                    //     if (i > 100) break;
+                    // }
+
+                    // Upload 3D LUT to GPU.
+                    status = m_shader.set_texture_param_with_image_data(
+                        m_shader_3d_lut_texture_parameter_name,
+                        MHWRender::kVolumeTexture,
+                        pixel_width,
+                        pixel_height,
+                        pixel_depth,
+                        pixel_num_channels,
+                        pixel_data_type,
+                        buffer);
+                    CHECK_MSTATUS(status);
+
+
+                    // 3D LUT Edge Size.
+                    status = m_shader.set_int_param(
+                        m_shader_3d_lut_edge_size_parameter_name,
+                        m_lut_edge_size);
+                    CHECK_MSTATUS(status);
+                }
+
+                // Should we use the 3D LUT texture?
+                status = m_shader.set_bool_param(
+                    m_shader_3d_lut_enable_parameter_name, use_3dlut);
+                CHECK_MSTATUS(status);
+            }
+
 
             // Set the matrix parameter expected to adjust the colors
             // of the image texture.

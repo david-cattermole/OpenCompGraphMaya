@@ -64,23 +64,33 @@ void generate_vertex_positions(
         rust::Slice<float> slice{buffer, pos_buffer_size};
         geom->fill_buffer_vertex_positions(slice);
 
-        // Deformer variables required for deformation.
-        //
-        // TODO: Work out the correct maths to ensure lens
-        // distortion considers the deformation relative to the
-        // display window.
-        auto canvas_window = ocg::BBox2Df();
-        canvas_window.min_x = -0.0;
-        canvas_window.min_y = -0.0;
-        canvas_window.max_x = +1.0;
-        canvas_window.max_y = +1.0;
-
         if (stream_data.deformers_len() > 0) {
+            // TODO: Work out the correct maths to ensure lens
+            // distortion considers the deformation relative to the
+            // display window.
+            auto display_window_int = stream_data.display_window();
+            auto data_window_int = stream_data.data_window();
+
+            auto display_window = ocg::BBox2Df();
+            display_window.min_x = -0.0;
+            display_window.min_y = -0.0;
+            display_window.max_x = +1.0;
+            display_window.max_y = +1.0;
+
+            auto data_window = ocg::BBox2Df();
+            data_window.min_x = -0.0;
+            data_window.min_y = -0.0;
+            data_window.max_x = +1.0;
+            data_window.max_y = +1.0;
+
             log->debug("applying lens distortion!");
-            log->debug("canvas window: min_x={} min_y={} max_x={} max_y={}",
-                       canvas_window.min_x, canvas_window.min_y,
-                       canvas_window.max_x, canvas_window.max_y);
-            stream_data.apply_deformers(slice, canvas_window);
+            log->debug("display window: min_x={} min_y={} max_x={} max_y={}",
+                       display_window.min_x, display_window.min_y,
+                       display_window.max_x, display_window.max_y);
+            log->debug("data window: min_x={} min_y={} max_x={} max_y={}",
+                       data_window.min_x, data_window.min_y,
+                       data_window.max_x, data_window.max_y);
+            stream_data.apply_deformers(slice, display_window, data_window);
         }
         vertex_buffer->commit(buffer);
     }

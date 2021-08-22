@@ -45,6 +45,7 @@
 // STL
 #include <map>
 #include <memory>
+#include <string>
 
 // OCG
 #include <opencompgraph.h>
@@ -129,6 +130,10 @@ private:
     static MString m_shader_image_color_matrix_parameter_name;
     static MString m_shader_image_texture_parameter_name;
     static MString m_shader_image_texture_sampler_parameter_name;
+    static MString m_shader_3d_lut_enable_parameter_name;
+    static MString m_shader_3d_lut_edge_size_parameter_name;
+    static MString m_shader_3d_lut_texture_parameter_name;
+    static MString m_shader_3d_lut_texture_sampler_parameter_name;
 
     // Internal state.
     MObject m_locator_node;
@@ -146,8 +151,13 @@ private:
     uint32_t m_card_res_x;
     uint32_t m_card_res_y;
     float m_time;
+    uint32_t m_lut_edge_size;
+    std::string m_from_color_space_name;
+    MString m_color_space_name;
     uint8_t m_cache_option;
-    uint8_t m_cache_crop_on_format;
+    bool m_cache_crop_on_format;
+    bool m_disk_cache_enable;
+    MString m_disk_cache_dir;
     ocg::Node m_in_stream_node;
     ocg::Node m_viewer_node;
     int m_display_window_width;

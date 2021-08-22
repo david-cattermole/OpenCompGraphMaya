@@ -133,12 +133,23 @@ global proc AEocgImagePlaneTemplate(string $nodeName)
     // editorTemplate -addControl "viewportDepth";  // 0.0% to 100.0%
     // editorTemplate -endLayout;
 
+    editorTemplate -beginLayout "Color Space" -collapse 1;
+    editorTemplate -beginNoOptimize;
+    editorTemplate -addControl "colorSpaceName";
+    editorTemplate -addControl "lutEdgeSize";
+    editorTemplate -endNoOptimize;
+    editorTemplate -endLayout;
+
     editorTemplate -beginLayout "Cache" -collapse 1;
+    editorTemplate -beginNoOptimize;
     // TODO: Display information about the cached images.
     // TODO: Add button to "export buffer compression file".
     // TODO: Add button to open cache options.
     editorTemplate -addControl "cacheOption";
     editorTemplate -addControl "cacheCropOnFormat";
+    editorTemplate -addControl "diskCacheEnable";
+    editorTemplate -addControl "diskCacheDirectory";
+    editorTemplate -endNoOptimize;
     editorTemplate -endLayout;
 
     // editorTemplate -beginLayout "Miscellaneous" -collapse 1;
@@ -157,7 +168,7 @@ global proc AEocgImagePlaneTemplate(string $nodeName)
     AEabstractBaseCreateTemplate $nodeName;
 
     editorTemplate -addExtraControls;
-    
+
     editorTemplate -endScrollLayout;
 
     editorTemplate -suppress "inStream";

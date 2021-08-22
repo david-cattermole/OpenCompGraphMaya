@@ -79,8 +79,12 @@ MObject ShapeNode::m_card_size_x_attr;
 MObject ShapeNode::m_card_size_y_attr;
 MObject ShapeNode::m_card_res_x_attr;
 MObject ShapeNode::m_card_res_y_attr;
+MObject ShapeNode::m_color_space_name_attr;
+MObject ShapeNode::m_lut_edge_size_attr;
 MObject ShapeNode::m_cache_option_attr;
 MObject ShapeNode::m_cache_crop_on_format_attr;
+MObject ShapeNode::m_disk_cache_enable_attr;
+MObject ShapeNode::m_disk_cache_dir_attr;
 MObject ShapeNode::m_time_attr;
 
 // Output Attributes
@@ -343,9 +347,32 @@ MStatus ShapeNode::initialize() {
 
     // Screen Depth Attribute
 
+    // 3D LUT Edge Size (larger size means more accurate 3D LUT).
+    uint32_t lut_edge_size_min = 8;
+    uint32_t lut_edge_size_soft_max = 64;
+    uint32_t lut_edge_size_max = 128;
+    uint32_t lut_edge_size_default = 20;
+    m_lut_edge_size_attr = nAttr.create(
+        "lutEdgeSize", "ltedgsz",
+        MFnNumericData::kInt, lut_edge_size_default);
+    CHECK_MSTATUS(nAttr.setStorable(true));
+    CHECK_MSTATUS(nAttr.setKeyable(false));
+    CHECK_MSTATUS(nAttr.setMin(lut_edge_size_min));
+    CHECK_MSTATUS(nAttr.setMax(lut_edge_size_max));
+    CHECK_MSTATUS(nAttr.setSoftMax(lut_edge_size_soft_max));
+
+    // Color Space Name
+    MFnStringData color_space_string_data;
+    MObject color_space_string_data_obj = color_space_string_data.create("Linear");
+    m_color_space_name_attr = tAttr.create(
+            "colorSpaceName", "clspcnm",
+            MFnData::kString, color_space_string_data_obj);
+    CHECK_MSTATUS(tAttr.setStorable(true));
+    CHECK_MSTATUS(tAttr.setUsedAsFilename(false));
+
     // Cache - Option
     m_cache_option_attr = eAttr.create(
-        "cacheOption", "cchopt", kBakeOptionColorSpace);
+        "cacheOption", "cchopt", kBakeOptionNothing);
     CHECK_MSTATUS(eAttr.addField("none", kBakeOptionNothing));
     CHECK_MSTATUS(eAttr.addField("colorSpace", kBakeOptionColorSpace));
     CHECK_MSTATUS(eAttr.addField("colorSpaceAndGrade", kBakeOptionColorSpaceAndGrade));
@@ -353,12 +380,29 @@ MStatus ShapeNode::initialize() {
     CHECK_MSTATUS(eAttr.setStorable(true));
 
     // Cache - Crop on Format
-    bool cache_crop_on_format_default = true;
+    bool cache_crop_on_format_default = false;
     m_cache_crop_on_format_attr = nAttr.create(
         "cacheCropOnFormat", "cchcpofmt",
         MFnNumericData::kBoolean, cache_crop_on_format_default);
     CHECK_MSTATUS(nAttr.setStorable(true));
     CHECK_MSTATUS(nAttr.setKeyable(false));
+
+    // Disk Cache Enable
+    bool disk_cache_enable_default = false;
+    m_disk_cache_enable_attr = nAttr.create(
+        "diskCacheEnable", "dskccheb",
+        MFnNumericData::kBoolean, disk_cache_enable_default);
+    CHECK_MSTATUS(nAttr.setStorable(true));
+    CHECK_MSTATUS(nAttr.setKeyable(false));
+
+    // Disk Cache Directory Attribute
+    MFnStringData dir_string_data;
+    MObject dir_string_data_obj = dir_string_data.create("${TEMP}");
+    m_disk_cache_dir_attr = tAttr.create(
+            "diskCacheDirectory", "dskcchdir",
+            MFnData::kString, dir_string_data_obj);
+    CHECK_MSTATUS(tAttr.setStorable(true));
+    CHECK_MSTATUS(tAttr.setUsedAsFilename(true));
 
     // Time
     m_time_attr = uAttr.create("time", "tm", MFnUnitAttribute::kTime, 0.0);
@@ -375,13 +419,24 @@ MStatus ShapeNode::initialize() {
     CHECK_MSTATUS(addAttribute(m_card_size_y_attr));
     CHECK_MSTATUS(addAttribute(m_card_res_x_attr));
     CHECK_MSTATUS(addAttribute(m_card_res_y_attr));
+    CHECK_MSTATUS(addAttribute(m_color_space_name_attr));
+    CHECK_MSTATUS(addAttribute(m_lut_edge_size_attr));
     CHECK_MSTATUS(addAttribute(m_cache_option_attr));
     CHECK_MSTATUS(addAttribute(m_cache_crop_on_format_attr));
+    CHECK_MSTATUS(addAttribute(m_disk_cache_enable_attr));
+    CHECK_MSTATUS(addAttribute(m_disk_cache_dir_attr));
     CHECK_MSTATUS(addAttribute(m_time_attr));
     CHECK_MSTATUS(addAttribute(m_in_stream_attr));
     CHECK_MSTATUS(addAttribute(m_out_stream_attr));
 
     // Attribute Affects
+    CHECK_MSTATUS(attributeAffects(m_time_attr, m_out_stream_attr));
+    CHECK_MSTATUS(attributeAffects(m_color_space_name_attr, m_out_stream_attr));
+    CHECK_MSTATUS(attributeAffects(m_lut_edge_size_attr, m_out_stream_attr));
+    CHECK_MSTATUS(attributeAffects(m_cache_option_attr, m_out_stream_attr));
+    CHECK_MSTATUS(attributeAffects(m_cache_crop_on_format_attr, m_out_stream_attr));
+    CHECK_MSTATUS(attributeAffects(m_disk_cache_enable_attr, m_out_stream_attr));
+    CHECK_MSTATUS(attributeAffects(m_disk_cache_dir_attr, m_out_stream_attr));
     CHECK_MSTATUS(attributeAffects(m_in_stream_attr, m_out_stream_attr));
 
     return MS::kSuccess;

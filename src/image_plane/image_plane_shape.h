@@ -86,8 +86,12 @@ public:
     static MObject m_card_size_y_attr;
     static MObject m_card_res_x_attr;
     static MObject m_card_res_y_attr;
+    static MObject m_color_space_name_attr;
+    static MObject m_lut_edge_size_attr;
     static MObject m_cache_option_attr;
     static MObject m_cache_crop_on_format_attr;
+    static MObject m_disk_cache_enable_attr;
+    static MObject m_disk_cache_dir_attr;
     static MObject m_time_attr;
     static MObject m_out_stream_attr;
 

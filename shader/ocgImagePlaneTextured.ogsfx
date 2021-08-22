@@ -1,3 +1,5 @@
+#version 430
+
 // World-view-projection transformation.
 uniform mat4 gWVPXf : WorldViewProjection;
 
@@ -19,6 +21,25 @@ uniform texture2D gImageTexture
 uniform sampler2D gImageTextureSampler = sampler_state
 {
     Texture = <gImageTexture>;
+    TEXTURE_MIN_FILTER = NEAREST;
+    TEXTURE_MAG_FILTER = NEAREST;
+    TEXTURE_WRAP_S = CLAMP_TO_EDGE;
+    TEXTURE_WRAP_T = CLAMP_TO_EDGE;
+    TEXTURE_WRAP_R = CLAMP_TO_EDGE;
+};
+
+// The 3D LUT texture to transform the texture colours.
+uniform bool g3dLutEnable = false;
+uniform int g3dLutEdgeSize = 0;
+uniform texture3D g3dLutTexture
+<
+    string ResourceName = "";
+    string ResourceType = "3D";
+>;
+
+uniform sampler3D g3dLutTextureSampler = sampler_state
+{
+    Texture = <g3dLutTexture>;
     TEXTURE_MIN_FILTER = NEAREST;
     TEXTURE_MAG_FILTER = NEAREST;
     TEXTURE_WRAP_S = CLAMP_TO_EDGE;
@@ -61,6 +82,13 @@ GLSLShader PS
     void main()
     {
         vec4 tex_color = texture2D(gImageTextureSampler, psIn.texcoord);
+        if (g3dLutEnable) {
+            float m = float(g3dLutEdgeSize-1) / float(g3dLutEdgeSize);
+            float b = 1.0 / (2.0 * float(g3dLutEdgeSize));
+            tex_color = vec4(
+                texture3D(g3dLutTextureSampler, m * tex_color.rgb + b).rgb,
+                tex_color.a);
+        }
         out_color = gSolidColor * gImageColorMatrix * tex_color;
     }
 }
