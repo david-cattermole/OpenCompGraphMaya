@@ -119,6 +119,7 @@ GeometryOverride::GeometryOverride(const MObject &obj)
         , m_from_color_space_name()
         , m_color_space_name()
         , m_disk_cache_enable(false)
+        , m_disk_cache_image_type(0)
         , m_disk_cache_dir()
         , m_in_stream_node(ocg::Node(ocg::NodeType::kNull, 0))
         , m_viewer_node(ocg::Node(ocg::NodeType::kNull, 0)) {
@@ -173,6 +174,7 @@ void GeometryOverride::updateDG() {
     bool cache_option_has_changed = false;
     bool cache_crop_on_format_has_changed = false;
     bool disk_cache_enable_has_changed = false;
+    bool disk_cache_image_type_has_changed = false;
     bool disk_cache_dir_has_changed = false;
     MPlug cache_option_plug(
         m_locator_node, ShapeNode::m_cache_option_attr);
@@ -180,6 +182,8 @@ void GeometryOverride::updateDG() {
         m_locator_node, ShapeNode::m_cache_crop_on_format_attr);
     MPlug disk_cache_enable_plug(
         m_locator_node, ShapeNode::m_disk_cache_enable_attr);
+    MPlug disk_cache_image_type_plug(
+        m_locator_node, ShapeNode::m_disk_cache_image_type_attr);
     MPlug disk_cache_dir_plug(
         m_locator_node, ShapeNode::m_disk_cache_dir_attr);
 
@@ -190,6 +194,9 @@ void GeometryOverride::updateDG() {
         utils::get_plug_value_bool(cache_crop_on_format_plug, m_cache_crop_on_format);
     std::tie(m_disk_cache_enable, disk_cache_enable_has_changed) =
         utils::get_plug_value_bool(disk_cache_enable_plug, m_disk_cache_enable);
+
+    std::tie(m_disk_cache_image_type, disk_cache_image_type_has_changed) =
+        utils::get_plug_value_uint32(disk_cache_image_type_plug, m_disk_cache_image_type);
 
     std::tie(m_disk_cache_dir, disk_cache_dir_has_changed) =
         utils::get_plug_value_string(disk_cache_dir_plug, m_disk_cache_dir);
@@ -205,6 +212,10 @@ void GeometryOverride::updateDG() {
     if (disk_cache_enable_has_changed) {
         shared_graph->set_node_attr_i32(
             m_viewer_node, "disk_cache", m_disk_cache_enable);
+    }
+    if (disk_cache_image_type_has_changed) {
+        shared_graph->set_node_attr_i32(
+            m_viewer_node, "disk_cache_image_type", m_disk_cache_image_type);
     }
     if (disk_cache_dir_has_changed) {
         auto dir_name = rust::String(m_disk_cache_dir.asChar());
