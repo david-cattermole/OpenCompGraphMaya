@@ -148,6 +148,7 @@ global proc AEocgImagePlaneTemplate(string $nodeName)
     editorTemplate -addControl "cacheOption";
     editorTemplate -addControl "cacheCropOnFormat";
     editorTemplate -addControl "diskCacheEnable";
+    editorTemplate -addControl "diskCacheImageType";
     editorTemplate -addControl "diskCacheDirectory";
     editorTemplate -endNoOptimize;
     editorTemplate -endLayout;
