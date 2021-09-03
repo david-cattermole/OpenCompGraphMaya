@@ -35,6 +35,9 @@
 // OCG Maya
 #include "base_node.h"
 
+// STL
+#include <vector>
+
 namespace ocg = open_comp_graph;
 
 namespace open_comp_graph_maya {
@@ -74,7 +77,7 @@ public:
     static MObject m_out_stream_attr;
 
 private:
-    ocg::Node m_ocg_node;
+    ocg::Node m_ocg_grade_node;
 };
 
 } // namespace open_comp_graph_maya

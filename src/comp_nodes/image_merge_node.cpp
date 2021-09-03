@@ -92,9 +92,11 @@ MStatus ImageMergeNode::updateOcgNodes(
     }
     bool exists = shared_graph->node_exists(m_ocg_node);
     if (!exists) {
+        MString node_name = "merge";
+        auto node_hash = generateUniqueNodeHash(node_name);
         m_ocg_node = shared_graph->create_node(
             ocg::NodeType::kMergeImage,
-            m_ocg_node_hash);
+            node_hash);
     }
     auto input_ocg_node_a = input_ocg_nodes[0];
     auto input_ocg_node_b = input_ocg_nodes[1];

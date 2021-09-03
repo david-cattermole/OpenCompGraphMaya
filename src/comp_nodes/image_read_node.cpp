@@ -87,9 +87,11 @@ MStatus ImageReadNode::updateOcgNodes(
     }
     bool exists = shared_graph->node_exists(m_ocg_node);
     if (!exists) {
+        MString node_name = "read";
+        auto node_hash = generateUniqueNodeHash(node_name);
         m_ocg_node = shared_graph->create_node(
             ocg::NodeType::kReadImage,
-            m_ocg_node_hash);
+            node_hash);
     }
 
     if (m_ocg_node.get_id() != 0) {

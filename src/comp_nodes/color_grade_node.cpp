@@ -66,7 +66,8 @@ MObject ColorGradeNode::m_multiply_a_attr;
 MObject ColorGradeNode::m_out_stream_attr;
 
 ColorGradeNode::ColorGradeNode()
-    : m_ocg_node(ocg::Node(ocg::NodeType::kNull, 0)) {}
+    : m_ocg_grade_node(ocg::Node(ocg::NodeType::kNull, 0)) {
+}
 
 ColorGradeNode::~ColorGradeNode() {}
 
@@ -83,33 +84,37 @@ MStatus ColorGradeNode::updateOcgNodes(
     if (input_ocg_nodes.size() != 1) {
         return MS::kFailure;
     }
-    bool exists = shared_graph->node_exists(m_ocg_node);
-    if (!exists) {
-        m_ocg_node = shared_graph->create_node(
-            ocg::NodeType::kGrade,
-            m_ocg_node_hash);
+
+    bool grade_exists = shared_graph->node_exists(m_ocg_grade_node);
+    if (!grade_exists) {
+        MString node_name = "grade";
+        auto grade_node_hash = generateUniqueNodeHash(node_name);
+        m_ocg_grade_node =
+            shared_graph->create_node(
+                ocg::NodeType::kGrade,
+                grade_node_hash);
     }
     auto input_ocg_node = input_ocg_nodes[0];
-    shared_graph->connect(input_ocg_node, m_ocg_node, 0);
+    shared_graph->connect(input_ocg_node, m_ocg_grade_node, 0);
 
-    if (m_ocg_node.get_id() != 0) {
+    if (m_ocg_grade_node.get_id() != 0) {
         // Set the output node
-        output_ocg_node = m_ocg_node;
+        output_ocg_node = m_ocg_grade_node;
 
         // Enable Attribute toggle
         bool enable = utils::get_attr_value_bool(data, m_enable_attr);
         shared_graph->set_node_attr_i32(
-            m_ocg_node, "enable", static_cast<int32_t>(enable));
+            m_ocg_grade_node, "enable", static_cast<int32_t>(enable));
 
         // Multiply Attribute RGBA
-        float temp_r = utils::get_attr_value_float(data, m_multiply_r_attr);
-        float temp_g = utils::get_attr_value_float(data, m_multiply_g_attr);
-        float temp_b = utils::get_attr_value_float(data, m_multiply_b_attr);
-        float temp_a = utils::get_attr_value_float(data, m_multiply_a_attr);
-        shared_graph->set_node_attr_f32(m_ocg_node, "multiply_r", temp_r);
-        shared_graph->set_node_attr_f32(m_ocg_node, "multiply_g", temp_g);
-        shared_graph->set_node_attr_f32(m_ocg_node, "multiply_b", temp_b);
-        shared_graph->set_node_attr_f32(m_ocg_node, "multiply_a", temp_a);
+        float multiply_r = utils::get_attr_value_float(data, m_multiply_r_attr);
+        float multiply_g = utils::get_attr_value_float(data, m_multiply_g_attr);
+        float multiply_b = utils::get_attr_value_float(data, m_multiply_b_attr);
+        float multiply_a = utils::get_attr_value_float(data, m_multiply_a_attr);
+        shared_graph->set_node_attr_f32(m_ocg_grade_node, "multiply_r", multiply_r);
+        shared_graph->set_node_attr_f32(m_ocg_grade_node, "multiply_g", multiply_g);
+        shared_graph->set_node_attr_f32(m_ocg_grade_node, "multiply_b", multiply_b);
+        shared_graph->set_node_attr_f32(m_ocg_grade_node, "multiply_a", multiply_a);
     }
 
     return status;

@@ -53,7 +53,7 @@ namespace ocg = open_comp_graph;
 namespace open_comp_graph_maya {
 
 BaseNode::BaseNode()
-        : m_ocg_node_hash(0) {}
+        : m_node_uuid() {}
 
 BaseNode::~BaseNode() {}
 
@@ -70,7 +70,9 @@ MStatus BaseNode::computeOcgStream(const MPlug &plug, MDataBlock &data,
                                    MObject &out_stream_attr) {
     auto log = log::get_logger();
     MStatus status = MS::kUnknownParameter;
-    if (m_ocg_node_hash == 0) {
+
+    const MUuid empty_uuid = MUuid();
+    if (m_node_uuid == empty_uuid) {
         // No OCG hash has been created yet, this node is not ready
         // to be computed.
         return status;
@@ -145,13 +147,7 @@ void BaseNode::postConstructor() {
     MStatus status = MS::kSuccess;
     MFnDependencyNode fn_depend_node(this_node, &status);
     CHECK_MSTATUS(status);
-    MUuid uuid = fn_depend_node.uuid();
-    MString uuid_string = uuid.asString();
-    const char *uuid_char = uuid_string.asChar();
-
-    // Generate a 64-bit hash id from the 128-bit UUID.
-    BaseNode::m_ocg_node_hash =
-        ocg::internal::generate_id_from_name(uuid_char);
+    m_node_uuid = fn_depend_node.uuid();
 };
 
 
@@ -205,6 +201,21 @@ MStatus BaseNode::create_output_stream_attribute(MObject &attr) {
     CHECK_MSTATUS(tAttr.setReadable(true));
     CHECK_MSTATUS(tAttr.setWritable(false));
     return MS::kSuccess;
+}
+
+// Generate a hash that is seeded by the current node UUID,
+// providing a technique for creating consistent OCG node hashes
+// for each instance of Maya node.
+uint64_t BaseNode::generateUniqueNodeHash(MString &node_name) {
+    MString uuid_string = m_node_uuid.asString();
+    uuid_string += node_name;
+
+    // Generate a 64-bit hash id from the 128-bit UUID string plus
+    // the node name suffix.
+    const char *uuid_char = uuid_string.asChar();
+    auto node_hash =
+        ocg::internal::generate_id_from_name(uuid_char);
+    return node_hash;
 }
 
 } // namespace open_comp_graph_maya

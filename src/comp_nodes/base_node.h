@@ -32,6 +32,7 @@
 #include <maya/MObject.h>
 #include <maya/MObjectArray.h>
 #include <maya/MTypeId.h>
+#include <maya/MUuid.h>
 
 // OCG
 #include "opencompgraph.h"
@@ -72,8 +73,10 @@ public:
         std::vector<ocg::Node> input_ocg_nodes,
         ocg::Node &output_ocg_node);
 
+    uint64_t generateUniqueNodeHash(MString &node_name);
+
 protected:
-    uint64_t m_ocg_node_hash;
+    MUuid m_node_uuid;
 };
 
 } // namespace open_comp_graph_maya
