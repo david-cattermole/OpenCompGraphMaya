@@ -408,7 +408,7 @@ Shader::set_texture_param_with_stream_data(
     auto pixel_buffer = stream_data.pixel_buffer();
     auto pixel_width = stream_data.pixel_width();
     auto pixel_height = stream_data.pixel_height();
-    auto pixel_depth = 1;
+    auto pixel_depth = 1;  // We do not support 3D textures.
     auto pixel_num_channels = stream_data.pixel_num_channels();
     auto pixel_data_type = stream_data.pixel_data_type();
     // auto channel_num_bytes = ocg::internal::channel_size_bytes(pixel_data_type);

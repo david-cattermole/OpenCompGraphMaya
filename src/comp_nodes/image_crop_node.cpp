@@ -17,9 +17,8 @@
  * along with OpenCompGraphMaya.  If not, see <https://www.gnu.org/licenses/>.
  * ====================================================================
  *
- * Apply a 2D Crop to an image (with matrix concatenation)
+ * Apply a 2D Crop to an image.
  *
- * TODO: Add 'pivot' point for the crop effect.
  */
 
 // Maya
@@ -155,7 +154,7 @@ MStatus ImageCropNode::initialize() {
     MFnNumericAttribute nAttr;
     MFnTypedAttribute tAttr;
 
-    // Window_Min X and Y
+    // Window X and Y
     int window_soft_min = 0;
     int window_soft_max = 4096;
     int window_default_a = 0;
