@@ -37,7 +37,9 @@
 
 // STL
 #include <cstring>
+#include <sstream>  // stringstream
 #include <cmath>
+#include <cctype>   // toupper
 
 // OCG
 #include "opencompgraph.h"
@@ -140,16 +142,56 @@ MStatus BaseNode::computeOcgStream(const MPlug &plug, MDataBlock &data,
 
 // Called after the node is created.
 void BaseNode::postConstructor() {
-    // Get the size
     MObject this_node = BaseNode::thisMObject();
-
-    // Get Node UUID
     MStatus status = MS::kSuccess;
+
     MFnDependencyNode fn_depend_node(this_node, &status);
     CHECK_MSTATUS(status);
-    m_node_uuid = fn_depend_node.uuid();
-};
 
+    // Get Node UUID
+    m_node_uuid = fn_depend_node.uuid();
+
+    // Get a unique random hash that will be created and set for the
+    // node just after construction, and set it in an attribute.
+    MString hash_attr_name("uniqueNodeHash");
+    MPlug hash_plug = fn_depend_node.findPlug(hash_attr_name, true);
+    if (hash_plug.isNull())
+    {
+        // Create Attribute
+        MFnStringData fn_string_data;
+        MObject str_attr_object = fn_string_data.create("");
+        MFnTypedAttribute attr;
+        attr.setHidden(true);
+        MObject attr_obj = attr.create(
+            hash_attr_name, hash_attr_name,
+            MFnData::kString, str_attr_object);
+        fn_depend_node.addAttribute(
+            attr_obj, MFnDependencyNode::kLocalDynamicAttr);
+        hash_plug = fn_depend_node.findPlug(attr_obj, true);
+
+        // Generate hash and convert to string.
+        auto unique_hash_number =
+            ocg::internal::generate_random_id();
+        std::stringstream string_stream;
+        string_stream
+            << std::setfill('0')
+            << std::setw(sizeof(unique_hash_number) * 2)
+            << std::hex
+            << unique_hash_number;
+        auto unique_hash_string = string_stream.str();
+        std::transform(
+            unique_hash_string.begin(),
+            unique_hash_string.end(),
+            unique_hash_string.begin(),
+            [](unsigned char c){ return std::toupper(c); }
+        );
+        MString unique_hash_mstring(unique_hash_string.c_str());
+
+        hash_plug.setValue(unique_hash_mstring);
+        hash_plug.setLocked(true);
+    }
+
+};
 
 MStatus BaseNode::create_enable_attribute(MObject &attr) {
     MStatus status = MS::kFailure;
