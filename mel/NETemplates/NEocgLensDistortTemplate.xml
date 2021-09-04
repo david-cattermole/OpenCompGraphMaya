@@ -9,9 +9,6 @@
         <attribute name='outStream' type='maya.TdataCompound'>
             <label>Out Stream</label>
         </attribute>
-        <attribute name='enable' type='maya.boolean'>
-            <label>Enable</label>
-        </attribute>
     </template>
     <view name='NEDefault' template='NEocgLensDistort'>
         <property name='outStream'/>

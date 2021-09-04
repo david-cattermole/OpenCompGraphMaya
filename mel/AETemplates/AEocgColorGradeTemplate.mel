@@ -18,28 +18,91 @@
 // ---------------------------------------------------------------------
 
 
+source "AEocgNodeTemplateCommon";
+source "AEocgDiskCache";
+source "AEocgCompNode";
+
+
 global proc AEocgColorGradeTemplate(string $nodeName)
 {
-    editorTemplate -beginScrollLayout;
+    AEocgNodeTemplateCommonBegin($nodeName);
 
     editorTemplate -beginLayout "Color Grade" -collapse 0;
+
+    AEocgCompNodeButton($nodeName);
+    editorTemplate -addSeparator;
     editorTemplate -addControl "enable";
     editorTemplate -addSeparator;
+
+    editorTemplate -beginNoOptimize;
+    editorTemplate -addControl "processR";
+    editorTemplate -addControl "processG";
+    editorTemplate -addControl "processB";
+    editorTemplate -addControl "processA";
+    editorTemplate -endNoOptimize;
+
+    editorTemplate -addSeparator;
+
+    editorTemplate -beginNoOptimize;
+    editorTemplate -addControl "blackPointR";
+    editorTemplate -addControl "blackPointG";
+    editorTemplate -addControl "blackPointB";
+    editorTemplate -addControl "blackPointA";
+    editorTemplate -endNoOptimize;
+
+    editorTemplate -beginNoOptimize;
+    editorTemplate -addControl "whitePointR";
+    editorTemplate -addControl "whitePointG";
+    editorTemplate -addControl "whitePointB";
+    editorTemplate -addControl "whitePointA";
+    editorTemplate -endNoOptimize;
+
+    editorTemplate -beginNoOptimize;
+    editorTemplate -addControl "liftR";
+    editorTemplate -addControl "liftG";
+    editorTemplate -addControl "liftB";
+    editorTemplate -addControl "liftA";
+    editorTemplate -endNoOptimize;
+
+    editorTemplate -beginNoOptimize;
+    editorTemplate -addControl "gainR";
+    editorTemplate -addControl "gainG";
+    editorTemplate -addControl "gainB";
+    editorTemplate -addControl "gainA";
+    editorTemplate -endNoOptimize;
+
     editorTemplate -beginNoOptimize;
     editorTemplate -addControl "multiplyR";
     editorTemplate -addControl "multiplyG";
     editorTemplate -addControl "multiplyB";
     editorTemplate -addControl "multiplyA";
+    editorTemplate -endNoOptimize;
+
+    editorTemplate -beginNoOptimize;
+    editorTemplate -addControl "offsetR";
+    editorTemplate -addControl "offsetG";
+    editorTemplate -addControl "offsetB";
+    editorTemplate -addControl "offsetA";
+    editorTemplate -endNoOptimize;
+
+    editorTemplate -beginNoOptimize;
+    editorTemplate -addControl "gammaR";
+    editorTemplate -addControl "gammaG";
+    editorTemplate -addControl "gammaB";
+    editorTemplate -addControl "gammaA";
+    editorTemplate -endNoOptimize;
+
+    editorTemplate -addControl "reverse";
+    editorTemplate -beginNoOptimize;
+    editorTemplate -addControl "clampBlack";
+    editorTemplate -addControl "clampWhite";
+    editorTemplate -endNoOptimize;
+    editorTemplate -addControl "premult";
+
     editorTemplate -endLayout;
 
-    // include/call base class/node attributes
-    AEabstractBaseCreateTemplate $nodeName;
+    AEocgDiskCacheLayout($nodeName, "", 1, 0);
+    AEocgDiskCacheSuppressAttributes($nodeName);
 
-    editorTemplate -addExtraControls;
-
-    editorTemplate -endScrollLayout;
-
-    editorTemplate -suppress "inStream";
-    editorTemplate -suppress "outStream";
-
+    AEocgNodeTemplateCommonEnd($nodeName);
 }

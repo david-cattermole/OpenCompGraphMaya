@@ -1,0 +1,104 @@
+//
+// Copyright (C) 2021 David Cattermole.
+//
+// This file is part of OpenCompGraphMaya.
+//
+// OpenCompGraphMaya is free software: you can redistribute it and/or modify it
+// under the terms of the GNU Lesser General Public License as
+// published by the Free Software Foundation, either version 3 of the
+// License, or (at your option) any later version.
+//
+// OpenCompGraphMaya is distributed in the hope that it will be useful,
+// but WITHOUT ANY WARRANTY; without even the implied warranty of
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+// GNU Lesser General Public License for more details.
+//
+// You should have received a copy of the GNU Lesser General Public License
+// along with OpenCompGraphMaya.  If not, see <https://www.gnu.org/licenses/>.
+// ---------------------------------------------------------------------
+
+
+source "AEocgImageReadTemplate";
+
+
+global proc AEocgNodeNetworkOpenCommand(string $nodeName)
+{
+    select -r $nodeName;
+
+    // Open Node Network
+    nodeEditorWindow();
+
+    // Set all nodes to be 'simple' looking.
+    string $ned = getCurrentNodeEditor();
+    select -clear;
+    nodeEditor -e
+        -nodeViewMode "simple"
+        $ned;
+
+    // Set only OCG nodes to be 'custom' displayed.
+    string $nodes[] = `listHistory -breadthFirst $nodeName`;
+    string $node;
+    for ($node in $nodes) {
+        string $nodeType = `nodeType $node`;
+        if (startsWith($nodeType, "ocg") == 1) {
+            select -add $node;
+        }
+    }
+    nodeEditor -e
+        -nodeViewMode "custom"
+        $ned;
+
+    // Graph and frame the nodes.
+    select -r $nodeName;
+    nodeEditor -e
+        -rootsFromSelection
+        -upstream
+        -frameAll
+        $ned;
+}
+
+
+global proc AEocgNodeNetworkOpenReplace(string $nodeName)
+{
+    string $buffer[];
+    int $numTokens = `tokenize $nodeName "." $buffer`;
+    $nodeName = $buffer[0];
+
+    button -e
+        -command ("AEocgNodeNetworkOpenCommand " + $nodeName)
+        ocgOpenNodeEditorButton;
+}
+
+
+global proc AEocgNodeNetworkOpenNew(string $nodeName)
+{
+    setUITemplate -pst attributeEditorTemplate;
+    rowLayout -nc 3;
+
+        text -label "" ;
+        button -label ("Node Editor...") ocgOpenNodeEditorButton;
+        text -label "" ;
+
+    setParent ..;
+    setUITemplate -ppt;
+
+    AEocgNodeNetworkOpenReplace $nodeName;
+}
+
+
+global proc AEocgNodeNetworkLayout(string $nodeName,
+                                   string $label,
+                                   int $collapse)
+{
+    if ($label == "") {
+        $label = "Node Network";
+    }
+    editorTemplate -beginLayout $label -collapse $collapse;
+
+    // Add button to open the current node network view.
+    editorTemplate
+        -callCustom "AEocgNodeNetworkOpenNew" "AEocgNodeNetworkOpenReplace"
+        $nodeName;
+
+    editorTemplate -endLayout;
+}

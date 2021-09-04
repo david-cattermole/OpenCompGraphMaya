@@ -9,30 +9,11 @@
         <attribute name='outStream' type='maya.TdataCompound'>
             <label>Out Stream</label>
         </attribute>
-        <attribute name='enable' type='maya.boolean'>
-            <label>Enable</label>
-        </attribute>
-        <attribute name='multiplyR' type='maya.float'>
-            <label>Multiply Red</label>
-        </attribute>
-        <attribute name='multiplyG' type='maya.float'>
-            <label>Multiply Green</label>
-        </attribute>
-        <attribute name='multiplyB' type='maya.float'>
-            <label>Multiply Blue</label>
-        </attribute>
-        <attribute name='multiplyA' type='maya.float'>
-            <label>Multiply Alpha</label>
-        </attribute>
     </template>
     <view name='NEDefault' template='NEocgColorGrade'>
         <property name='outStream'/>
         <property name='inStream'/>
         <property name='enable'/>
-        <property name='multiplyR'/>
-        <property name='multiplyG'/>
-        <property name='multiplyB'/>
-        <property name='multiplyA'/>
     </view>
     <view name='NEDefaultSoloOutput' template='NEocgColorGrade'>
         <property name='outStream'/>

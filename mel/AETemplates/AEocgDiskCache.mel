@@ -1,0 +1,108 @@
+//
+// Copyright (C) 2021 David Cattermole.
+//
+// This file is part of OpenCompGraphMaya.
+//
+// OpenCompGraphMaya is free software: you can redistribute it and/or modify it
+// under the terms of the GNU Lesser General Public License as
+// published by the Free Software Foundation, either version 3 of the
+// License, or (at your option) any later version.
+//
+// OpenCompGraphMaya is distributed in the hope that it will be useful,
+// but WITHOUT ANY WARRANTY; without even the implied warranty of
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+// GNU Lesser General Public License for more details.
+//
+// You should have received a copy of the GNU Lesser General Public License
+// along with OpenCompGraphMaya.  If not, see <https://www.gnu.org/licenses/>.
+// ---------------------------------------------------------------------
+
+
+global proc AEocgDiskCacheReplace(string $nodeName, string $ip, string $hfa, string $vfa)
+{
+    button -e
+        -command ("AEocgDiskCacheCommand " + $nodeName + " " + $ip + " " + $hfa + " " + $vfa)
+        ocgGenerateDiskCacheButton;
+}
+
+
+global proc AEocgDiskCacheCommand(string $nodeName, string $ip, string $hfa, string $vfa)
+{
+    // TODO: Make this procedure open a GUI for us to generate a disk
+    // cache.
+
+    string $cameraName[];
+    tokenize( $ip, ".", $cameraName );
+
+    // create imageplane shape.
+    string $newImagePlane[] = createImagePlane($cameraName[0]);
+}
+
+
+global proc AEocgDiskCacheNew(string $nodeName, string $ip, string $hfa, string $vfa)
+{
+    setUITemplate -pst attributeEditorTemplate;
+    rowLayout -nc 3;
+
+        text -label "" ;
+        button -label ("Generate...") ocgGenerateDiskCacheButton;
+        text -label "" ;
+
+    setParent ..;
+    setUITemplate -ppt;
+
+    AEocgDiskCacheReplace $nodeName $ip $hfa $vfa;
+}
+
+
+global proc AEocgDiskCacheLayout(string $nodeName,
+                                 string $label,
+                                 int $collapse,
+                                 int $options)
+{
+    if ($label == "") {
+        $label = "Disk Cache";
+    }
+
+    if ($options == 0) {
+        editorTemplate -beginLayout $label -collapse $collapse;
+
+        editorTemplate -addControl "diskCacheEnable";
+        editorTemplate -addControl "diskCacheMode";
+        editorTemplate -addSeparator;
+
+        editorTemplate -addControl "diskCacheBasePath";
+        editorTemplate -addSeparator;
+
+        editorTemplate -addControl "diskCacheFileFormat";
+        editorTemplate -addControl "diskCacheJpegLevel";
+        editorTemplate -addControl "diskCachePngLevel";
+        editorTemplate -addControl "diskCacheExrCompression";
+        editorTemplate -addControl "diskCacheExrDwaLevel";
+        editorTemplate -addSeparator;
+
+        // Add button to generate disk cache GUI options.
+        editorTemplate
+            -callCustom "AEocgDiskCacheNew" "AEocgDiskCacheReplace"
+            $nodeName
+            "imagePlane"
+            "horizontalFilmAperture"
+            "verticalFilmAperture";
+
+        editorTemplate -endLayout;
+    }
+
+    else if ($options == 1) {
+        editorTemplate -addControl "diskCacheEnable";
+    }
+
+}
+
+global proc AEocgDiskCacheSuppressAttributes(string $nodeName)
+{
+    editorTemplate -suppress "diskCacheFileFormat";
+    editorTemplate -suppress "diskCacheJpegLevel";
+    editorTemplate -suppress "diskCachePngLevel";
+    editorTemplate -suppress "diskCacheExrCompression";
+    editorTemplate -suppress "diskCacheExrDwaLevel";
+}

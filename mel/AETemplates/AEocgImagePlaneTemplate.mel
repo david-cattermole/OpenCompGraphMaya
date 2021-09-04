@@ -20,11 +20,17 @@
 // Image Plane Attribute Template file.
 //
 
+
+source "AEocgNodeTemplateCommon";
+source "AEocgDiskCache";
+source "AEocgNodeNetwork";
+
+
 global proc AEocgImagePlaneTemplate(string $nodeName)
 {
-    editorTemplate -beginScrollLayout;
+    AEocgNodeTemplateCommonBegin($nodeName);
 
-    editorTemplate -beginLayout "Display" -collapse 0;
+    editorTemplate -beginLayout "Common" -collapse 0;
     editorTemplate -addControl "camera";
     editorTemplate -beginNoOptimize;
     editorTemplate -addControl "visibility";
@@ -36,58 +42,34 @@ global proc AEocgImagePlaneTemplate(string $nodeName)
     editorTemplate -addControl "exposure"; // EVs multiplier for the viewer only.
     editorTemplate -addControl "gamma"; // gamma correction
     editorTemplate -addControl "softClip"; // prevent over-bright values.
+    editorTemplate -addSeparator;
+    editorTemplate -addControl "cardDepth";
     editorTemplate -endLayout;
 
-    // // TODO: Button to open the Node Editor with connected nodes.
+    editorTemplate -beginLayout "Time" -collapse 0;
+    // TODO: Add button to open the Graph Editor with the image plane
+    // selected. The user is expected to change the animCurve as
+    // needed.
+    //
+    // Floating point "time" value, to allow reading and blending of
+    // images.
+    //
+    // TODO: Add drop-down menu with values:
+    //
+    //  - "Default Time"
+    //  - "Animation Curve"
+    //  - "Custom Connection"
+    //
+    // As the user changes the drop-down menu the time attribute will
+    // be re-connected. Each attribute is actually simply re-connected
+    // to the real time value, so this allows the user to easily
+    // change different time values to experiment without deleting the
+    // animation curve or custom connection.
+    //
+    editorTemplate -addControl "time";
+    editorTemplate -endLayout;
 
-    // editorTemplate -beginLayout "Read Image" -collapse 0;
-    // //
-    // // TODO: Dynamically displays "read file" node options.
-    // //
-    // // - File Path + Browse File Path button.
-    // // - Input Color Space
-    // // - Start Frame
-    // // - End Frame
-    // // - Before Start Frame
-    // // - After End Frame
-    // // - On Missing Frame:
-    // //     - "Color Bars"
-    // //     - "Black"
-    // //     - "Last"
-    // //     - "Nearest"
-    // //     - "Invisible"
-    // //
-    // editorTemplate -endLayout;
-
-    // editorTemplate -beginLayout "Image Reformat" -collapse 0;
-    // // TODO: Dynamically displays "reformat" node options.
-    // //
-    // // - Scale: 1.0
-    // // - Width / Height.
-    // editorTemplate -endLayout;
-
-    // editorTemplate -beginLayout "Color Grade" -collapse 0;
-    // // TODO: Dynamically displays "color grade" node options.
-    // //
-    // // - Color Multiply.
-    // // - Color Offset.
-    // //
-    // editorTemplate -endLayout;
-
-    // editorTemplate -beginLayout "Lens Distortion" -collapse 0;
-    // // TODO: Dynamically displays "lens distortion" node options.
-    // //
-    // // - Model name
-    // // - Degree 2
-    // // - Degree 4
-    // //
-    // editorTemplate -endLayout;
-
-    // editorTemplate -beginLayout "Write Image" -collapse 0;
-    // // TODO: Dynamically displays "write image" node options. By
-    // // default there will not be a write image node created, but the
-    // // user can click "create" and it will be displayed here.
-    // editorTemplate -endLayout;
+    AEocgNodeNetworkLayout($nodeName, "", 0);
 
     // Goemetry
     editorTemplate -beginLayout "Geometry" -collapse 1;
@@ -107,23 +89,11 @@ global proc AEocgImagePlaneTemplate(string $nodeName)
     // Geometry - Card
     editorTemplate -addControl "cardSizeX";
     editorTemplate -addControl "cardSizeY";
+
+    // Geometry resolution.
     editorTemplate -addControl "cardResolutionX";
     editorTemplate -addControl "cardResolutionY";
 
-    // Geometry resolution.
-    editorTemplate -addControl "cardResX";
-    editorTemplate -addControl "cardResY";
-
-    editorTemplate -endLayout;
-
-    editorTemplate -beginLayout "Time" -collapse 1;
-    // TODO: Add button to open the Graph Editor with the image plane
-    // selected. The user is expected to change the animCurve as
-    // needed.
-    //
-    // Floating point "time" value, to allow reading and blending of
-    // images.
-    editorTemplate -addControl "time";
     editorTemplate -endLayout;
 
     // // Specifics to the viewport.
@@ -165,14 +135,8 @@ global proc AEocgImagePlaneTemplate(string $nodeName)
     // editorTemplate -addControl "canvasWireframeVisible";
     // editorTemplate -endLayout;
 
-    // include/call base class/node attributes
-    AEabstractBaseCreateTemplate $nodeName;
+    AEocgDiskCacheLayout($nodeName, "", 1, 0);
 
-    editorTemplate -addExtraControls;
-
-    editorTemplate -endScrollLayout;
-
-    editorTemplate -suppress "inStream";
-    editorTemplate -suppress "outStream";
-
+    AEocgNodeTemplateCommonEnd($nodeName);
+    AEocgDiskCacheSuppressAttributes($nodeName);
 }

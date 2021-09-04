@@ -1,0 +1,31 @@
+
+<?xml version='1.0' encoding='UTF-8'?>
+<templates>
+    <using package='maya'/>
+    <template name='NEocgImagePlane'>
+        <attribute name='inStream' type='maya.TdataCompound'>
+            <label>In Stream</label>
+        </attribute>
+        <attribute name='outStream' type='maya.TdataCompound'>
+            <label>Out Stream</label>
+        </attribute>
+        <attribute name='camera' type='maya.TdataCompound'>
+            <label>Camera</label>
+        </attribute>
+        <attribute name='time' type='maya.doubleLinear'>
+            <label>Time</label>
+        </attribute>
+    </template>
+    <view name='NEDefault' template='NEocgImagePlane'>
+        <property name='outStream'/>
+        <property name='inStream'/>
+        <property name='enable'/>
+        <property name='camera'/>
+        <property name='visibility'/>
+        <property name='cardDepth'/>
+        <property name='time'/>
+    </view>
+    <view name='NEDefaultSoloOutput' template='NEocgImagePlane'>
+        <property name='outStream'/>
+    </view>
+</templates>

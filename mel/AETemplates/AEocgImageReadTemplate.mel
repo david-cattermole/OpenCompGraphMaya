@@ -18,30 +18,64 @@
 // ---------------------------------------------------------------------
 
 
+source "AEocgNodeTemplateCommon";
+source "AEocgDiskCache";
+source "AEocgCompNode";
+
+
+global proc AEocgImageReadMain(string $nodeName, int $collapse, int $options)
+{
+    // $options:
+    //   0 = default
+    //   1 = minimal
+
+    string $label = "Image Read";
+
+    if ($options == 0) {
+        // Default UI
+
+        editorTemplate -beginLayout $label -collapse $collapse;
+
+        AEocgCompNodeButton($nodeName);
+        editorTemplate -addSeparator;
+        editorTemplate -addControl "enable";
+        editorTemplate -addSeparator;
+        editorTemplate -addControl "filePath";
+        // editorTemplate -addSeparator;
+        // editorTemplate -addControl "startFrame";
+        // editorTemplate -addControl "endFrame";
+        // editorTemplate -addSeparator;
+        // editorTemplate -addControl "beforeFrame";
+        // editorTemplate -addControl "afterFrame";
+        editorTemplate -endLayout;
+
+        AEocgDiskCacheLayout($nodeName, "", 1, $options);
+        AEocgDiskCacheSuppressAttributes($nodeName);
+
+    } else if ($options == 1) {
+        // Minimal UI
+
+        $label = $label + " - " + $nodeName;
+        editorTemplate -beginLayout $label -collapse $collapse;
+
+        editorTemplate -addControl "enable";
+        editorTemplate -addControl "filePath";
+
+        editorTemplate -endLayout;
+    }
+}
+
+
 global proc AEocgImageReadTemplate(string $nodeName)
 {
-    editorTemplate -beginScrollLayout;
+    AEocgNodeTemplateCommonBegin($nodeName);
 
-    editorTemplate -beginLayout "Image Read" -collapse 0;
-    editorTemplate -addControl "enable";
-    editorTemplate -addSeparator;
-    editorTemplate -addControl "filePath";
-    // editorTemplate -addSeparator;
-    // editorTemplate -addControl "startFrame";
-    // editorTemplate -addControl "endFrame";
-    // editorTemplate -addSeparator;
-    // editorTemplate -addControl "beforeFrame";
-    // editorTemplate -addControl "afterFrame";
-    editorTemplate -endLayout;
+    int $options = 0;  // 0 == default
+    int $collapse = 0;
+    AEocgImageReadMain($nodeName, $collapse, $options);
 
-    // include/call base class/node attributes
-    AEabstractBaseCreateTemplate $nodeName;
+    AEocgNodeTemplateCommonEnd($nodeName);
 
-    editorTemplate -addExtraControls;
-
-    editorTemplate -endScrollLayout;
-
-    editorTemplate -suppress "outStream";
     editorTemplate -suppress "startFrame";
     editorTemplate -suppress "endFrame";
     editorTemplate -suppress "beforeFrame";

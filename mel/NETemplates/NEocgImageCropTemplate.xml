@@ -2,19 +2,20 @@
 <?xml version='1.0' encoding='UTF-8'?>
 <templates>
     <using package='maya'/>
-    <template name='NEocgImageRead'>
+    <template name='NEocgImageCrop'>
+        <attribute name='inStream' type='maya.TdataCompound'>
+            <label>In Stream</label>
+        </attribute>
         <attribute name='outStream' type='maya.TdataCompound'>
             <label>Out Stream</label>
         </attribute>
     </template>
-    <view name='NEDefault' template='NEocgImageRead'>
+    <view name='NEDefault' template='NEocgImageCrop'>
         <property name='outStream'/>
+        <property name='inStream'/>
         <property name='enable'/>
-        <property name='filePath'/>
-        <property name='startFrame'/>
-        <property name='endFrame'/>
     </view>
-    <view name='NEDefaultSoloOutput' template='NEocgImageRead'>
+    <view name='NEDefaultSoloOutput' template='NEocgImageCrop'>
         <property name='outStream'/>
     </view>
 </templates>

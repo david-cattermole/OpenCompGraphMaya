@@ -1,0 +1,28 @@
+
+<?xml version='1.0' encoding='UTF-8'?>
+<templates>
+    <using package='maya'/>
+    <template name='NEocgImageMerge'>
+        <attribute name='inStreamA' type='maya.TdataCompound'>
+            <label>In Stream A</label>
+        </attribute>
+        <attribute name='inStreamB' type='maya.TdataCompound'>
+            <label>In Stream B</label>
+        </attribute>
+        <attribute name='outStream' type='maya.TdataCompound'>
+            <label>Out Stream</label>
+        </attribute>
+    </template>
+    <view name='NEDefault' template='NEocgImageMerge'>
+        <property name='outStream'/>
+        <property name='inStreamA'/>
+        <property name='inStreamB'/>
+        <property name='enable'/>
+        <property name='filePath'/>
+        <property name='startFrame'/>
+        <property name='endFrame'/>
+    </view>
+    <view name='NEDefaultSoloOutput' template='NEocgImageMerge'>
+        <property name='outStream'/>
+    </view>
+</templates>

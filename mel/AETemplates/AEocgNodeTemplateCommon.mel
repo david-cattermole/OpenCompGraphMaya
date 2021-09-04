@@ -18,32 +18,22 @@
 // ---------------------------------------------------------------------
 
 
-source "AEocgNodeTemplateCommon";
-source "AEocgDiskCache";
-source "AEocgCompNode";
-
-
-global proc AEocgImageMergeTemplate(string $nodeName)
+global proc AEocgNodeTemplateCommonBegin(string $nodeName)
 {
-    AEocgNodeTemplateCommonBegin($nodeName);
+    editorTemplate -beginScrollLayout;
+}
 
-    editorTemplate -beginLayout "Image Merge" -collapse 0;
 
-    AEocgCompNodeButton($nodeName);
-    editorTemplate -addSeparator;
-    editorTemplate -addControl "enable";
-    editorTemplate -addSeparator;
-    editorTemplate -addControl "mode";
-    editorTemplate -addSeparator;
-    editorTemplate -addControl "mix";
-    editorTemplate -endLayout;
+global proc AEocgNodeTemplateCommonEnd(string $nodeName)
+{
+    // include/call base class/node attributes
+    AEabstractBaseCreateTemplate($nodeName);
 
-    AEocgDiskCacheLayout($nodeName, "", 1, 0);
-    AEocgDiskCacheSuppressAttributes($nodeName);
+    editorTemplate -addExtraControls;
 
-    AEocgNodeTemplateCommonEnd($nodeName);
+    editorTemplate -endScrollLayout;
 
+    // Common attributes that need to be suppressed from the UI.
     editorTemplate -suppress "inStream";
     editorTemplate -suppress "outStream";
-
 }

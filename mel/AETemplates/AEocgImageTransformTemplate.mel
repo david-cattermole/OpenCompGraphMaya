@@ -18,11 +18,18 @@
 // ---------------------------------------------------------------------
 
 
+source "AEocgNodeTemplateCommon";
+source "AEocgDiskCache";
+source "AEocgCompNode";
+
+
 global proc AEocgImageTransformTemplate(string $nodeName)
 {
-    editorTemplate -beginScrollLayout;
+    AEocgNodeTemplateCommonBegin($nodeName);
 
     editorTemplate -beginLayout "Image Transform" -collapse 0;
+
+    AEocgCompNodeButton($nodeName);
     editorTemplate -addSeparator;
     editorTemplate -addControl "enable";
     editorTemplate -addSeparator;
@@ -38,16 +45,11 @@ global proc AEocgImageTransformTemplate(string $nodeName)
     editorTemplate -addControl "invert";
     editorTemplate -endLayout;
 
-    // include/call base class/node attributes
-    AEabstractBaseCreateTemplate $nodeName;
+    AEocgDiskCacheLayout($nodeName, "", 1, 0);
+    AEocgDiskCacheSuppressAttributes($nodeName);
 
-    editorTemplate -addExtraControls;
-
-    editorTemplate -endScrollLayout;
+    AEocgNodeTemplateCommonEnd($nodeName);
 
     editorTemplate -suppress "rotateCenterX";
     editorTemplate -suppress "rotateCenterY";
-    editorTemplate -suppress "inStream";
-    editorTemplate -suppress "outStream";
-
 }
