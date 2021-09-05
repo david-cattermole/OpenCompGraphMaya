@@ -68,16 +68,59 @@ public:
     // Input Attributes
     static MObject m_in_stream_attr;
     static MObject m_enable_attr;
+
+    static MObject m_process_r_attr;
+    static MObject m_process_g_attr;
+    static MObject m_process_b_attr;
+    static MObject m_process_a_attr;
+
+    static MObject m_black_point_r_attr;
+    static MObject m_black_point_g_attr;
+    static MObject m_black_point_b_attr;
+    static MObject m_black_point_a_attr;
+
+    static MObject m_white_point_r_attr;
+    static MObject m_white_point_g_attr;
+    static MObject m_white_point_b_attr;
+    static MObject m_white_point_a_attr;
+
+    static MObject m_lift_r_attr;
+    static MObject m_lift_g_attr;
+    static MObject m_lift_b_attr;
+    static MObject m_lift_a_attr;
+
+    static MObject m_gain_r_attr;
+    static MObject m_gain_g_attr;
+    static MObject m_gain_b_attr;
+    static MObject m_gain_a_attr;
+
     static MObject m_multiply_r_attr;
     static MObject m_multiply_g_attr;
     static MObject m_multiply_b_attr;
     static MObject m_multiply_a_attr;
+
+    static MObject m_offset_r_attr;
+    static MObject m_offset_g_attr;
+    static MObject m_offset_b_attr;
+    static MObject m_offset_a_attr;
+
+    static MObject m_gamma_r_attr;
+    static MObject m_gamma_g_attr;
+    static MObject m_gamma_b_attr;
+    static MObject m_gamma_a_attr;
+
+    static MObject m_reverse_attr;
+    static MObject m_clamp_black_attr;
+    static MObject m_clamp_white_attr;
+    static MObject m_premult_attr;
 
     // Output Attributes
     static MObject m_out_stream_attr;
 
 private:
     ocg::Node m_ocg_grade_node;
+    ocg::Node m_ocg_read_node;
+    ocg::Node m_ocg_write_node;
 };
 
 } // namespace open_comp_graph_maya
