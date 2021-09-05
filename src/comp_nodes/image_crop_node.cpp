@@ -182,7 +182,7 @@ MStatus ImageCropNode::initialize() {
         MFnNumericData::kInt, window_default_b);
     CHECK_MSTATUS(nAttr.setStorable(true));
     CHECK_MSTATUS(nAttr.setKeyable(true));
-    CHECK_MSTATUS(nAttr.setSoftMax(window_soft_min));
+    CHECK_MSTATUS(nAttr.setSoftMin(window_soft_min));
     CHECK_MSTATUS(nAttr.setSoftMax(window_soft_max));
 
     m_window_max_y_attr = nAttr.create(
@@ -190,7 +190,7 @@ MStatus ImageCropNode::initialize() {
         MFnNumericData::kInt, window_default_b);
     CHECK_MSTATUS(nAttr.setStorable(true));
     CHECK_MSTATUS(nAttr.setKeyable(true));
-    CHECK_MSTATUS(nAttr.setSoftMax(window_soft_min));
+    CHECK_MSTATUS(nAttr.setSoftMin(window_soft_min));
     CHECK_MSTATUS(nAttr.setSoftMax(window_soft_max));
 
     // 'reformat' toggle
