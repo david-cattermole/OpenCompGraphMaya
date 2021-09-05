@@ -21,6 +21,7 @@
 source "AEocgNodeTemplateCommon";
 source "AEocgDiskCache";
 source "AEocgCompNode";
+source "AEocgNodeIo";
 
 
 global proc AEocgLensDistortTemplate(string $nodeName)
@@ -46,6 +47,7 @@ global proc AEocgLensDistortTemplate(string $nodeName)
 
     editorTemplate -endLayout;
 
+    AEocgNodeIoLayout($nodeName, "", 1);
     AEocgDiskCacheLayout($nodeName, "", 1, 0);
     AEocgDiskCacheSuppressAttributes($nodeName);
 
