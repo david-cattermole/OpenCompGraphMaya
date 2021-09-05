@@ -93,7 +93,9 @@ MStatus ImageTransformNode::updateOcgNodes(
     bool exists = shared_graph->node_exists(m_ocg_node);
     if (!exists) {
         MString node_name = "transform";
-        auto node_hash = generateUniqueNodeHash(node_name);
+        auto node_hash = generate_unique_node_hash(
+            m_node_uuid,
+            node_name);
         m_ocg_node = shared_graph->create_node(
             ocg::NodeType::kTransform,
             node_hash);

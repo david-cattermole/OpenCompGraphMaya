@@ -88,7 +88,9 @@ MStatus ColorGradeNode::updateOcgNodes(
     bool grade_exists = shared_graph->node_exists(m_ocg_grade_node);
     if (!grade_exists) {
         MString node_name = "grade";
-        auto grade_node_hash = generateUniqueNodeHash(node_name);
+        auto grade_node_hash = generate_unique_node_hash(
+            m_node_uuid,
+            node_name);
         m_ocg_grade_node =
             shared_graph->create_node(
                 ocg::NodeType::kGrade,

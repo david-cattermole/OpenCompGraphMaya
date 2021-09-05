@@ -248,8 +248,8 @@ MStatus BaseNode::create_output_stream_attribute(MObject &attr) {
 // Generate a hash that is seeded by the current node UUID,
 // providing a technique for creating consistent OCG node hashes
 // for each instance of Maya node.
-uint64_t BaseNode::generateUniqueNodeHash(MString &node_name) {
-    MString uuid_string = m_node_uuid.asString();
+uint64_t BaseNode::generate_unique_node_hash(MUuid &node_uuid, MString &node_name) {
+    MString uuid_string = node_uuid.asString();
     uuid_string += node_name;
 
     // Generate a 64-bit hash id from the 128-bit UUID string plus

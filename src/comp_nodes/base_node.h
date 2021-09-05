@@ -61,6 +61,9 @@ public:
     static MStatus
     create_output_stream_attribute(MObject &attr);
 
+    static uint64_t
+    generate_unique_node_hash(MUuid &node_uuid, MString &node_name);
+
     // OCG Node Graph Helpers.
     virtual MStatus computeOcgStream(
         const MPlug &plug, MDataBlock &data,
@@ -73,7 +76,6 @@ public:
         std::vector<ocg::Node> input_ocg_nodes,
         ocg::Node &output_ocg_node);
 
-    uint64_t generateUniqueNodeHash(MString &node_name);
 
 protected:
     MUuid m_node_uuid;
