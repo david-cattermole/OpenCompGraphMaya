@@ -161,6 +161,7 @@ Shader::compile_file(const MString shader_file_name) {
         return MS::kFailure;
     }
 
+    // TODO: Surely this should be run only once at plug-in start up?
     MString shader_location;
     MString cmd = MString("getModulePath -moduleName \"OpenCompGraphMaya\";");
     if (!MGlobal::executeCommand(cmd, shader_location, false)) {

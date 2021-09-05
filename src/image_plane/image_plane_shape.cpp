@@ -113,7 +113,6 @@ ShapeNode::~ShapeNode() {}
 
 // Called after the node is created.
 void ShapeNode::postConstructor() {
-    // Get the size
     MObject this_node = ShapeNode::thisMObject();
 
     // Get Node UUID
@@ -247,7 +246,7 @@ MStatus ShapeNode::preEvaluation(
     return MStatus::kSuccess;
 }
 
-// Called before this node is evaluated by Evaluation Manager.
+// Called after this node is evaluated by Evaluation Manager.
 //
 // Helps to trigger the node to be evaluated in viewport 2.0.
 MStatus ShapeNode::postEvaluation(
