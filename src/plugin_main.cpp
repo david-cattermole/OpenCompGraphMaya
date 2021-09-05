@@ -46,6 +46,7 @@
 #include <comp_nodes/lens_distort_node.h>
 #include <comp_nodes/image_transform_node.h>
 #include <comp_nodes/image_crop_node.h>
+#include <preferences_node.h>
 #include <graph_data.h>
 #include "global_cache.h"
 #include "logger.h"
@@ -121,6 +122,13 @@ MStatus initializePlugin(MObject obj) {
         ocgm::GraphData::m_id,
         ocgm::GraphData::creator,
         status);
+
+    REGISTER_NODE(plugin,
+                  ocgm::PreferencesNode::nodeName(),
+                  ocgm::PreferencesNode::m_id,
+                  ocgm::PreferencesNode::creator,
+                  ocgm::PreferencesNode::initialize,
+                  status);
 
     REGISTER_NODE(plugin,
                   ocgm::ImageReadNode::nodeName(),
@@ -254,6 +262,9 @@ MStatus uninitializePlugin(MObject obj) {
     // Deregister custom selection mask
     MSelectionMask::deregisterSelectionType(
         ocgm::image_plane::ShapeNode::m_selection_type_name);
+
+    DEREGISTER_NODE(plugin, ocgm::PreferencesNode::nodeName(),
+                    ocgm::PreferencesNode::m_id, status);
 
     DEREGISTER_NODE(plugin, ocgm::ImageReadNode::nodeName(),
                     ocgm::ImageReadNode::m_id, status);

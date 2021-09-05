@@ -38,6 +38,7 @@ set(SOURCE_FILES
   ${CMAKE_CURRENT_SOURCE_DIR}/comp_nodes/image_crop_node.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/comp_nodes/color_grade_node.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/comp_nodes/lens_distort_node.cpp
+  ${CMAKE_CURRENT_SOURCE_DIR}/preferences_node.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/graph_data.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/graph_execute.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/geometry_buffer.cpp
