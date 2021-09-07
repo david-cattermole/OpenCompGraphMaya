@@ -33,6 +33,7 @@ set(SOURCE_FILES
   ${CMAKE_CURRENT_SOURCE_DIR}/image_plane/image_plane_geometry_window.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/comp_nodes/base_node.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/comp_nodes/image_read_node.cpp
+  ${CMAKE_CURRENT_SOURCE_DIR}/comp_nodes/image_write_node.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/comp_nodes/image_merge_node.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/comp_nodes/image_transform_node.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/comp_nodes/image_crop_node.cpp

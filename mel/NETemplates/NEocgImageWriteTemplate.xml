@@ -1,0 +1,21 @@
+
+<?xml version='1.0' encoding='UTF-8'?>
+<templates>
+    <using package='maya'/>
+    <template name='NEocgImageWrite'>
+        <attribute name='inStream' type='maya.TdataCompound'>
+            <label>In Stream</label>
+        </attribute>
+        <attribute name='outStream' type='maya.TdataCompound'>
+            <label>Out Stream</label>
+        </attribute>
+    </template>
+    <view name='NEDefault' template='NEocgImageWrite'>
+        <property name='outStream'/>
+        <property name='inStream'/>
+        <property name='enable'/>
+    </view>
+    <view name='NEDefaultSoloOutput' template='NEocgImageWrite'>
+        <property name='outStream'/>
+    </view>
+</templates>
