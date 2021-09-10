@@ -36,7 +36,7 @@ global proc AEocgImageWriteTemplate(string $nodeName)
     editorTemplate -addControl "filePath";
     editorTemplate -endLayout;
 
-    AEocgDiskCacheLayout($nodeName, "", 1, $options);
+    AEocgDiskCacheLayout($nodeName, "", 1, 0);
     AEocgDiskCacheSuppressAttributes($nodeName);
 
     AEocgNodeTemplateCommonEnd($nodeName);
