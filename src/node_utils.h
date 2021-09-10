@@ -21,9 +21,13 @@
  */
 
 // Maya
+#include <maya/MStatus.h>
 #include <maya/MObject.h>
 #include <maya/MDataBlock.h>
 #include <maya/MString.h>
+
+// OCG
+#include "opencompgraph.h"
 
 namespace open_comp_graph_maya {
 namespace utils {
@@ -37,6 +41,11 @@ int32_t get_attr_value_int(MDataBlock &data_block, MObject &attr);
 float get_attr_value_float(MDataBlock &data_block, MObject &attr);
 
 MString get_attr_value_string(MDataBlock &data_block, MObject &attr);
+
+MStatus
+get_plug_ocg_stream_value(MPlug &plug,
+                          std::shared_ptr<open_comp_graph::Graph> &graph,
+                          open_comp_graph::Node &value);
 
 } // namespace utils
 } // namespace open_comp_graph_maya

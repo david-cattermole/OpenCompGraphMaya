@@ -25,6 +25,19 @@
 #include <maya/MDataBlock.h>
 #include <maya/MDataHandle.h>
 #include <maya/MString.h>
+#include <maya/MPlug.h>
+#include <maya/MFnPluginData.h>
+
+// OCG
+#include "opencompgraph.h"
+
+// OCG Maya
+#include "logger.h"
+#include "graph_data.h"
+
+#include "node_utils.h"
+
+namespace ocg = open_comp_graph;
 
 namespace open_comp_graph_maya {
 namespace utils {
@@ -62,6 +75,45 @@ MString get_attr_value_string(MDataBlock &data_block, MObject &attr) {
     MDataHandle handle = data_block.inputValue(attr, &status);
     CHECK_MSTATUS(status);
     return handle.asString();
+}
+
+// Get the ocgStreamData type from the given plug.
+MStatus
+get_plug_ocg_stream_value(MPlug &plug,
+                          std::shared_ptr<ocg::Graph> &graph,
+                          ocg::Node &value) {
+    MStatus status;
+    auto log = log::get_logger();
+
+    if (!plug.isNull()) {
+        log->debug(
+            "Reading plug: {}", plug.name().asChar());
+        MObject new_object = plug.asMObject(&status);
+        if (new_object.isNull() || (status != MS::kSuccess)) {
+            log->warn("Input stream is not valid - maybe connect a node?");
+            status = MS::kFailure;
+            status.perror("Input stream is not valid - maybe connect a node?");
+            return status;
+        } else {
+            // Convert Maya controlled data into the OCG custom MPxData class.
+            // We are ensured this is valid from Maya. The MObject is a smart
+            // pointer and we check the object is valid before-hand too.
+            MFnPluginData fn_plugin_data(new_object);
+            GraphData *input_stream_data =
+                static_cast<GraphData *>(fn_plugin_data.data(&status));
+            CHECK_MSTATUS(status);
+            if (input_stream_data == nullptr) {
+                log->error("Input stream data is not valid.");
+                status = MS::kFailure;
+                status.perror("Input stream data is not valid.");
+                return status;
+            } else {
+                value = input_stream_data->get_node();
+                log->debug("input node id: {}", value.get_id());
+            }
+        }
+    }
+    return status;
 }
 
 } // namespace utils

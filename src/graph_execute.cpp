@@ -32,14 +32,14 @@ namespace ocg = open_comp_graph;
 namespace open_comp_graph_maya {
 namespace graph {
 
+
 // Trigger an OCG Graph evaluation and return the computed data.
-ocg::ExecuteStatus execute_ocg_graph(
+ocg::ExecuteStatus execute_ocg_graph_frames(
         ocg::Node stream_ocg_node,
-        int32_t execute_frame,
+        std::vector<double> execute_frames,
         std::shared_ptr <ocg::Graph> shared_graph,
         std::shared_ptr <ocg::Cache> shared_cache) {
     auto log = log::get_logger();
-    log->debug("execute_frame={}", execute_frame);
 
     bool exists = shared_graph->node_exists(stream_ocg_node);
     log->debug(
@@ -48,13 +48,12 @@ ocg::ExecuteStatus execute_ocg_graph(
         static_cast<uint64_t>(stream_ocg_node.get_node_type()),
         exists);
 
-    std::vector <int32_t> frames;
-    frames.push_back(execute_frame);
-    for (auto f : frames) {
-        log->debug("frames={}", f);
+    for (auto f : execute_frames) {
+        log->debug("execute_frames={}", f);
     }
+
     auto exec_status = shared_graph->execute(
-        stream_ocg_node, frames, shared_cache);
+        stream_ocg_node, execute_frames, shared_cache);
     log->debug(
         "execute status={}",
         static_cast<uint64_t>(exec_status));
@@ -75,6 +74,26 @@ ocg::ExecuteStatus execute_ocg_graph(
     }
     return exec_status;
 }
+
+
+// Trigger an OCG Graph evaluation and return the computed data.
+ocg::ExecuteStatus execute_ocg_graph(
+        ocg::Node stream_ocg_node,
+        double execute_frame,
+        std::shared_ptr <ocg::Graph> shared_graph,
+        std::shared_ptr <ocg::Cache> shared_cache) {
+    auto log = log::get_logger();
+
+    std::vector <double> execute_frames;
+    execute_frames.push_back(execute_frame);
+
+    return execute_ocg_graph_frames(
+        stream_ocg_node,
+        execute_frames,
+        shared_graph,
+        shared_cache);
+}
+
 
 } // namespace graph
 } // namespace open_comp_graph_maya

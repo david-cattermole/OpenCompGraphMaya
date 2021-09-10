@@ -314,7 +314,7 @@ void GeometryOverride::updateDG() {
     m_exec_status = ocg::ExecuteStatus::kUninitialized;
     if (stream_values_changed > 0) {
         log->debug("ocgImagePlane: m_time={}", m_time);
-        int32_t execute_frame = static_cast<int32_t>(std::lround(m_time));
+        double execute_frame = std::lround(m_time);
         log->debug("ocgImagePlane: execute_frame={}", execute_frame);
         auto shared_cache = ocgm_cache::get_shared_cache();
         m_exec_status = ocgm_graph::execute_ocg_graph(

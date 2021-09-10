@@ -37,9 +37,15 @@ namespace ocg = open_comp_graph;
 namespace open_comp_graph_maya {
 namespace graph {
 
+ocg::ExecuteStatus execute_ocg_graph_frames(
+    ocg::Node stream_ocg_node,
+    std::vector<double> execute_frames,
+    std::shared_ptr<ocg::Graph> shared_graph,
+    std::shared_ptr<ocg::Cache> shared_cache);
+
 ocg::ExecuteStatus execute_ocg_graph(
     ocg::Node stream_ocg_node,
-    int32_t execute_frame,
+    double execute_frame,
     std::shared_ptr<ocg::Graph> shared_graph,
     std::shared_ptr<ocg::Cache> shared_cache);
 

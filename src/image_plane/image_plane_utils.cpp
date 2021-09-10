@@ -40,6 +40,7 @@
 // OCG Maya
 #include "graph_data.h"
 #include "logger.h"
+#include "../node_utils.h"
 
 namespace ocg = open_comp_graph;
 
@@ -190,34 +191,21 @@ get_plug_value_stream(MPlug plug, ocg::Node old_value) {
     auto shared_graph = get_shared_graph();
     bool has_changed = false;
     ocg::Node value = old_value;
-    if (!plug.isNull()) {
-        ocg::Node new_value = ocg::Node(ocg::NodeType::kNull, 0);
-        MObject new_object = plug.asMObject(&status);
-        if (new_object.isNull() || (status != MS::kSuccess)) {
-            log->warn("Input stream is not valid - maybe connect a node?");
-        } else {
-            // Convert Maya controlled data into the OCG custom MPxData class.
-            // We are ensured this is valid from Maya. The MObject is a smart
-            // pointer and we check the object is valid before-hand too.
-            MFnPluginData fn_plugin_data(new_object);
-            GraphData *input_stream_data =
-                static_cast<GraphData *>(fn_plugin_data.data(&status));
-            CHECK_MSTATUS(status);
-            if (input_stream_data == nullptr) {
-                log->error("Input stream data is not valid.");
-            } else {
-                new_value = input_stream_data->get_node();
-                log->debug("input node id: {}", new_value.get_id());
-            }
-        }
-
+    ocg::Node new_value = ocg::Node(ocg::NodeType::kNull, 0);
+    status = open_comp_graph_maya::utils::get_plug_ocg_stream_value(
+        plug, shared_graph, new_value);
+    if (status != MS::kFailure) {
         has_changed =
             (shared_graph->state() != ocg::GraphState::kClean)
             || (old_value.get_id() != new_value.get_id());
         if (has_changed) {
             value = new_value;
         }
+    } else {
+        // log->warn("Input stream is not valid - maybe connect a node?");
+        log->error("Input stream data is not valid.");
     }
+
     return std::make_tuple(value, has_changed);
 }
 
