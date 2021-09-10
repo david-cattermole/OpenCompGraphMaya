@@ -48,12 +48,27 @@
 #include <comp_nodes/image_transform_node.h>
 #include <comp_nodes/image_crop_node.h>
 #include <preferences_node.h>
+#include <execute_cmd.h>
 #include <graph_data.h>
 #include "global_cache.h"
 #include "logger.h"
 
 namespace ocg = open_comp_graph;
 namespace ocgm = open_comp_graph_maya;
+
+#define REGISTER_COMMAND(plugin, name, creator, syntax, stat) \
+    stat = plugin.registerCommand( name, creator, syntax);    \
+    if (!stat) {                                              \
+        stat.perror(MString(name) + ": registerCommand");     \
+        return status;                                        \
+    }
+
+#define DEREGISTER_COMMAND(plugin, name, stat)              \
+    stat = plugin.deregisterCommand(name);                  \
+    if (!stat) {                                            \
+        stat.perror(MString(name) + ": deregisterCommand"); \
+        return stat;                                        \
+    }
 
 #define REGISTER_NODE(plugin, name, id, creator, initialize, stat) \
     stat = plugin.registerNode(name, id, creator, initialize);     \
@@ -114,6 +129,13 @@ MStatus initializePlugin(MObject obj) {
     // TODO: When a scene is closed, the Cache should automatically flush.
     shared_cache->set_capacity_bytes(20 * bytes_to_gigabytes);  // 20GB of RAM
     shared_color_tfm_cache->set_capacity_bytes(0.1 * bytes_to_gigabytes);  // 100MB of RAM
+
+    REGISTER_COMMAND(
+        plugin,
+        ocgm::ExecuteCmd::cmdName(),
+        ocgm::ExecuteCmd::creator,
+        ocgm::ExecuteCmd::newSyntax,
+        status);
 
     // Register data types first, so the nodes and commands below can
     // reference them.
@@ -300,6 +322,8 @@ MStatus uninitializePlugin(MObject obj) {
     DEREGISTER_DATA(plugin,
                     ocgm::GraphData::typeName(),
                     ocgm::GraphData::m_id, status);
+
+    DEREGISTER_COMMAND(plugin, ocgm::ExecuteCmd::cmdName(), status);
 
     ocgm::log::deinitialize();
     return status;

@@ -40,6 +40,7 @@ set(SOURCE_FILES
   ${CMAKE_CURRENT_SOURCE_DIR}/comp_nodes/color_grade_node.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/comp_nodes/lens_distort_node.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/preferences_node.cpp
+  ${CMAKE_CURRENT_SOURCE_DIR}/execute_cmd.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/graph_data.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/graph_execute.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/geometry_buffer.cpp
@@ -144,6 +145,7 @@ target_include_directories(OpenCompGraphMaya
 target_link_libraries(OpenCompGraphMaya
   PUBLIC
       ${MAYA_OpenMaya_LIBRARY}
+      ${MAYA_OpenMayaAnim_LIBRARY}
       ${MAYA_OpenMayaUI_LIBRARY}
       ${MAYA_OpenMayaRender_LIBRARY}
       ${MAYA_Foundation_LIBRARY}
