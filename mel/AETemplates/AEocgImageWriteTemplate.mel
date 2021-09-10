@@ -19,7 +19,6 @@
 
 
 source "AEocgNodeTemplateCommon";
-source "AEocgDiskCache";
 source "AEocgCompNode";
 
 
@@ -36,11 +35,5 @@ global proc AEocgImageWriteTemplate(string $nodeName)
     editorTemplate -addControl "filePath";
     editorTemplate -endLayout;
 
-    AEocgDiskCacheLayout($nodeName, "", 1, 0);
-    AEocgDiskCacheSuppressAttributes($nodeName);
-
     AEocgNodeTemplateCommonEnd($nodeName);
-
-    editorTemplate -suppress "startFrame";
-    editorTemplate -suppress "endFrame";
 }
