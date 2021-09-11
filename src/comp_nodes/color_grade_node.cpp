@@ -102,6 +102,7 @@ MObject ColorGradeNode::m_reverse_attr;
 MObject ColorGradeNode::m_clamp_black_attr;
 MObject ColorGradeNode::m_clamp_white_attr;
 MObject ColorGradeNode::m_premult_attr;
+MObject ColorGradeNode::m_mix_attr;
 
 
 // Output Attributes
@@ -245,6 +246,7 @@ MStatus ColorGradeNode::updateOcgNodes(
         bool clamp_black = utils::get_attr_value_bool(data, m_clamp_black_attr);
         bool clamp_white = utils::get_attr_value_bool(data, m_clamp_white_attr);
         bool premult = utils::get_attr_value_bool(data, m_premult_attr);
+        float mix = utils::get_attr_value_float(data, m_mix_attr);
         shared_graph->set_node_attr_i32(
             m_ocg_grade_node, "reverse", static_cast<int32_t>(reverse));
         shared_graph->set_node_attr_i32(
@@ -253,6 +255,7 @@ MStatus ColorGradeNode::updateOcgNodes(
             m_ocg_grade_node, "clamp_white", static_cast<int32_t>(clamp_white));
         shared_graph->set_node_attr_i32(
             m_ocg_grade_node, "premult", static_cast<int32_t>(premult));
+        shared_graph->set_node_attr_f32(m_ocg_grade_node, "mix", mix);
     }
 
     return status;
@@ -296,7 +299,6 @@ MStatus ColorGradeNode::initialize() {
         MFnNumericData::kBoolean, true);
     CHECK_MSTATUS(nAttr.setStorable(true));
     CHECK_MSTATUS(nAttr.setKeyable(true));
-
 
     m_process_a_attr = nAttr.create(
         "processA", "prca",
@@ -586,6 +588,14 @@ MStatus ColorGradeNode::initialize() {
     CHECK_MSTATUS(nAttr.setStorable(true));
     CHECK_MSTATUS(nAttr.setKeyable(true));
 
+    m_mix_attr = nAttr.create(
+        "mix", "mix",
+        MFnNumericData::kFloat, 1.0);
+    CHECK_MSTATUS(nAttr.setStorable(true));
+    CHECK_MSTATUS(nAttr.setKeyable(true));
+    CHECK_MSTATUS(nAttr.setMin(0.0));
+    CHECK_MSTATUS(nAttr.setMax(1.0));
+
     // Create Common Attributes
     CHECK_MSTATUS(create_enable_attribute(m_enable_attr));
     CHECK_MSTATUS(create_input_stream_attribute(m_in_stream_attr));
@@ -638,6 +648,7 @@ MStatus ColorGradeNode::initialize() {
     CHECK_MSTATUS(addAttribute(m_clamp_black_attr));
     CHECK_MSTATUS(addAttribute(m_clamp_white_attr));
     CHECK_MSTATUS(addAttribute(m_premult_attr));
+    CHECK_MSTATUS(addAttribute(m_mix_attr));
 
     CHECK_MSTATUS(addAttribute(m_in_stream_attr));
     CHECK_MSTATUS(addAttribute(m_out_stream_attr));
@@ -689,6 +700,7 @@ MStatus ColorGradeNode::initialize() {
     CHECK_MSTATUS(attributeAffects(m_clamp_black_attr, m_out_stream_attr));
     CHECK_MSTATUS(attributeAffects(m_clamp_white_attr, m_out_stream_attr));
     CHECK_MSTATUS(attributeAffects(m_premult_attr, m_out_stream_attr));
+    CHECK_MSTATUS(attributeAffects(m_mix_attr, m_out_stream_attr));
 
     CHECK_MSTATUS(attributeAffects(m_in_stream_attr, m_out_stream_attr));
 

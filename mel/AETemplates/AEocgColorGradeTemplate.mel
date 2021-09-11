@@ -99,6 +99,9 @@ global proc AEocgColorGradeTemplate(string $nodeName)
     editorTemplate -endNoOptimize;
     editorTemplate -addControl "premult";
 
+    editorTemplate -addSeparator;
+    editorTemplate -addControl "mix";
+
     editorTemplate -endLayout;
 
     AEocgDiskCacheLayout($nodeName, "", 1, 0);

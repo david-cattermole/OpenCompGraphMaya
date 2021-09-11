@@ -113,6 +113,7 @@ public:
     static MObject m_clamp_black_attr;
     static MObject m_clamp_white_attr;
     static MObject m_premult_attr;
+    static MObject m_mix_attr;
 
     // Output Attributes
     static MObject m_out_stream_attr;
