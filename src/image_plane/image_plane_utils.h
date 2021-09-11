@@ -73,7 +73,7 @@ get_plug_value_string(MPlug plug, MString old_value);
 
 // Get the ocgStreamData type from the given plug.
 std::tuple<ocg::Node, bool>
-get_plug_value_stream(MPlug plug, ocg::Node old_value);
+get_plug_value_stream(MPlug &plug, ocg::Node old_value);
 
 } // namespace utils
 } // namespace image_plane

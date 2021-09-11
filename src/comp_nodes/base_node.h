@@ -65,6 +65,13 @@ public:
     generate_unique_node_hash(MUuid &node_uuid, MString &node_name);
 
     // OCG Node Graph Helpers.
+    static MStatus
+    joinOcgNodes(
+        std::shared_ptr<ocg::Graph> &shared_graph,
+        ocg::Node &input_ocg_node,
+        ocg::Node &output_ocg_node,
+        uint8_t input_num);
+
     virtual MStatus computeOcgStream(
         const MPlug &plug, MDataBlock &data,
         MObjectArray &in_stream_attr_array,

@@ -100,10 +100,24 @@ MStatus ImageMergeNode::updateOcgNodes(
             ocg::NodeType::kMergeImage,
             node_hash);
     }
+
     auto input_ocg_node_a = input_ocg_nodes[0];
+    uint8_t input_num_a = 0;
+    status = BaseNode::joinOcgNodes(
+        shared_graph,
+        input_ocg_node_a,
+        m_ocg_node,
+        input_num_a);
+    CHECK_MSTATUS(status);
+
     auto input_ocg_node_b = input_ocg_nodes[1];
-    shared_graph->connect(input_ocg_node_a, m_ocg_node, 0);
-    shared_graph->connect(input_ocg_node_b, m_ocg_node, 1);
+    uint8_t input_num_b = 1;
+    status = BaseNode::joinOcgNodes(
+        shared_graph,
+        input_ocg_node_b,
+        m_ocg_node,
+        input_num_b);
+    CHECK_MSTATUS(status);
 
     if (m_ocg_node.get_id() != 0) {
         // Set the output node

@@ -184,26 +184,24 @@ get_plug_value_string(MPlug plug, MString old_value) {
 
 // Get the ocgStreamData type from the given plug.
 std::tuple<ocg::Node, bool>
-get_plug_value_stream(MPlug plug, ocg::Node old_value) {
+get_plug_value_stream(MPlug &plug, ocg::Node old_value) {
     MStatus status;
     auto log = log::get_logger();
 
     auto shared_graph = get_shared_graph();
-    bool has_changed = false;
     ocg::Node value = old_value;
     ocg::Node new_value = ocg::Node(ocg::NodeType::kNull, 0);
     status = open_comp_graph_maya::utils::get_plug_ocg_stream_value(
         plug, shared_graph, new_value);
-    if (status != MS::kFailure) {
-        has_changed =
-            (shared_graph->state() != ocg::GraphState::kClean)
-            || (old_value.get_id() != new_value.get_id());
-        if (has_changed) {
-            value = new_value;
-        }
-    } else {
-        // log->warn("Input stream is not valid - maybe connect a node?");
-        log->error("Input stream data is not valid.");
+    if (status != MS::kSuccess) {
+        new_value = ocg::Node(ocg::NodeType::kNull, 0);
+    }
+
+    bool has_changed =
+        (shared_graph->state() != ocg::GraphState::kClean)
+        || (old_value.get_id() != new_value.get_id());
+    if (has_changed) {
+        value = new_value;
     }
 
     return std::make_tuple(value, has_changed);

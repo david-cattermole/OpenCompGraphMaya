@@ -139,7 +139,13 @@ MStatus ColorGradeNode::updateOcgNodes(
                 grade_node_hash);
     }
     auto input_ocg_node = input_ocg_nodes[0];
-    shared_graph->connect(input_ocg_node, m_ocg_grade_node, 0);
+    uint8_t input_num = 0;
+    status = BaseNode::joinOcgNodes(
+        shared_graph,
+        input_ocg_node,
+        m_ocg_grade_node,
+        input_num);
+    CHECK_MSTATUS(status);
 
     if (m_ocg_grade_node.get_id() != 0) {
         // Set the output node

@@ -166,8 +166,14 @@ void GeometryOverride::updateDG() {
         m_viewer_node = shared_graph->create_node(
             ocg::NodeType::kViewer,
             viewer_node_hash);
-
-        shared_graph->connect(m_in_stream_node, m_viewer_node, 0);
+    }
+    if (in_stream_has_changed) {
+        bool stream_node_exists = shared_graph->node_exists(m_in_stream_node);
+        if (stream_node_exists) {
+            shared_graph->connect(m_in_stream_node, m_viewer_node, 0);
+        } else {
+            shared_graph->disconnect_input(m_viewer_node, 0);
+        }
     }
 
     // Set attributes on Viewer

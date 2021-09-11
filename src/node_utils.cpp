@@ -84,35 +84,44 @@ get_plug_ocg_stream_value(MPlug &plug,
                           ocg::Node &value) {
     MStatus status;
     auto log = log::get_logger();
+    log->debug(
+        "Reading plug: {}",
+        plug.name().asChar());
 
-    if (!plug.isNull()) {
-        log->debug(
-            "Reading plug: {}", plug.name().asChar());
-        MObject new_object = plug.asMObject(&status);
-        if (new_object.isNull() || (status != MS::kSuccess)) {
-            log->warn("Input stream is not valid - maybe connect a node?");
-            status = MS::kFailure;
-            status.perror("Input stream is not valid - maybe connect a node?");
-            return status;
-        } else {
-            // Convert Maya controlled data into the OCG custom MPxData class.
-            // We are ensured this is valid from Maya. The MObject is a smart
-            // pointer and we check the object is valid before-hand too.
-            MFnPluginData fn_plugin_data(new_object);
-            GraphData *input_stream_data =
-                static_cast<GraphData *>(fn_plugin_data.data(&status));
-            CHECK_MSTATUS(status);
-            if (input_stream_data == nullptr) {
-                log->error("Input stream data is not valid.");
-                status = MS::kFailure;
-                status.perror("Input stream data is not valid.");
-                return status;
-            } else {
-                value = input_stream_data->get_node();
-                log->debug("input node id: {}", value.get_id());
-            }
-        }
+    if (plug.isNull()) {
+        log->error(
+            "Plug is not valid: {}",
+            plug.name().asChar());
+        status.perror("Plug is not valid.");
+        status = MS::kFailure;
+        return status;
     }
+
+    MObject new_object = plug.asMObject(&status);
+    if (new_object.isNull() || (status != MS::kSuccess)) {
+        log->warn("Input stream is not valid - maybe connect a node?");
+        value = ocg::Node(ocg::NodeType::kNull, 0);
+        status = MS::kSuccess;
+        return status;
+    }
+
+    // Convert Maya controlled data into the OCG custom MPxData class.
+    // We are ensured this is valid from Maya. The MObject is a smart
+    // pointer and we check the object is valid before-hand too.
+    MFnPluginData fn_plugin_data(new_object);
+    GraphData *input_stream_data =
+        static_cast<GraphData *>(fn_plugin_data.data(&status));
+    CHECK_MSTATUS(status);
+    if (input_stream_data == nullptr) {
+        log->error("Input stream data is not valid.");
+        status = MS::kFailure;
+        status.perror("Input stream data is not valid.");
+        return status;
+    }
+
+    value = input_stream_data->get_node();
+    log->debug("input node id: {}", value.get_id());
+
     return status;
 }
 

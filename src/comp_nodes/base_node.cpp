@@ -59,6 +59,20 @@ BaseNode::BaseNode()
 
 BaseNode::~BaseNode() {}
 
+MStatus BaseNode::joinOcgNodes(
+        std::shared_ptr<ocg::Graph> &shared_graph,
+        ocg::Node &input_ocg_node,
+        ocg::Node &output_ocg_node,
+        uint8_t input_num) {
+    bool input_node_exists = shared_graph->node_exists(input_ocg_node);
+    if (input_node_exists) {
+        shared_graph->connect(input_ocg_node, output_ocg_node, input_num);
+    } else {
+        shared_graph->disconnect_input(output_ocg_node, input_num);
+    }
+    return MS::kSuccess;
+}
+
 MStatus BaseNode::updateOcgNodes(
         MDataBlock &data,
         std::shared_ptr<ocg::Graph> &shared_graph,
@@ -96,13 +110,17 @@ MStatus BaseNode::computeOcgStream(const MPlug &plug, MDataBlock &data,
             MDataHandle in_stream_handle = data.inputValue(
                 in_stream_attr, &status);
             CHECK_MSTATUS_AND_RETURN_IT(status);
+
+            ocg::Node input_ocg_node = ocg::Node(ocg::NodeType::kNull, 0);
             GraphData* input_stream_data =
                 static_cast<GraphData*>(in_stream_handle.asPluginData());
-            if (input_stream_data == nullptr) {
-                status = MS::kFailure;
-                return status;
+            if (input_stream_data != nullptr) {
+                input_ocg_node = input_stream_data->get_node();
+            } else {
+                log->warn(
+                    "Input stream is not valid - maybe connect a node? input={}",
+                    i);
             }
-            auto input_ocg_node = input_stream_data->get_node();
             input_ocg_nodes.push_back(input_ocg_node);
         }
 
@@ -227,6 +245,7 @@ MStatus BaseNode::create_input_stream_attribute(MObject &attr, const MString &su
     CHECK_MSTATUS(tAttr.setKeyable(false));
     CHECK_MSTATUS(tAttr.setReadable(true));
     CHECK_MSTATUS(tAttr.setWritable(true));
+    CHECK_MSTATUS(tAttr.setDisconnectBehavior(MFnAttribute::kReset));
     return MS::kSuccess;
 }
 
@@ -242,6 +261,7 @@ MStatus BaseNode::create_output_stream_attribute(MObject &attr) {
     CHECK_MSTATUS(tAttr.setKeyable(false));
     CHECK_MSTATUS(tAttr.setReadable(true));
     CHECK_MSTATUS(tAttr.setWritable(false));
+    CHECK_MSTATUS(tAttr.setDisconnectBehavior(MFnAttribute::kReset));
     return MS::kSuccess;
 }
 
