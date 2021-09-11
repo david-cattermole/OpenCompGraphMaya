@@ -19,7 +19,6 @@
  *
  * Apply a 2D Transform to an image (with matrix concatenation)
  *
- * TODO: Add 'pivot' point for the transform effect.
  */
 
 // Maya
@@ -67,6 +66,8 @@ MObject ImageTransformNode::m_rotate_center_y_attr;
 MObject ImageTransformNode::m_scale_uniform_attr;
 MObject ImageTransformNode::m_scale_x_attr;
 MObject ImageTransformNode::m_scale_y_attr;
+MObject ImageTransformNode::m_pivot_x_attr;
+MObject ImageTransformNode::m_pivot_y_attr;
 MObject ImageTransformNode::m_invert_attr;
 
 // Output Attributes
@@ -133,6 +134,8 @@ MStatus ImageTransformNode::updateOcgNodes(
         float scale_uniform = utils::get_attr_value_float(data, m_scale_uniform_attr);
         float scale_x = utils::get_attr_value_float(data, m_scale_x_attr);
         float scale_y = utils::get_attr_value_float(data, m_scale_y_attr);
+        float px = utils::get_attr_value_float(data, m_pivot_x_attr);
+        float py = utils::get_attr_value_float(data, m_pivot_y_attr);
         shared_graph->set_node_attr_f32(m_ocg_node, "translate_x", tx);
         shared_graph->set_node_attr_f32(m_ocg_node, "translate_y", ty);
         shared_graph->set_node_attr_f32(m_ocg_node, "rotate", r);
@@ -140,6 +143,8 @@ MStatus ImageTransformNode::updateOcgNodes(
         shared_graph->set_node_attr_f32(m_ocg_node, "rotate_center_y", ry);
         shared_graph->set_node_attr_f32(m_ocg_node, "scale_x", scale_uniform * scale_x);
         shared_graph->set_node_attr_f32(m_ocg_node, "scale_y", scale_uniform * scale_y);
+        shared_graph->set_node_attr_f32(m_ocg_node, "pivot_x", px);
+        shared_graph->set_node_attr_f32(m_ocg_node, "pivot_y", py);
     }
 
     return status;
@@ -243,6 +248,26 @@ MStatus ImageTransformNode::initialize() {
     CHECK_MSTATUS(nAttr.setSoftMin(scale_soft_min));
     CHECK_MSTATUS(nAttr.setSoftMax(scale_soft_max));
 
+    // Pivot X and Y
+    float pivot_soft_min = -1.0f;
+    float pivot_soft_max = 1.0f;
+    float pivot_default = 0.5f;
+    m_pivot_x_attr = nAttr.create(
+        "pivotX", "px",
+        MFnNumericData::kFloat, pivot_default);
+    CHECK_MSTATUS(nAttr.setStorable(true));
+    CHECK_MSTATUS(nAttr.setKeyable(true));
+    CHECK_MSTATUS(nAttr.setSoftMin(pivot_soft_min));
+    CHECK_MSTATUS(nAttr.setSoftMax(pivot_soft_max));
+
+    m_pivot_y_attr = nAttr.create(
+        "pivotY", "py",
+        MFnNumericData::kFloat, pivot_default);
+    CHECK_MSTATUS(nAttr.setStorable(true));
+    CHECK_MSTATUS(nAttr.setKeyable(true));
+    CHECK_MSTATUS(nAttr.setSoftMin(pivot_soft_min));
+    CHECK_MSTATUS(nAttr.setSoftMax(pivot_soft_max));
+
     // 'invert' toggle, to invert the transform: 'A * invert(A) == A'.
     m_invert_attr = nAttr.create(
         "invert", "ivt",
@@ -265,6 +290,8 @@ MStatus ImageTransformNode::initialize() {
     CHECK_MSTATUS(addAttribute(m_scale_uniform_attr));
     CHECK_MSTATUS(addAttribute(m_scale_x_attr));
     CHECK_MSTATUS(addAttribute(m_scale_y_attr));
+    CHECK_MSTATUS(addAttribute(m_pivot_x_attr));
+    CHECK_MSTATUS(addAttribute(m_pivot_y_attr));
     CHECK_MSTATUS(addAttribute(m_invert_attr));
     CHECK_MSTATUS(addAttribute(m_in_stream_attr));
     CHECK_MSTATUS(addAttribute(m_out_stream_attr));
@@ -279,6 +306,8 @@ MStatus ImageTransformNode::initialize() {
     CHECK_MSTATUS(attributeAffects(m_scale_uniform_attr, m_out_stream_attr));
     CHECK_MSTATUS(attributeAffects(m_scale_x_attr, m_out_stream_attr));
     CHECK_MSTATUS(attributeAffects(m_scale_y_attr, m_out_stream_attr));
+    CHECK_MSTATUS(attributeAffects(m_pivot_x_attr, m_out_stream_attr));
+    CHECK_MSTATUS(attributeAffects(m_pivot_y_attr, m_out_stream_attr));
     CHECK_MSTATUS(attributeAffects(m_invert_attr, m_out_stream_attr));
     CHECK_MSTATUS(attributeAffects(m_in_stream_attr, m_out_stream_attr));
 

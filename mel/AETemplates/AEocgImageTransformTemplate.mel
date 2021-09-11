@@ -42,6 +42,9 @@ global proc AEocgImageTransformTemplate(string $nodeName)
     editorTemplate -addControl "scaleX";
     editorTemplate -addControl "scaleY";
     editorTemplate -addSeparator;
+    editorTemplate -addControl "pivotX";
+    editorTemplate -addControl "pivotY";
+    editorTemplate -addSeparator;
     editorTemplate -addControl "invert";
     editorTemplate -endLayout;
 

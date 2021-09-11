@@ -73,6 +73,8 @@ public:
     static MObject m_scale_uniform_attr;
     static MObject m_scale_x_attr;
     static MObject m_scale_y_attr;
+    static MObject m_pivot_x_attr;
+    static MObject m_pivot_y_attr;
     static MObject m_invert_attr;
 
     // Output Attributes
