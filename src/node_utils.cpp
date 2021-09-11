@@ -27,6 +27,11 @@
 #include <maya/MString.h>
 #include <maya/MPlug.h>
 #include <maya/MFnPluginData.h>
+#include <maya/MFnDependencyNode.h>
+
+// STL
+#include <sstream>  // stringstream
+#include <cctype>   // toupper
 
 // OCG
 #include "opencompgraph.h"
@@ -125,5 +130,75 @@ get_plug_ocg_stream_value(MPlug &plug,
     return status;
 }
 
+MString generate_unique_hash_string() {
+    // Generate hash and convert to string.
+    auto unique_hash_number =
+        ocg::internal::generate_random_id();
+    std::stringstream string_stream;
+    string_stream
+        << std::setfill('0')
+        << std::setw(sizeof(unique_hash_number) * 2)
+        << std::hex
+        << unique_hash_number;
+    auto unique_hash_string = string_stream.str();
+    std::transform(
+        unique_hash_string.begin(),
+        unique_hash_string.end(),
+        unique_hash_string.begin(),
+        [](unsigned char c){ return std::toupper(c); }
+    );
+    MString unique_hash_mstring(unique_hash_string.c_str());
+    return unique_hash_mstring;
+}
+
+MStatus find_unique_node_hash_plug(MFnDependencyNode &fn_depend_node, MPlug &plug) {
+    MString hash_attr_name("uniqueNodeHash");
+    plug = fn_depend_node.findPlug(hash_attr_name, true);
+    return MS::kSuccess;
+}
+
+MStatus create_empty_unique_node_hash_attr(MFnDependencyNode &fn_depend_node) {
+    MStatus status = MS::kSuccess;
+
+    MPlug hash_plug;
+    status = find_unique_node_hash_plug(fn_depend_node, hash_plug);
+    CHECK_MSTATUS(status);
+
+    // Get a unique random hash that will be created and set for the
+    // node just after construction, and set it in an attribute.
+    if (hash_plug.isNull()) {
+        // Create Attribute
+        MFnStringData fn_string_data;
+        MObject str_attr_object = fn_string_data.create("");
+        MFnTypedAttribute attr;
+        attr.setHidden(true);
+        MString hash_attr_name("uniqueNodeHash");
+        MObject attr_obj = attr.create(
+            hash_attr_name, hash_attr_name,
+            MFnData::kString, str_attr_object);
+        fn_depend_node.addAttribute(
+            attr_obj, MFnDependencyNode::kLocalDynamicAttr);
+        hash_plug = fn_depend_node.findPlug(attr_obj, true);
+    }
+
+    return status;
+}
+
+MStatus set_new_unique_node_hash_attr(MFnDependencyNode &fn_depend_node) {
+    MStatus status = MS::kSuccess;
+
+    MPlug hash_plug;
+    status = find_unique_node_hash_plug(fn_depend_node, hash_plug);
+    CHECK_MSTATUS(status);
+
+    if (hash_plug.isNull()) {return MS::kFailure;}
+
+    hash_plug.setLocked(false);
+    MString unique_hash_mstring = generate_unique_hash_string();
+    hash_plug.setValue(unique_hash_mstring);
+    hash_plug.setLocked(true);
+
+    return status;
+}
 } // namespace utils
 } // namespace open_comp_graph_maya

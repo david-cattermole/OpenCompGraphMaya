@@ -47,5 +47,11 @@ get_plug_ocg_stream_value(MPlug &plug,
                           std::shared_ptr<open_comp_graph::Graph> &graph,
                           open_comp_graph::Node &value);
 
+MStatus
+create_empty_unique_node_hash_attr(MFnDependencyNode &fn_depend_node);
+
+MStatus
+set_new_unique_node_hash_attr(MFnDependencyNode &fn_depend_node);
+
 } // namespace utils
 } // namespace open_comp_graph_maya

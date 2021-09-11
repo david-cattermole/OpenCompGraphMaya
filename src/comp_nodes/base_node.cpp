@@ -37,9 +37,7 @@
 
 // STL
 #include <cstring>
-#include <sstream>  // stringstream
 #include <cmath>
-#include <cctype>   // toupper
 
 // OCG
 #include "opencompgraph.h"
@@ -49,6 +47,7 @@
 #include "logger.h"
 #include "graph_data.h"
 #include "base_node.h"
+#include "../node_utils.h"
 
 namespace ocg = open_comp_graph;
 
@@ -157,7 +156,6 @@ MStatus BaseNode::computeOcgStream(const MPlug &plug, MDataBlock &data,
     return status;
 }
 
-
 // Called after the node is created.
 void BaseNode::postConstructor() {
     MObject this_node = BaseNode::thisMObject();
@@ -169,46 +167,15 @@ void BaseNode::postConstructor() {
     // Get Node UUID
     m_node_uuid = fn_depend_node.uuid();
 
-    // Get a unique random hash that will be created and set for the
-    // node just after construction, and set it in an attribute.
-    MString hash_attr_name("uniqueNodeHash");
-    MPlug hash_plug = fn_depend_node.findPlug(hash_attr_name, true);
-    if (hash_plug.isNull())
-    {
-        // Create Attribute
-        MFnStringData fn_string_data;
-        MObject str_attr_object = fn_string_data.create("");
-        MFnTypedAttribute attr;
-        attr.setHidden(true);
-        MObject attr_obj = attr.create(
-            hash_attr_name, hash_attr_name,
-            MFnData::kString, str_attr_object);
-        fn_depend_node.addAttribute(
-            attr_obj, MFnDependencyNode::kLocalDynamicAttr);
-        hash_plug = fn_depend_node.findPlug(attr_obj, true);
+    // NOTE: If the node is duplicated, the attribute stays the same
+    // value.
+    status = utils::create_empty_unique_node_hash_attr(fn_depend_node);
+    CHECK_MSTATUS(status);
+    status = utils::set_new_unique_node_hash_attr(fn_depend_node);
+    CHECK_MSTATUS(status);
 
-        // Generate hash and convert to string.
-        auto unique_hash_number =
-            ocg::internal::generate_random_id();
-        std::stringstream string_stream;
-        string_stream
-            << std::setfill('0')
-            << std::setw(sizeof(unique_hash_number) * 2)
-            << std::hex
-            << unique_hash_number;
-        auto unique_hash_string = string_stream.str();
-        std::transform(
-            unique_hash_string.begin(),
-            unique_hash_string.end(),
-            unique_hash_string.begin(),
-            [](unsigned char c){ return std::toupper(c); }
-        );
-        MString unique_hash_mstring(unique_hash_string.c_str());
-
-        hash_plug.setValue(unique_hash_mstring);
-        hash_plug.setLocked(true);
-    }
-
+    // TODO: Set the disk cache base directory value based on the
+    // current configuration values.
 };
 
 MStatus BaseNode::create_enable_attribute(MObject &attr) {
@@ -227,7 +194,6 @@ MStatus BaseNode::create_input_stream_attribute(MObject &attr) {
     MString suffix = "";
     return BaseNode::create_input_stream_attribute(attr, suffix);
 }
-
 
 MStatus BaseNode::create_input_stream_attribute(MObject &attr, const MString &suffix) {
     MStatus status = MS::kFailure;
