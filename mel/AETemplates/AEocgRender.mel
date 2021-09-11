@@ -1,0 +1,62 @@
+//
+// Copyright (C) 2021 David Cattermole.
+//
+// This file is part of OpenCompGraphMaya.
+//
+// OpenCompGraphMaya is free software: you can redistribute it and/or modify it
+// under the terms of the GNU Lesser General Public License as
+// published by the Free Software Foundation, either version 3 of the
+// License, or (at your option) any later version.
+//
+// OpenCompGraphMaya is distributed in the hope that it will be useful,
+// but WITHOUT ANY WARRANTY; without even the implied warranty of
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+// GNU Lesser General Public License for more details.
+//
+// You should have received a copy of the GNU Lesser General Public License
+// along with OpenCompGraphMaya.  If not, see <https://www.gnu.org/licenses/>.
+// ---------------------------------------------------------------------
+
+global proc AEocgRenderReplace(string $nodeName)
+{
+    string $buffer[];
+    int $numTokens = `tokenize $nodeName "." $buffer`;
+    $nodeName = $buffer[0];
+
+    button -e
+        -command ("AEocgRenderCommand " + $nodeName)
+        ocgGenerateRenderButton;
+}
+
+
+global proc AEocgRenderCommand(string $nodeName)
+{
+    // TODO: Enable the render window to use the initial node name of
+    // this current node.
+    python("import OpenCompGraphMaya.render_window as tool; tool.main()");
+}
+
+
+global proc AEocgRenderNew(string $nodeName)
+{
+    setUITemplate -pst attributeEditorTemplate;
+    rowLayout -nc 3;
+
+        text -label "" ;
+        button -label ("Render...") ocgGenerateRenderButton;
+        text -label "" ;
+
+    setParent ..;
+    setUITemplate -ppt;
+
+    AEocgRenderReplace $nodeName;
+}
+
+
+global proc AEocgRenderLayout(string $nodeName)
+{
+    // Add button to render.
+    editorTemplate
+        -callCustom "AEocgRenderNew" "AEocgRenderReplace"
+        $nodeName;
+}

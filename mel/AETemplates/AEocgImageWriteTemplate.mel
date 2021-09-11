@@ -20,6 +20,7 @@
 
 source "AEocgNodeTemplateCommon";
 source "AEocgCompNode";
+source "AEocgRender";
 
 
 global proc AEocgImageWriteTemplate(string $nodeName)
@@ -33,6 +34,10 @@ global proc AEocgImageWriteTemplate(string $nodeName)
     editorTemplate -addControl "enable";
     editorTemplate -addSeparator;
     editorTemplate -addControl "filePath";
+    editorTemplate -addSeparator;
+
+    AEocgRenderLayout($nodeName);
+
     editorTemplate -endLayout;
 
     AEocgNodeTemplateCommonEnd($nodeName);

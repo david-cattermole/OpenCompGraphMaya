@@ -41,6 +41,7 @@ set(MAYA_LIB_PATH "/usr/autodesk/maya${MAYA_VERSION}/lib" CACHE PATH "Maya libra
 
 add_subdirectory(modules)
 add_subdirectory(mel)
+add_subdirectory(python)
 add_subdirectory(shader)
 add_subdirectory(include)
 add_subdirectory(src)
