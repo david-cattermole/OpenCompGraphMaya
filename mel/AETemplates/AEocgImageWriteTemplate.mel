@@ -35,8 +35,21 @@ global proc AEocgImageWriteTemplate(string $nodeName)
     editorTemplate -addSeparator;
     editorTemplate -addControl "filePath";
     editorTemplate -addSeparator;
+    editorTemplate -addControl "cropOnWrite";
+    editorTemplate -addControl "pixelDataType";
 
     AEocgRenderLayout($nodeName);
+
+    editorTemplate -beginLayout "Format Options" -collapse 1;
+    editorTemplate -addControl "exrCompression";
+    editorTemplate -addControl "exrDwaCompressionLevel";
+    editorTemplate -addSeparator;
+    editorTemplate -addControl "pngCompressionLevel";
+    editorTemplate -addSeparator;
+    editorTemplate -addControl "jpegCompressionLevel";
+    editorTemplate -addControl "jpegChromaSubSampling";
+    editorTemplate -addControl "jpegProgressive";
+    editorTemplate -endLayout;
 
     editorTemplate -endLayout;
 

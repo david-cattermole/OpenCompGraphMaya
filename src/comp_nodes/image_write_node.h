@@ -64,6 +64,14 @@ public:
     static MObject m_in_stream_attr;
     static MObject m_enable_attr;
     static MObject m_file_path_attr;
+    static MObject m_crop_on_write_attr;
+    static MObject m_pixel_data_type_attr;
+    static MObject m_exr_compression_attr;
+    static MObject m_exr_dwa_compression_level_attr;
+    static MObject m_png_compression_level_attr;
+    static MObject m_jpeg_compression_level_attr;
+    static MObject m_jpeg_chroma_sub_sampling_attr;
+    static MObject m_jpeg_progressive_attr;
 
     // Output Attributes
     static MObject m_out_stream_attr;
