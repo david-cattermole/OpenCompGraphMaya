@@ -37,6 +37,7 @@ set(SOURCE_FILES
   ${CMAKE_CURRENT_SOURCE_DIR}/comp_nodes/image_merge_node.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/comp_nodes/image_transform_node.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/comp_nodes/image_crop_node.cpp
+  ${CMAKE_CURRENT_SOURCE_DIR}/comp_nodes/image_resample_node.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/comp_nodes/color_grade_node.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/comp_nodes/lens_distort_node.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/preferences_node.cpp

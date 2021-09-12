@@ -47,6 +47,7 @@
 #include <comp_nodes/lens_distort_node.h>
 #include <comp_nodes/image_transform_node.h>
 #include <comp_nodes/image_crop_node.h>
+#include <comp_nodes/image_resample_node.h>
 #include <preferences_node.h>
 #include <execute_cmd.h>
 #include <graph_data.h>
@@ -182,6 +183,13 @@ MStatus initializePlugin(MObject obj) {
                   status);
 
     REGISTER_NODE(plugin,
+                  ocgm::ImageResampleNode::nodeName(),
+                  ocgm::ImageResampleNode::m_id,
+                  ocgm::ImageResampleNode::creator,
+                  ocgm::ImageResampleNode::initialize,
+                  status);
+
+    REGISTER_NODE(plugin,
                   ocgm::ImageTransformNode::nodeName(),
                   ocgm::ImageTransformNode::m_id,
                   ocgm::ImageTransformNode::creator,
@@ -307,6 +315,9 @@ MStatus uninitializePlugin(MObject obj) {
 
     DEREGISTER_NODE(plugin, ocgm::ImageCropNode::nodeName(),
                     ocgm::ImageCropNode::m_id, status);
+
+    DEREGISTER_NODE(plugin, ocgm::ImageResampleNode::nodeName(),
+                    ocgm::ImageResampleNode::m_id, status);
 
     DEREGISTER_NODE(plugin, ocgm::ImageTransformNode::nodeName(),
                     ocgm::ImageTransformNode::m_id, status);
