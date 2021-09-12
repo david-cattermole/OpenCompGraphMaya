@@ -245,7 +245,7 @@ MStatus ImageWriteNode::initialize() {
             "filePath", "fp",
             MFnData::kString, empty_string_data_obj);
     CHECK_MSTATUS(tAttr.setStorable(true));
-    CHECK_MSTATUS(tAttr.setUsedAsFilename(true));
+    CHECK_MSTATUS(tAttr.setUsedAsFilename(false));
 
     // Crop on Write
     m_crop_on_write_attr = eAttr.create(
