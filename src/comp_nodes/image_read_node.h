@@ -67,12 +67,16 @@ public:
     static MObject m_frame_end_attr;
     static MObject m_frame_before_attr;
     static MObject m_frame_after_attr;
+    static MObject m_disk_cache_enable_attr;
+    static MObject m_disk_cache_file_path_attr;
 
     // Output Attributes
     static MObject m_out_stream_attr;
 
 private:
     ocg::Node m_ocg_node;
+    ocg::Node m_ocg_read_cache_node;
+    ocg::Node m_ocg_read_node;
 };
 
 } // namespace open_comp_graph_maya

@@ -47,8 +47,10 @@
 #include <opencompgraphmaya/node_type_ids.h>
 #include "logger.h"
 #include "graph_data.h"
-#include "image_read_node.h"
 #include "node_utils.h"
+#include "attr_utils.h"
+
+#include "image_read_node.h"
 
 namespace ocg = open_comp_graph;
 
@@ -63,12 +65,16 @@ MObject ImageReadNode::m_frame_end_attr;
 MObject ImageReadNode::m_frame_after_attr;
 MObject ImageReadNode::m_frame_before_attr;
 MObject ImageReadNode::m_file_path_attr;
+MObject ImageReadNode::m_disk_cache_enable_attr;
+MObject ImageReadNode::m_disk_cache_file_path_attr;
 
 // Output Attributes
 MObject ImageReadNode::m_out_stream_attr;
 
 ImageReadNode::ImageReadNode()
-        : m_ocg_node(ocg::Node(ocg::NodeType::kNull, 0)) {}
+        : m_ocg_node(ocg::Node(ocg::NodeType::kNull, 0))
+        , m_ocg_read_node(ocg::Node(ocg::NodeType::kNull, 0))
+        , m_ocg_read_cache_node(ocg::Node(ocg::NodeType::kNull, 0)) {}
 
 ImageReadNode::~ImageReadNode() {}
 
@@ -85,48 +91,103 @@ MStatus ImageReadNode::updateOcgNodes(
     if (input_ocg_nodes.size() != 0) {
         return MS::kFailure;
     }
+
     bool exists = shared_graph->node_exists(m_ocg_node);
     if (!exists) {
-        MString node_name = "read";
+        MString node_name = "output";
         auto node_hash = generate_unique_node_hash(
             m_node_uuid,
             node_name);
         m_ocg_node = shared_graph->create_node(
-            ocg::NodeType::kReadImage,
+            ocg::NodeType::kNull,
             node_hash);
     }
+
+    bool read_exists = shared_graph->node_exists(m_ocg_read_node);
+    if (!read_exists) {
+        MString node_name = "read";
+        auto read_node_hash = generate_unique_node_hash(
+            m_node_uuid, node_name);
+        m_ocg_read_node =
+            shared_graph->create_node(
+                ocg::NodeType::kReadImage,
+                read_node_hash);
+    }
+
+    bool read_cache_exists = shared_graph->node_exists(m_ocg_read_cache_node);
+    if (!read_cache_exists) {
+        MString node_name = "read_cache";
+        auto read_cache_node_hash = generate_unique_node_hash(
+            m_node_uuid, node_name);
+        m_ocg_read_cache_node =
+            shared_graph->create_node(
+                ocg::NodeType::kReadImage,
+                read_cache_node_hash);
+    }
+
+    bool use_disk_cache = utils::get_attr_value_bool(
+        data,
+        m_disk_cache_enable_attr);
+
+    uint8_t input_num = 0;
+    auto input_ocg_node = ocg::Node(ocg::NodeType::kNull, 0);
+    if (!use_disk_cache) {
+        input_ocg_node = m_ocg_read_node;
+    } else {
+        input_ocg_node = m_ocg_read_cache_node;
+    }
+    status = BaseNode::joinOcgNodes(
+        shared_graph,
+        input_ocg_node,
+        m_ocg_node,
+        input_num);
+    CHECK_MSTATUS(status);
 
     if (m_ocg_node.get_id() != 0) {
         // Set the output node
         output_ocg_node = m_ocg_node;
+    }
 
+    if (m_ocg_read_cache_node.get_id() != 0) {
+        // Enable
+        bool enable = utils::get_attr_value_bool(data, m_enable_attr);
+        shared_graph->set_node_attr_i32(
+            m_ocg_read_cache_node, "enable", static_cast<int32_t>(enable));
+
+        // Disk Cache File Path
+        MString file_path = utils::get_attr_value_string(data, m_disk_cache_file_path_attr);
+        shared_graph->set_node_attr_str(
+            m_ocg_read_cache_node, "file_path", file_path.asChar());
+    }
+
+    if (m_ocg_read_node.get_id() != 0) {
         // Enable Attribute toggle
         bool enable = utils::get_attr_value_bool(data, m_enable_attr);
         shared_graph->set_node_attr_i32(
-            m_ocg_node, "enable", static_cast<int32_t>(enable));
+            m_ocg_read_node, "enable", static_cast<int32_t>(enable));
 
         // Start / End Frame Attribute
         auto start_frame = utils::get_attr_value_int(data, m_frame_start_attr);
         auto end_frame = utils::get_attr_value_int(data, m_frame_end_attr);
-        shared_graph->set_node_attr_i32(m_ocg_node, "start_frame", start_frame);
-        shared_graph->set_node_attr_i32(m_ocg_node, "end_frame", end_frame);
+        shared_graph->set_node_attr_i32(m_ocg_read_node, "start_frame", start_frame);
+        shared_graph->set_node_attr_i32(m_ocg_read_node, "end_frame", end_frame);
 
         // Before Frame Attribute
         int16_t before_frame =
             utils::get_attr_value_short(data, m_frame_before_attr);
         shared_graph->set_node_attr_i32(
-            m_ocg_node, "before_frame", static_cast<int32_t>(before_frame));
+            m_ocg_read_node, "before_frame", static_cast<int32_t>(before_frame));
 
         // After Frame Attribute
         int16_t after_frame =
             utils::get_attr_value_short(data, m_frame_after_attr);
         shared_graph->set_node_attr_i32(
-            m_ocg_node, "after_frame", static_cast<int32_t>(after_frame));
+            m_ocg_read_node, "after_frame", static_cast<int32_t>(after_frame));
 
         // File Path Attribute
         MString file_path = utils::get_attr_value_string(data, m_file_path_attr);
         shared_graph->set_node_attr_str(
-            m_ocg_node, "file_path", file_path.asChar());
+            m_ocg_read_node, "file_path", file_path.asChar());
     }
 
     return status;
@@ -199,6 +260,9 @@ MStatus ImageReadNode::initialize() {
     // Create Common Attributes
     CHECK_MSTATUS(create_enable_attribute(m_enable_attr));
     CHECK_MSTATUS(create_output_stream_attribute(m_out_stream_attr));
+    CHECK_MSTATUS(utils::create_node_disk_cache_attributes(
+                      m_disk_cache_enable_attr,
+                      m_disk_cache_file_path_attr));
 
     // Add Attributes
     CHECK_MSTATUS(addAttribute(m_enable_attr));
@@ -207,12 +271,16 @@ MStatus ImageReadNode::initialize() {
     CHECK_MSTATUS(addAttribute(m_frame_end_attr));
     CHECK_MSTATUS(addAttribute(m_frame_after_attr));
     CHECK_MSTATUS(addAttribute(m_frame_before_attr));
+    CHECK_MSTATUS(addAttribute(m_disk_cache_enable_attr));
+    CHECK_MSTATUS(addAttribute(m_disk_cache_file_path_attr));
     CHECK_MSTATUS(addAttribute(m_out_stream_attr));
 
     // Attribute Affects
     CHECK_MSTATUS(attributeAffects(m_enable_attr, m_out_stream_attr));
     CHECK_MSTATUS(attributeAffects(m_frame_start_attr, m_out_stream_attr));
     CHECK_MSTATUS(attributeAffects(m_frame_end_attr, m_out_stream_attr));
+    CHECK_MSTATUS(attributeAffects(m_disk_cache_enable_attr, m_out_stream_attr));
+    CHECK_MSTATUS(attributeAffects(m_disk_cache_file_path_attr, m_out_stream_attr));
     CHECK_MSTATUS(attributeAffects(m_file_path_attr, m_out_stream_attr));
 
     return MS::kSuccess;

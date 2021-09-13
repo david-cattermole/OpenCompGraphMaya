@@ -18,28 +18,22 @@
 // ---------------------------------------------------------------------
 
 
-global proc AEocgDiskCacheReplace(string $nodeName, string $ip, string $hfa, string $vfa)
+global proc AEocgDiskCacheReplace(string $nodeName)
 {
     button -e
-        -command ("AEocgDiskCacheCommand " + $nodeName + " " + $ip + " " + $hfa + " " + $vfa)
+        -command ("AEocgDiskCacheCommand " + $nodeName)
         ocgGenerateDiskCacheButton;
 }
 
 
-global proc AEocgDiskCacheCommand(string $nodeName, string $ip, string $hfa, string $vfa)
+global proc AEocgDiskCacheCommand(string $nodeName)
 {
     // TODO: Make this procedure open a GUI for us to generate a disk
     // cache.
-
-    string $cameraName[];
-    tokenize( $ip, ".", $cameraName );
-
-    // create imageplane shape.
-    string $newImagePlane[] = createImagePlane($cameraName[0]);
 }
 
 
-global proc AEocgDiskCacheNew(string $nodeName, string $ip, string $hfa, string $vfa)
+global proc AEocgDiskCacheNew(string $nodeName)
 {
     setUITemplate -pst attributeEditorTemplate;
     rowLayout -nc 3;
@@ -51,7 +45,7 @@ global proc AEocgDiskCacheNew(string $nodeName, string $ip, string $hfa, string 
     setParent ..;
     setUITemplate -ppt;
 
-    AEocgDiskCacheReplace $nodeName $ip $hfa $vfa;
+    AEocgDiskCacheReplace $nodeName;
 }
 
 
@@ -68,26 +62,12 @@ global proc AEocgDiskCacheLayout(string $nodeName,
         editorTemplate -beginLayout $label -collapse $collapse;
 
         editorTemplate -addControl "diskCacheEnable";
-        editorTemplate -addControl "diskCacheMode";
         editorTemplate -addSeparator;
+        editorTemplate -addControl "diskCacheFilePath";
 
-        editorTemplate -addControl "diskCacheBasePath";
-        editorTemplate -addSeparator;
-
-        editorTemplate -addControl "diskCacheFileFormat";
-        editorTemplate -addControl "diskCacheJpegLevel";
-        editorTemplate -addControl "diskCachePngLevel";
-        editorTemplate -addControl "diskCacheExrCompression";
-        editorTemplate -addControl "diskCacheExrDwaLevel";
-        editorTemplate -addSeparator;
-
-        // Add button to generate disk cache GUI options.
         editorTemplate
             -callCustom "AEocgDiskCacheNew" "AEocgDiskCacheReplace"
-            $nodeName
-            "imagePlane"
-            "horizontalFilmAperture"
-            "verticalFilmAperture";
+            $nodeName;
 
         editorTemplate -endLayout;
     }
@@ -100,9 +80,5 @@ global proc AEocgDiskCacheLayout(string $nodeName,
 
 global proc AEocgDiskCacheSuppressAttributes(string $nodeName)
 {
-    editorTemplate -suppress "diskCacheFileFormat";
-    editorTemplate -suppress "diskCacheJpegLevel";
-    editorTemplate -suppress "diskCachePngLevel";
-    editorTemplate -suppress "diskCacheExrCompression";
-    editorTemplate -suppress "diskCacheExrDwaLevel";
+    // editorTemplate -suppress "attrName";
 }
