@@ -20,6 +20,9 @@
  * Node utilities.
  */
 
+#ifndef OPENCOMPGRAPHMAYA_NODE_UTILS_H
+#define OPENCOMPGRAPHMAYA_NODE_UTILS_H
+
 // Maya
 #include <maya/MStatus.h>
 #include <maya/MObject.h>
@@ -55,3 +58,5 @@ set_new_unique_node_hash_attr(MFnDependencyNode &fn_depend_node);
 
 } // namespace utils
 } // namespace open_comp_graph_maya
+
+#endif // OPENCOMPGRAPHMAYA_NODE_UTILS_H
