@@ -92,7 +92,6 @@ public:
     static MObject m_cache_crop_on_format_attr;
     static MObject m_disk_cache_enable_attr;
     static MObject m_disk_cache_dir_attr;
-    static MObject m_disk_cache_image_type_attr;
     static MObject m_time_attr;
     static MObject m_out_stream_attr;
 

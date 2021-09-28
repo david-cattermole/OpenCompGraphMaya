@@ -71,17 +71,6 @@ const int32_t kBakeOptionColorSpace = static_cast<int32_t>(ocg::BakeOption::kCol
 const int32_t kBakeOptionColorSpaceAndGrade = static_cast<int32_t>(ocg::BakeOption::kColorSpaceAndGrade);
 const int32_t kBakeOptionAll = static_cast<int32_t>(ocg::BakeOption::kAll);
 
-const int32_t kDiskCacheImageTypeJpegLossyUInt8 =
-    static_cast<int32_t>(ocg::DiskCacheImageType::kJpegLossyUInt8);
-const int32_t kDiskCacheImageTypeJpeg2000LossyUInt8 =
-    static_cast<int32_t>(ocg::DiskCacheImageType::kJpeg2000LossyUInt8);
-const int32_t kDiskCacheImageTypeJpeg2000LosslessUInt8 =
-    static_cast<int32_t>(ocg::DiskCacheImageType::kJpeg2000LosslessUInt8);
-const int32_t kDiskCacheImageTypeExrLossyHalf16 =
-    static_cast<int32_t>(ocg::DiskCacheImageType::kExrLossyHalf16);
-const int32_t kDiskCacheImageTypeExrLosslessHalf16 =
-    static_cast<int32_t>(ocg::DiskCacheImageType::kExrLosslessHalf16);
-
 // Input Attributes
 MObject ShapeNode::m_camera_attr;
 MObject ShapeNode::m_in_stream_attr;
@@ -96,7 +85,6 @@ MObject ShapeNode::m_cache_option_attr;
 MObject ShapeNode::m_cache_crop_on_format_attr;
 MObject ShapeNode::m_disk_cache_enable_attr;
 MObject ShapeNode::m_disk_cache_dir_attr;
-MObject ShapeNode::m_disk_cache_image_type_attr;
 MObject ShapeNode::m_time_attr;
 
 // Output Attributes
@@ -406,26 +394,6 @@ MStatus ShapeNode::initialize() {
     CHECK_MSTATUS(nAttr.setStorable(true));
     CHECK_MSTATUS(nAttr.setKeyable(false));
 
-    // Disk Cache - Image Type
-    m_disk_cache_image_type_attr = eAttr.create(
-        "diskCacheImageType", "dskcchimgtyp", kBakeOptionNothing);
-    CHECK_MSTATUS(eAttr.addField(
-                      "jpeg_lossy_uint8",
-                      kDiskCacheImageTypeJpegLossyUInt8));
-    CHECK_MSTATUS(eAttr.addField(
-                      "jpeg2000_lossy_uint8",
-                      kDiskCacheImageTypeJpeg2000LossyUInt8));
-    CHECK_MSTATUS(eAttr.addField(
-                      "jpeg2000_lossless_uint8",
-                      kDiskCacheImageTypeJpeg2000LosslessUInt8));
-    CHECK_MSTATUS(eAttr.addField(
-                      "exr_lossy_half16",
-                      kDiskCacheImageTypeExrLossyHalf16));
-    CHECK_MSTATUS(eAttr.addField(
-                      "exr_lossless_half16",
-                      kDiskCacheImageTypeExrLosslessHalf16));
-    CHECK_MSTATUS(eAttr.setStorable(true));
-
     // Disk Cache Directory Attribute
     MFnStringData dir_string_data;
     MObject dir_string_data_obj = dir_string_data.create("${TEMP}");
@@ -455,7 +423,6 @@ MStatus ShapeNode::initialize() {
     CHECK_MSTATUS(addAttribute(m_cache_option_attr));
     CHECK_MSTATUS(addAttribute(m_cache_crop_on_format_attr));
     CHECK_MSTATUS(addAttribute(m_disk_cache_enable_attr));
-    CHECK_MSTATUS(addAttribute(m_disk_cache_image_type_attr));
     CHECK_MSTATUS(addAttribute(m_disk_cache_dir_attr));
     CHECK_MSTATUS(addAttribute(m_time_attr));
     CHECK_MSTATUS(addAttribute(m_in_stream_attr));
@@ -468,7 +435,6 @@ MStatus ShapeNode::initialize() {
     CHECK_MSTATUS(attributeAffects(m_cache_option_attr, m_out_stream_attr));
     CHECK_MSTATUS(attributeAffects(m_cache_crop_on_format_attr, m_out_stream_attr));
     CHECK_MSTATUS(attributeAffects(m_disk_cache_enable_attr, m_out_stream_attr));
-    CHECK_MSTATUS(attributeAffects(m_disk_cache_image_type_attr, m_out_stream_attr));
     CHECK_MSTATUS(attributeAffects(m_disk_cache_dir_attr, m_out_stream_attr));
     CHECK_MSTATUS(attributeAffects(m_in_stream_attr, m_out_stream_attr));
 
