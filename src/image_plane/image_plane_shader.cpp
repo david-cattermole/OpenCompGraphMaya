@@ -310,7 +310,7 @@ Shader::set_texture_param_with_image_data(
         const int32_t pixel_height,
         const int32_t pixel_depth,
         const int32_t pixel_num_channels,
-        const ocg::PixelDataType pixel_data_type,
+        const ocg::DataType pixel_data_type,
         const void* buffer) {
     auto log = log::get_logger();
     MStatus status = MS::kSuccess;
@@ -340,23 +340,23 @@ Shader::set_texture_param_with_image_data(
     texture_description.fTextureType = texture_type;
     texture_description.fMipmaps = 1;
 
-    if (pixel_data_type == ocg::PixelDataType::kUInt8) {
-        // log->warn("ocg::PixelDataType::kUInt8");
+    if (pixel_data_type == ocg::DataType::kUInt8) {
+        // log->warn("ocg::DataType::kUInt8");
         // log->warn("MHWRender::kR8G8B8A8_UNORM");
         texture_description.fFormat = MHWRender::kR8G8B8A8_UNORM;
 
-    } else if (pixel_data_type == ocg::PixelDataType::kHalf16) {
-        // log->warn("ocg::PixelDataType::kHalf16");
+    } else if (pixel_data_type == ocg::DataType::kHalf16) {
+        // log->warn("ocg::DataType::kHalf16");
         // log->warn("MHWRender::kR16G16B16A16_FLOAT");
         texture_description.fFormat = MHWRender::kR16G16B16A16_FLOAT;
 
-    } else if (pixel_data_type == ocg::PixelDataType::kUInt16) {
-        // log->warn("ocg::PixelDataType::kUInt16");
+    } else if (pixel_data_type == ocg::DataType::kUInt16) {
+        // log->warn("ocg::DataType::kUInt16");
         // log->warn("MHWRender::kR16G16B16A16_UINT");
         texture_description.fFormat = MHWRender::kR16G16B16A16_UINT;
 
-    } else if (pixel_data_type == ocg::PixelDataType::kFloat32) {
-        // log->warn("ocg::PixelDataType::kFloat32");
+    } else if (pixel_data_type == ocg::DataType::kFloat32) {
+        // log->warn("ocg::DataType::kFloat32");
         if (pixel_num_channels == 3) {
             texture_description.fFormat = MHWRender::kR32G32B32_FLOAT;
             // log->warn("MHWRender::kR32G32B32_FLOAT");
@@ -412,7 +412,6 @@ Shader::set_texture_param_with_stream_data(
     auto pixel_depth = 1;  // We do not support 3D textures.
     auto pixel_num_channels = stream_data.pixel_num_channels();
     auto pixel_data_type = stream_data.pixel_data_type();
-    // auto channel_num_bytes = ocg::internal::channel_size_bytes(pixel_data_type);
 
     // log->warn("pixels: {}x{} c={}",
     //           pixel_width,  pixel_height,

@@ -95,7 +95,7 @@ public:
         const int32_t pixel_height,
         const int32_t pixel_depth,
         const int32_t pixel_num_channels,
-        const ocg::PixelDataType pixel_data_type,
+        const ocg::DataType pixel_data_type,
         const void* buffer);
 
     MStatus set_texture_param_with_stream_data(

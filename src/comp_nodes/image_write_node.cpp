@@ -55,11 +55,11 @@ namespace ocg = open_comp_graph;
 namespace open_comp_graph_maya {
 
 // Precompute index for enum.
-const int32_t kPixelDataTypeFloat32 = static_cast<int32_t>(ocg::PixelDataType::kFloat32);
-const int32_t kPixelDataTypeHalf16 = static_cast<int32_t>(ocg::PixelDataType::kHalf16);
-const int32_t kPixelDataTypeUInt8 = static_cast<int32_t>(ocg::PixelDataType::kUInt8);
-const int32_t kPixelDataTypeUInt16 = static_cast<int32_t>(ocg::PixelDataType::kUInt16);
-const int32_t kPixelDataTypeUnknown = static_cast<int32_t>(ocg::PixelDataType::kUnknown);
+const int32_t kDataTypeFloat32 = static_cast<int32_t>(ocg::DataType::kFloat32);
+const int32_t kDataTypeHalf16 = static_cast<int32_t>(ocg::DataType::kHalf16);
+const int32_t kDataTypeUInt8 = static_cast<int32_t>(ocg::DataType::kUInt8);
+const int32_t kDataTypeUInt16 = static_cast<int32_t>(ocg::DataType::kUInt16);
+const int32_t kDataTypeUnknown = static_cast<int32_t>(ocg::DataType::kUnknown);
 
 const int32_t kCropOnWriteAuto = static_cast<int32_t>(ocg::CropOnWrite::kAuto);
 const int32_t kCropOnWriteEnable = static_cast<int32_t>(ocg::CropOnWrite::kEnable);
@@ -259,12 +259,12 @@ MStatus ImageWriteNode::initialize() {
     // Pixel Data Type
     m_pixel_data_type_attr = eAttr.create(
         "pixelDataType", "pxldtyp",
-        kPixelDataTypeUnknown);
-    CHECK_MSTATUS(eAttr.addField("auto", kPixelDataTypeUnknown));
-    CHECK_MSTATUS(eAttr.addField("float32", kPixelDataTypeFloat32));
-    CHECK_MSTATUS(eAttr.addField("half16", kPixelDataTypeHalf16));
-    CHECK_MSTATUS(eAttr.addField("uint8", kPixelDataTypeUInt8));
-    CHECK_MSTATUS(eAttr.addField("uint16", kPixelDataTypeUInt16));
+        kDataTypeUnknown);
+    CHECK_MSTATUS(eAttr.addField("auto", kDataTypeUnknown));
+    CHECK_MSTATUS(eAttr.addField("float32", kDataTypeFloat32));
+    CHECK_MSTATUS(eAttr.addField("half16", kDataTypeHalf16));
+    CHECK_MSTATUS(eAttr.addField("uint8", kDataTypeUInt8));
+    CHECK_MSTATUS(eAttr.addField("uint16", kDataTypeUInt16));
     CHECK_MSTATUS(eAttr.setStorable(true));
 
     // EXR Compression mode

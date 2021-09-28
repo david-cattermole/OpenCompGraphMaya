@@ -614,13 +614,14 @@ void GeometryOverride::updateRenderItems(const MDagPath &path,
                     auto pixel_height = m_lut_edge_size;
                     auto pixel_depth = m_lut_edge_size;
                     auto pixel_num_channels = lut_image.pixel_block->num_channels();
-                    auto pixel_data_type = lut_image.pixel_block->pixel_data_type();
-                    auto pixel_buffer = lut_image.pixel_block->as_slice();
-                    auto buffer = static_cast<const void*>(pixel_buffer.data());
+                    auto pixel_data_type = lut_image.pixel_block->data_type();
+                    auto buffer = ocg::internal::pixelblock_get_pixel_data_ptr_read_write(
+                        lut_image.pixel_block);
 
-                    log->warn("GeometryOverride:: lut_edge_size: {}", m_lut_edge_size);
-                    log->warn("GeometryOverride:: pixel_num_channels: {}", pixel_num_channels);
-                    log->warn("GeometryOverride:: pixel count: {}", pixel_buffer.length());
+                    log->warn("GeometryOverride:: lut_edge_size: {}",
+                              m_lut_edge_size);
+                    log->warn("GeometryOverride:: pixel_num_channels: {}",
+                              pixel_num_channels);
                     // for (auto i = 0; i < pixel_buffer.length(); ++i) {
                     //     log->warn("num: {}={}", i, pixel_buffer[i]);
                     //     if (i > 100) break;
