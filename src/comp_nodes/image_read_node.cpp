@@ -95,7 +95,7 @@ MStatus ImageReadNode::updateOcgNodes(
     bool exists = shared_graph->node_exists(m_ocg_node);
     if (!exists) {
         MString node_name = "output";
-        auto node_hash = generate_unique_node_hash(
+        auto node_hash = utils::generate_unique_node_hash(
             m_node_uuid,
             node_name);
         m_ocg_node = shared_graph->create_node(
@@ -106,7 +106,7 @@ MStatus ImageReadNode::updateOcgNodes(
     bool read_exists = shared_graph->node_exists(m_ocg_read_node);
     if (!read_exists) {
         MString node_name = "read";
-        auto read_node_hash = generate_unique_node_hash(
+        auto read_node_hash = utils::generate_unique_node_hash(
             m_node_uuid, node_name);
         m_ocg_read_node =
             shared_graph->create_node(
@@ -117,7 +117,7 @@ MStatus ImageReadNode::updateOcgNodes(
     bool read_cache_exists = shared_graph->node_exists(m_ocg_read_cache_node);
     if (!read_cache_exists) {
         MString node_name = "read_cache";
-        auto read_cache_node_hash = generate_unique_node_hash(
+        auto read_cache_node_hash = utils::generate_unique_node_hash(
             m_node_uuid, node_name);
         m_ocg_read_cache_node =
             shared_graph->create_node(
@@ -136,7 +136,7 @@ MStatus ImageReadNode::updateOcgNodes(
     } else {
         input_ocg_node = m_ocg_read_cache_node;
     }
-    status = BaseNode::joinOcgNodes(
+    status = utils::join_ocg_nodes(
         shared_graph,
         input_ocg_node,
         m_ocg_node,

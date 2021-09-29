@@ -86,7 +86,7 @@ MStatus ImageResampleNode::updateOcgNodes(
     bool exists = shared_graph->node_exists(m_ocg_node);
     if (!exists) {
         MString node_name = "resample";
-        auto node_hash = generate_unique_node_hash(
+        auto node_hash = utils::generate_unique_node_hash(
             m_node_uuid,
             node_name);
         m_ocg_node = shared_graph->create_node(
@@ -96,7 +96,7 @@ MStatus ImageResampleNode::updateOcgNodes(
     auto input_ocg_node = input_ocg_nodes[0];
 
     uint8_t input_num = 0;
-    status = BaseNode::joinOcgNodes(
+    status = utils::join_ocg_nodes(
         shared_graph,
         input_ocg_node,
         m_ocg_node,
