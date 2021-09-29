@@ -157,9 +157,10 @@ private:
     uint8_t m_cache_option;
     bool m_cache_crop_on_format;
     bool m_disk_cache_enable;
-    MString m_disk_cache_dir;
+    MString m_disk_cache_file_path;
     ocg::Node m_in_stream_node;
     ocg::Node m_viewer_node;
+    ocg::Node m_read_cache_node;
     int m_display_window_width;
     int m_display_window_height;
     int m_data_window_min_x;

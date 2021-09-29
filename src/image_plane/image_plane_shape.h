@@ -38,6 +38,7 @@
 #include <maya/MEvaluationNode.h>
 #include <maya/MFnUnitAttribute.h>
 #include <maya/MFnDagNode.h>
+#include <maya/MUuid.h>
 
 // Maya Viewport 2.0
 #include <maya/MDrawRegistry.h>
@@ -45,6 +46,11 @@
 #include <maya/MShaderManager.h>
 #include <maya/MHWGeometry.h>
 #include <maya/MHWGeometryUtilities.h>
+
+// OCG
+#include "opencompgraph.h"
+
+namespace ocg = open_comp_graph;
 
 namespace open_comp_graph_maya {
 namespace image_plane {
@@ -91,7 +97,7 @@ public:
     static MObject m_cache_option_attr;
     static MObject m_cache_crop_on_format_attr;
     static MObject m_disk_cache_enable_attr;
-    static MObject m_disk_cache_dir_attr;
+    static MObject m_disk_cache_file_path_attr;
     static MObject m_time_attr;
     static MObject m_out_stream_attr;
 
@@ -103,8 +109,11 @@ public:
     static MString m_display_filter_name;
     static MString m_display_filter_label;
 
-    // Unique hash for the viewer OCG node.
-    uint64_t m_viewer_node_hash;
+    // Output OCG node
+    ocg::Node m_out_stream_node;
+
+    // Unique id for the node.
+    MUuid m_node_uuid;
 };
 
 } // namespace image_plane

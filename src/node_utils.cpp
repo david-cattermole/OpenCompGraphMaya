@@ -25,9 +25,12 @@
 #include <maya/MDataBlock.h>
 #include <maya/MDataHandle.h>
 #include <maya/MString.h>
+#include <maya/MFnTypedAttribute.h>
+#include <maya/MFnStringData.h>
 #include <maya/MPlug.h>
 #include <maya/MFnPluginData.h>
 #include <maya/MFnDependencyNode.h>
+#include <maya/MUuid.h>
 
 // STL
 #include <sstream>  // stringstream
@@ -200,5 +203,35 @@ MStatus set_new_unique_node_hash_attr(MFnDependencyNode &fn_depend_node) {
 
     return status;
 }
+
+MStatus join_ocg_nodes(
+        std::shared_ptr<ocg::Graph> &shared_graph,
+        ocg::Node &input_ocg_node,
+        ocg::Node &output_ocg_node,
+        uint8_t input_num) {
+    bool input_node_exists = shared_graph->node_exists(input_ocg_node);
+    if (input_node_exists) {
+        shared_graph->connect(input_ocg_node, output_ocg_node, input_num);
+    } else {
+        shared_graph->disconnect_input(output_ocg_node, input_num);
+    }
+    return MS::kSuccess;
+}
+
+// Generate a hash that is seeded by the current node UUID,
+// providing a technique for creating consistent OCG node hashes
+// for each instance of Maya node.
+uint64_t generate_unique_node_hash(MUuid &node_uuid, MString &node_name) {
+    MString uuid_string = node_uuid.asString();
+    uuid_string += node_name;
+
+    // Generate a 64-bit hash id from the 128-bit UUID string plus
+    // the node name suffix.
+    const char *uuid_char = uuid_string.asChar();
+    auto node_hash =
+        ocg::internal::generate_id_from_name(uuid_char);
+    return node_hash;
+}
+
 } // namespace utils
 } // namespace open_comp_graph_maya

@@ -41,16 +41,18 @@
 #include <maya/MFnDagNode.h>
 #include <maya/MFnCamera.h>
 #include <maya/MFnPluginData.h>
-#include <maya/MUuid.h>
 
 // OCG
 #include "opencompgraph.h"
 
 // OCG Maya
 #include <opencompgraphmaya/node_type_ids.h>
+#include "logger.h"
 #include "graph_data.h"
 #include "image_plane_shape.h"
 #include "comp_nodes/base_node.h"
+#include "attr_utils.h"
+#include "../node_utils.h"
 
 namespace ocg = open_comp_graph;
 
@@ -84,7 +86,7 @@ MObject ShapeNode::m_lut_edge_size_attr;
 MObject ShapeNode::m_cache_option_attr;
 MObject ShapeNode::m_cache_crop_on_format_attr;
 MObject ShapeNode::m_disk_cache_enable_attr;
-MObject ShapeNode::m_disk_cache_dir_attr;
+MObject ShapeNode::m_disk_cache_file_path_attr;
 MObject ShapeNode::m_time_attr;
 
 // Output Attributes
@@ -95,30 +97,69 @@ MString ShapeNode::nodeName() {
     return MString(OCGM_IMAGE_PLANE_SHAPE_TYPE_NAME);
 }
 
-ShapeNode::ShapeNode() : m_viewer_node_hash(0) {}
+ShapeNode::ShapeNode()
+        : m_node_uuid()
+        , m_out_stream_node(ocg::Node(ocg::NodeType::kNull, 0))
+{}
 
 ShapeNode::~ShapeNode() {}
 
 // Called after the node is created.
 void ShapeNode::postConstructor() {
     MObject this_node = ShapeNode::thisMObject();
-
-    // Get Node UUID
     MStatus status = MS::kSuccess;
+
     MFnDependencyNode fn_depend_node(this_node, &status);
     CHECK_MSTATUS(status);
-    MUuid uuid = fn_depend_node.uuid();
-    MString uuid_string = uuid.asString();
-    const char *uuid_char = uuid_string.asChar();
 
-    // Generate a 64-bit hash id from the 128-bit UUID.
-    ShapeNode::m_viewer_node_hash =
-        ocg::internal::generate_id_from_name(uuid_char);
+    // Get Node UUID
+    m_node_uuid = fn_depend_node.uuid();
 };
 
-MStatus ShapeNode::compute(const MPlug & /*plug*/, MDataBlock & /*data*/ ) {
+MStatus ShapeNode::compute(const MPlug & plug, MDataBlock & data) {
+    auto log = log::get_logger();
+    MStatus status = MS::kUnknownParameter;
+
     MHWRender::MRenderer::setGeometryDrawDirty(thisMObject());
-    return MS::kUnknownParameter;
+
+    const MUuid empty_uuid = MUuid();
+    if (m_node_uuid == empty_uuid) {
+        // No OCG hash has been created yet, this node is not ready
+        // to be computed.
+        return status;
+    }
+
+    // Pass the output node though the Maya DG.
+    if (plug == m_out_stream_attr) {
+        auto shared_graph = get_shared_graph();
+        if (shared_graph) {
+            if ((m_out_stream_node.get_id() != 0)
+                    && shared_graph->node_exists(m_out_stream_node)) {
+                log->debug(
+                    "ImagePlaneShape: Graph as string:\n{}",
+                    shared_graph->data_debug_string());
+
+                // Create initial plug-in data structure. We don't need to
+                // 'new' the data type directly.
+                MFnPluginData fn_plugin_data;
+                MTypeId data_type_id(OCGM_GRAPH_DATA_TYPE_ID);
+                fn_plugin_data.create(data_type_id, &status);
+                CHECK_MSTATUS_AND_RETURN_IT(status);
+
+                // Output Stream
+                MDataHandle out_stream_handle = data.outputValue(m_out_stream_attr);
+                GraphData* new_data =
+                    static_cast<GraphData*>(fn_plugin_data.data(&status));
+                CHECK_MSTATUS_AND_RETURN_IT(status);
+                new_data->set_node(m_out_stream_node);
+                out_stream_handle.setMPxData(new_data);
+                out_stream_handle.setClean();
+                status = MS::kSuccess;
+            }
+        }
+    }
+
+    return status;
 }
 
 // Called by legacy default viewport
@@ -386,23 +427,6 @@ MStatus ShapeNode::initialize() {
     CHECK_MSTATUS(nAttr.setStorable(true));
     CHECK_MSTATUS(nAttr.setKeyable(false));
 
-    // Disk Cache Enable
-    bool disk_cache_enable_default = false;
-    m_disk_cache_enable_attr = nAttr.create(
-        "diskCacheEnable", "dskccheb",
-        MFnNumericData::kBoolean, disk_cache_enable_default);
-    CHECK_MSTATUS(nAttr.setStorable(true));
-    CHECK_MSTATUS(nAttr.setKeyable(false));
-
-    // Disk Cache Directory Attribute
-    MFnStringData dir_string_data;
-    MObject dir_string_data_obj = dir_string_data.create("${TEMP}");
-    m_disk_cache_dir_attr = tAttr.create(
-            "diskCacheDirectory", "dskcchdir",
-            MFnData::kString, dir_string_data_obj);
-    CHECK_MSTATUS(tAttr.setStorable(true));
-    CHECK_MSTATUS(tAttr.setUsedAsFilename(true));
-
     // Time
     m_time_attr = uAttr.create("time", "tm", MFnUnitAttribute::kTime, 0.0);
     CHECK_MSTATUS(uAttr.setStorable(true));
@@ -410,6 +434,9 @@ MStatus ShapeNode::initialize() {
     // Create Common Attributes
     CHECK_MSTATUS(BaseNode::create_input_stream_attribute(m_in_stream_attr));
     CHECK_MSTATUS(BaseNode::create_output_stream_attribute(m_out_stream_attr));
+    CHECK_MSTATUS(utils::create_node_disk_cache_attributes(
+                      m_disk_cache_enable_attr,
+                      m_disk_cache_file_path_attr));
 
     // Add Attributes
     CHECK_MSTATUS(addAttribute(m_camera_attr));
@@ -423,7 +450,7 @@ MStatus ShapeNode::initialize() {
     CHECK_MSTATUS(addAttribute(m_cache_option_attr));
     CHECK_MSTATUS(addAttribute(m_cache_crop_on_format_attr));
     CHECK_MSTATUS(addAttribute(m_disk_cache_enable_attr));
-    CHECK_MSTATUS(addAttribute(m_disk_cache_dir_attr));
+    CHECK_MSTATUS(addAttribute(m_disk_cache_file_path_attr));
     CHECK_MSTATUS(addAttribute(m_time_attr));
     CHECK_MSTATUS(addAttribute(m_in_stream_attr));
     CHECK_MSTATUS(addAttribute(m_out_stream_attr));
@@ -435,7 +462,7 @@ MStatus ShapeNode::initialize() {
     CHECK_MSTATUS(attributeAffects(m_cache_option_attr, m_out_stream_attr));
     CHECK_MSTATUS(attributeAffects(m_cache_crop_on_format_attr, m_out_stream_attr));
     CHECK_MSTATUS(attributeAffects(m_disk_cache_enable_attr, m_out_stream_attr));
-    CHECK_MSTATUS(attributeAffects(m_disk_cache_dir_attr, m_out_stream_attr));
+    CHECK_MSTATUS(attributeAffects(m_disk_cache_file_path_attr, m_out_stream_attr));
     CHECK_MSTATUS(attributeAffects(m_in_stream_attr, m_out_stream_attr));
 
     return MS::kSuccess;

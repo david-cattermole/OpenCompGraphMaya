@@ -61,10 +61,12 @@
 #include "graph_execute.h"
 #include "global_cache.h"
 #include "logger.h"
+#include "node_utils.h"
 
 namespace ocg = open_comp_graph;
 namespace ocgm_cache = open_comp_graph_maya::cache;
 namespace ocgm_graph = open_comp_graph_maya::graph;
+namespace ocgm_utils = open_comp_graph_maya::utils;
 
 namespace open_comp_graph_maya {
 namespace image_plane {
@@ -119,9 +121,10 @@ GeometryOverride::GeometryOverride(const MObject &obj)
         , m_from_color_space_name()
         , m_color_space_name()
         , m_disk_cache_enable(false)
-        , m_disk_cache_dir()
+        , m_disk_cache_file_path()
         , m_in_stream_node(ocg::Node(ocg::NodeType::kNull, 0))
-        , m_viewer_node(ocg::Node(ocg::NodeType::kNull, 0)) {
+        , m_viewer_node(ocg::Node(ocg::NodeType::kNull, 0))
+        , m_read_cache_node(ocg::Node(ocg::NodeType::kNull, 0)) {
 }
 
 GeometryOverride::~GeometryOverride() {
@@ -155,67 +158,127 @@ void GeometryOverride::updateDG() {
     // input data is valid..
     m_in_stream_node = new_stream_node;
 
+    // Use disk cache?
+    bool disk_cache_enable_has_changed = false;
+
+    MPlug disk_cache_enable_plug(
+        m_locator_node, ShapeNode::m_disk_cache_enable_attr);
+
+    std::tie(m_disk_cache_enable, disk_cache_enable_has_changed) =
+        utils::get_plug_value_bool(disk_cache_enable_plug, m_disk_cache_enable);
+
+    // Get the shape node.
+    MFnDagNode node(m_locator_node, &status);
+    ShapeNode *fp = status ? dynamic_cast<ShapeNode *>(node.userNode()) : nullptr;
+
     // Create Viewer node.
     bool viewer_exists = shared_graph->node_exists(m_viewer_node);
     if (!viewer_exists) {
-        MFnDagNode node(m_locator_node, &status);
-        ShapeNode *fp = status ? dynamic_cast<ShapeNode *>(node.userNode()) : nullptr;
-
-        auto viewer_node_hash = fp->m_viewer_node_hash;
+        auto node_uuid = fp->m_node_uuid;
+        MString node_name = "viewer";
+        auto node_hash = ocgm_utils::generate_unique_node_hash(
+            node_uuid,
+            node_name);
         m_viewer_node = shared_graph->create_node(
             ocg::NodeType::kViewer,
-            viewer_node_hash);
+            node_hash);
     }
+
+    // Create Read node.
+    bool read_cache_exists = shared_graph->node_exists(m_read_cache_node);
+    if (!read_cache_exists) {
+        auto node_uuid = fp->m_node_uuid;
+        MString node_name = "read_cache";
+        auto node_hash = ocgm_utils::generate_unique_node_hash(
+            node_uuid,
+            node_name);
+        m_read_cache_node = shared_graph->create_node(
+            ocg::NodeType::kReadImage,
+            node_hash);
+    }
+
+    // Create Output node.
+    bool output_exists = shared_graph->node_exists(fp->m_out_stream_node);
+    if (!output_exists) {
+        auto node_uuid = fp->m_node_uuid;
+        MString node_name = "output";
+        auto node_hash = ocgm_utils::generate_unique_node_hash(
+            node_uuid,
+            node_name);
+        fp->m_out_stream_node = shared_graph->create_node(
+            ocg::NodeType::kNull,
+            node_hash);
+    }
+
+    // Connect input stream to the input.
     if (in_stream_has_changed) {
-        bool stream_node_exists = shared_graph->node_exists(m_in_stream_node);
-        if (stream_node_exists) {
-            shared_graph->connect(m_in_stream_node, m_viewer_node, 0);
-        } else {
-            shared_graph->disconnect_input(m_viewer_node, 0);
-        }
+        uint8_t input_num = 0;
+        status = ocgm_utils::join_ocg_nodes(
+            shared_graph,
+            m_in_stream_node,
+            m_viewer_node,
+            input_num);
+        CHECK_MSTATUS(status);
+    }
+
+    // Connect the read or viewer node to the output node.
+    uint8_t input_num = 0;
+    auto input_ocg_node = ocg::Node(ocg::NodeType::kNull, 0);
+    if (!m_disk_cache_enable) {
+        input_ocg_node = m_viewer_node;
+    } else {
+        input_ocg_node = m_read_cache_node;
+    }
+    status = ocgm_utils::join_ocg_nodes(
+        shared_graph,
+        input_ocg_node,
+        fp->m_out_stream_node,
+        input_num);
+    CHECK_MSTATUS(status);
+
+    // Disk Cache File Path
+    bool disk_cache_file_path_has_changed = false;
+
+    MPlug disk_cache_file_path_plug(
+        m_locator_node, ShapeNode::m_disk_cache_file_path_attr);
+
+    std::tie(m_disk_cache_file_path, disk_cache_file_path_has_changed) =
+        utils::get_plug_value_string(disk_cache_file_path_plug, m_disk_cache_file_path);
+
+    if (m_read_cache_node.get_id() != 0) {
+        // Disk Cache Enable
+        shared_graph->set_node_attr_i32(
+            m_read_cache_node, "enable",
+            static_cast<int32_t>(m_disk_cache_enable));
+
+        // Disk Cache File Path
+        shared_graph->set_node_attr_str(
+            m_read_cache_node, "file_path", m_disk_cache_file_path.asChar());
     }
 
     // Set attributes on Viewer
     bool cache_option_has_changed = false;
     bool cache_crop_on_format_has_changed = false;
-    bool disk_cache_enable_has_changed = false;
-    bool disk_cache_dir_has_changed = false;
+
     MPlug cache_option_plug(
         m_locator_node, ShapeNode::m_cache_option_attr);
     MPlug cache_crop_on_format_plug(
         m_locator_node, ShapeNode::m_cache_crop_on_format_attr);
-    MPlug disk_cache_enable_plug(
-        m_locator_node, ShapeNode::m_disk_cache_enable_attr);
-    MPlug disk_cache_dir_plug(
-        m_locator_node, ShapeNode::m_disk_cache_dir_attr);
 
     std::tie(m_cache_option, cache_option_has_changed) =
         utils::get_plug_value_uint32(cache_option_plug, m_cache_option);
-
     std::tie(m_cache_crop_on_format, cache_crop_on_format_has_changed) =
         utils::get_plug_value_bool(cache_crop_on_format_plug, m_cache_crop_on_format);
-    std::tie(m_disk_cache_enable, disk_cache_enable_has_changed) =
-        utils::get_plug_value_bool(disk_cache_enable_plug, m_disk_cache_enable);
 
-    std::tie(m_disk_cache_dir, disk_cache_dir_has_changed) =
-        utils::get_plug_value_string(disk_cache_dir_plug, m_disk_cache_dir);
-
-    if (cache_option_has_changed) {
-        shared_graph->set_node_attr_i32(
-            m_viewer_node, "bake_option", m_cache_option);
-    }
-    if (cache_crop_on_format_has_changed) {
-        shared_graph->set_node_attr_i32(
-            m_viewer_node, "crop_to_format", m_cache_crop_on_format);
-    }
-    if (disk_cache_enable_has_changed) {
-        shared_graph->set_node_attr_i32(
-            m_viewer_node, "disk_cache", m_disk_cache_enable);
-    }
-    if (disk_cache_dir_has_changed) {
-        auto dir_name = rust::String(m_disk_cache_dir.asChar());
-        shared_graph->set_node_attr_str(
-            m_viewer_node, "disk_cache_dir", dir_name);
+    if (m_viewer_node.get_id() != 0) {
+        if (cache_option_has_changed) {
+            shared_graph->set_node_attr_i32(
+                m_viewer_node, "bake_option", m_cache_option);
+        }
+        if (cache_crop_on_format_has_changed) {
+            shared_graph->set_node_attr_i32(
+                m_viewer_node, "crop_to_format", m_cache_crop_on_format);
+        }
     }
 
     // TODO: Detect when the camera matrix has changed.
@@ -294,6 +357,7 @@ void GeometryOverride::updateDG() {
 
     stream_values_changed += static_cast<uint32_t>(time_has_changed);
     stream_values_changed += static_cast<uint32_t>(in_stream_has_changed);
+    stream_values_changed += static_cast<uint32_t>(disk_cache_enable_has_changed);
 
     vertex_values_changed += static_cast<uint32_t>(focal_length_has_changed);
     vertex_values_changed += static_cast<uint32_t>(card_depth_has_changed);
@@ -313,7 +377,7 @@ void GeometryOverride::updateDG() {
         log->debug("ocgImagePlane: execute_frame={}", execute_frame);
         auto shared_cache = ocgm_cache::get_shared_cache();
         m_exec_status = ocgm_graph::execute_ocg_graph(
-            m_viewer_node,
+            fp->m_out_stream_node,
             execute_frame,
             shared_graph,
             shared_cache);

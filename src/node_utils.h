@@ -56,6 +56,16 @@ create_empty_unique_node_hash_attr(MFnDependencyNode &fn_depend_node);
 MStatus
 set_new_unique_node_hash_attr(MFnDependencyNode &fn_depend_node);
 
+MStatus
+join_ocg_nodes(
+    std::shared_ptr<ocg::Graph> &shared_graph,
+    ocg::Node &input_ocg_node,
+    ocg::Node &output_ocg_node,
+    uint8_t input_num);
+
+uint64_t
+generate_unique_node_hash(MUuid &node_uuid, MString &node_name);
+
 } // namespace utils
 } // namespace open_comp_graph_maya
 
