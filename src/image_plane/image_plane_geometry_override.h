@@ -183,6 +183,7 @@ private:
     std::string m_from_color_space_name;
     MString m_color_space_name;
     uint8_t m_cache_option;
+    uint8_t m_cache_pixel_data_type;
     bool m_cache_crop_on_format;
     bool m_disk_cache_enable;
     MString m_disk_cache_file_path;

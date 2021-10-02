@@ -850,15 +850,20 @@ void GeometryOverride::updateDG() {
 
     // Set attributes on Viewer
     bool cache_option_has_changed = false;
+    bool pixel_data_type_has_changed = false;
     bool cache_crop_on_format_has_changed = false;
 
     MPlug cache_option_plug(
         m_locator_node, ShapeNode::m_cache_option_attr);
+    MPlug pixel_data_type_plug(
+        m_locator_node, ShapeNode::m_cache_pixel_data_type_attr);
     MPlug cache_crop_on_format_plug(
         m_locator_node, ShapeNode::m_cache_crop_on_format_attr);
 
     std::tie(m_cache_option, cache_option_has_changed) =
         utils::get_plug_value_uint32(cache_option_plug, m_cache_option);
+    std::tie(m_cache_pixel_data_type, pixel_data_type_has_changed) =
+        utils::get_plug_value_uint32(pixel_data_type_plug, m_cache_pixel_data_type);
     std::tie(m_cache_crop_on_format, cache_crop_on_format_has_changed) =
         utils::get_plug_value_bool(cache_crop_on_format_plug, m_cache_crop_on_format);
 
@@ -866,6 +871,10 @@ void GeometryOverride::updateDG() {
         if (cache_option_has_changed) {
             shared_graph->set_node_attr_i32(
                 m_viewer_node, "bake_option", m_cache_option);
+        }
+        if (pixel_data_type_has_changed) {
+            shared_graph->set_node_attr_i32(
+                m_viewer_node, "bake_pixel_data_type", m_cache_pixel_data_type);
         }
         if (cache_crop_on_format_has_changed) {
             shared_graph->set_node_attr_i32(

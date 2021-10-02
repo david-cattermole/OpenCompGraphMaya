@@ -122,6 +122,7 @@ global proc AEocgImagePlaneTemplate(string $nodeName)
     // TODO: Add button to "export buffer compression file".
     // TODO: Add button to open cache options.
     editorTemplate -addControl "cacheOption";
+    editorTemplate -addControl "cachePixelDataType";
     editorTemplate -addControl "cacheCropOnFormat";
     editorTemplate -addControl "diskCacheEnable";
     editorTemplate -addControl "diskCacheImageType";

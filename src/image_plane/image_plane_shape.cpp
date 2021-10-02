@@ -73,6 +73,12 @@ const int32_t kBakeOptionColorSpace = static_cast<int32_t>(ocg::BakeOption::kCol
 const int32_t kBakeOptionColorSpaceAndGrade = static_cast<int32_t>(ocg::BakeOption::kColorSpaceAndGrade);
 const int32_t kBakeOptionAll = static_cast<int32_t>(ocg::BakeOption::kAll);
 
+const int32_t kDataTypeFloat32 = static_cast<int32_t>(ocg::DataType::kFloat32);
+const int32_t kDataTypeHalf16 = static_cast<int32_t>(ocg::DataType::kHalf16);
+const int32_t kDataTypeUInt8 = static_cast<int32_t>(ocg::DataType::kUInt8);
+const int32_t kDataTypeUInt16 = static_cast<int32_t>(ocg::DataType::kUInt16);
+const int32_t kDataTypeUnknown = static_cast<int32_t>(ocg::DataType::kUnknown);
+
 // Input Attributes
 MObject ShapeNode::m_camera_attr;
 MObject ShapeNode::m_in_stream_attr;
@@ -93,6 +99,7 @@ MObject ShapeNode::m_card_res_y_attr;
 MObject ShapeNode::m_color_space_name_attr;
 MObject ShapeNode::m_lut_edge_size_attr;
 MObject ShapeNode::m_cache_option_attr;
+MObject ShapeNode::m_cache_pixel_data_type_attr;
 MObject ShapeNode::m_cache_crop_on_format_attr;
 MObject ShapeNode::m_disk_cache_enable_attr;
 MObject ShapeNode::m_disk_cache_file_path_attr;
@@ -533,6 +540,17 @@ MStatus ShapeNode::initialize() {
     CHECK_MSTATUS(eAttr.addField("all", kBakeOptionAll));
     CHECK_MSTATUS(eAttr.setStorable(true));
 
+    // Pixel Data Type
+    m_cache_pixel_data_type_attr = eAttr.create(
+        "cachePixelDataType", "cchpxldtyp",
+        kDataTypeUnknown);
+    CHECK_MSTATUS(eAttr.addField("auto", kDataTypeUnknown));
+    CHECK_MSTATUS(eAttr.addField("uint8", kDataTypeUInt8));
+    CHECK_MSTATUS(eAttr.addField("uint16", kDataTypeUInt16));
+    CHECK_MSTATUS(eAttr.addField("half16", kDataTypeHalf16));
+    CHECK_MSTATUS(eAttr.addField("float32", kDataTypeFloat32));
+    CHECK_MSTATUS(eAttr.setStorable(true));
+
     // Cache - Crop on Format
     bool cache_crop_on_format_default = false;
     m_cache_crop_on_format_attr = nAttr.create(
@@ -575,6 +593,7 @@ MStatus ShapeNode::initialize() {
     CHECK_MSTATUS(addAttribute(m_lut_edge_size_attr));
     //
     CHECK_MSTATUS(addAttribute(m_cache_option_attr));
+    CHECK_MSTATUS(addAttribute(m_cache_pixel_data_type_attr));
     CHECK_MSTATUS(addAttribute(m_cache_crop_on_format_attr));
     //
     CHECK_MSTATUS(addAttribute(m_disk_cache_enable_attr));
@@ -598,6 +617,7 @@ MStatus ShapeNode::initialize() {
     CHECK_MSTATUS(attributeAffects(m_color_space_name_attr, m_out_stream_attr));
     CHECK_MSTATUS(attributeAffects(m_lut_edge_size_attr, m_out_stream_attr));
     CHECK_MSTATUS(attributeAffects(m_cache_option_attr, m_out_stream_attr));
+    CHECK_MSTATUS(attributeAffects(m_cache_pixel_data_type_attr, m_out_stream_attr));
     CHECK_MSTATUS(attributeAffects(m_cache_crop_on_format_attr, m_out_stream_attr));
     CHECK_MSTATUS(attributeAffects(m_disk_cache_enable_attr, m_out_stream_attr));
     CHECK_MSTATUS(attributeAffects(m_disk_cache_file_path_attr, m_out_stream_attr));

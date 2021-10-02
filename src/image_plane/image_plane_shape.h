@@ -108,6 +108,7 @@ public:
     static MObject m_lut_edge_size_attr;
     //
     static MObject m_cache_option_attr;
+    static MObject m_cache_pixel_data_type_attr;
     static MObject m_cache_crop_on_format_attr;
     //
     static MObject m_disk_cache_enable_attr;
