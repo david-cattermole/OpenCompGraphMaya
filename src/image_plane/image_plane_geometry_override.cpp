@@ -161,6 +161,12 @@ MString GeometryOverride::m_shader_color_parameter_name = "gSolidColor";
 MString GeometryOverride::m_shader_geometry_transform_parameter_name = "gGeometryTransform";
 MString GeometryOverride::m_shader_rescale_transform_parameter_name = "gRescaleTransform";
 MString GeometryOverride::m_shader_display_mode_parameter_name = "gDisplayMode";
+MString GeometryOverride::m_shader_display_color_parameter_name = "gDisplayColor";
+MString GeometryOverride::m_shader_display_alpha_parameter_name = "gDisplayAlpha";
+MString GeometryOverride::m_shader_display_saturation_matrix_parameter_name = "gDisplaySaturationMatrix";
+MString GeometryOverride::m_shader_display_exposure_parameter_name = "gDisplayExposure";
+MString GeometryOverride::m_shader_display_gamma_parameter_name = "gDisplayGamma";
+MString GeometryOverride::m_shader_display_soft_clip_parameter_name = "gDisplaySoftClip";
 MString GeometryOverride::m_shader_image_color_matrix_parameter_name = "gImageColorMatrix";
 MString GeometryOverride::m_shader_image_texture_parameter_name = "gImageTexture";
 MString GeometryOverride::m_shader_image_texture_sampler_parameter_name = "gImageTextureSampler";
@@ -197,6 +203,12 @@ GeometryOverride::GeometryOverride(const MObject &obj)
         , m_update_shader_border(true)
         , m_exec_status(ocg::ExecuteStatus::kUninitialized)
         , m_display_mode(0)
+        , m_display_color()
+        , m_display_alpha(1.0f)
+        , m_display_saturation(1.0f)
+        , m_display_exposure(0.0f)
+        , m_display_gamma(1.0f)
+        , m_display_soft_clip(0.0f)
         , m_focal_length(35.0f)
         , m_card_depth(1.0f)
         , m_card_size_x(1.0f)
@@ -506,6 +518,11 @@ MStatus updatePlaneGeometry(
     return status;
 }
 
+// Luminance weights
+#define LUMINANCE_RED   (0.3086)
+#define LUMINANCE_GREEN (0.6094)
+#define LUMINANCE_BLUE  (0.0820)
+
 MStatus GeometryOverride::updateWithStream(std::shared_ptr<ocg::Graph> &shared_graph,
                                            ocg::StreamData &stream_data) {
     auto log = log::get_logger();
@@ -534,6 +551,75 @@ MStatus GeometryOverride::updateWithStream(std::shared_ptr<ocg::Graph> &shared_g
     status = m_shader.set_int_param(
         m_shader_display_mode_parameter_name,
         m_display_mode);
+    CHECK_MSTATUS(status);
+
+    // Display Color
+    const float display_color_values[4] = {
+        m_display_color.r,
+        m_display_color.g,
+        m_display_color.b,
+        1.0f};
+    status = m_shader.set_color_param(
+        m_shader_display_color_parameter_name,
+        display_color_values);
+    CHECK_MSTATUS(status);
+
+    // Display Alpha
+    status = m_shader.set_float_param(
+        m_shader_display_alpha_parameter_name,
+        m_display_alpha);
+    CHECK_MSTATUS(status);
+
+    // Display Saturation
+    {
+        float rwgt = LUMINANCE_RED;
+        float gwgt = LUMINANCE_GREEN;
+        float bwgt = LUMINANCE_BLUE;
+
+        float sat = m_display_saturation;
+        float a = (1.0 - sat) * rwgt + sat;
+        float b = (1.0 - sat) * rwgt;
+        float c = (1.0 - sat) * rwgt;
+        float d = (1.0 - sat) * gwgt;
+        float e = (1.0 - sat) * gwgt + sat;
+        float f = (1.0 - sat) * gwgt;
+        float g = (1.0 - sat) * bwgt;
+        float h = (1.0 - sat) * bwgt;
+        float i = (1.0 - sat) * bwgt + sat;
+
+        float saturation_matrix_values[4][4] = {
+            // Column 0
+            {a, d, g, 0.0},
+            // Column 1
+            {b, e, h, 0.0},
+            // Column 2
+            {c, f, i, 0.0},
+            // Column 3
+            {0.0, 0.0, 0.0, 1.0},
+        };
+        MFloatMatrix saturation_matrix(saturation_matrix_values);
+        status = m_shader.set_float_matrix4x4_param(
+            m_shader_display_saturation_matrix_parameter_name,
+            saturation_matrix);
+        CHECK_MSTATUS(status);
+    }
+
+    // Display Exposure
+    status = m_shader.set_float_param(
+        m_shader_display_exposure_parameter_name,
+        m_display_exposure);
+    CHECK_MSTATUS(status);
+
+    // Display Gamma
+    status = m_shader.set_float_param(
+        m_shader_display_gamma_parameter_name,
+        m_display_gamma);
+    CHECK_MSTATUS(status);
+
+    // Display Soft Clip
+    status = m_shader.set_float_param(
+        m_shader_display_soft_clip_parameter_name,
+        m_display_soft_clip);
     CHECK_MSTATUS(status);
 
     // The image color space.
@@ -770,12 +856,42 @@ void GeometryOverride::updateDG() {
 
     // Display Mode
     bool display_mode_has_changed = false;
+    bool display_color_has_changed = false;
+    bool display_alpha_has_changed = false;
+    bool display_saturation_has_changed = false;
+    bool display_exposure_has_changed = false;
+    bool display_gamma_has_changed = false;
+    bool display_soft_clip_has_changed = false;
 
     MPlug display_mode_plug(
         m_locator_node, ShapeNode::m_display_mode_attr);
+    MPlug display_color_plug(
+        m_locator_node, ShapeNode::m_display_color_attr);
+    MPlug display_alpha_plug(
+        m_locator_node, ShapeNode::m_display_alpha_attr);
+    MPlug display_saturation_plug(
+        m_locator_node, ShapeNode::m_display_saturation_attr);
+    MPlug display_exposure_plug(
+        m_locator_node, ShapeNode::m_display_exposure_attr);
+    MPlug display_gamma_plug(
+        m_locator_node, ShapeNode::m_display_gamma_attr);
+    MPlug display_soft_clip_plug(
+        m_locator_node, ShapeNode::m_display_soft_clip_attr);
 
     std::tie(m_display_mode, display_mode_has_changed) =
         utils::get_plug_value_uint32(display_mode_plug, m_display_mode);
+    std::tie(m_display_color, display_color_has_changed) =
+        utils::get_plug_value_color(display_color_plug, m_display_color);
+    std::tie(m_display_alpha, display_alpha_has_changed) =
+        utils::get_plug_value_float(display_alpha_plug, m_display_alpha);
+    std::tie(m_display_saturation, display_saturation_has_changed) =
+        utils::get_plug_value_float(display_saturation_plug, m_display_saturation);
+    std::tie(m_display_exposure, display_exposure_has_changed) =
+        utils::get_plug_value_float(display_exposure_plug, m_display_exposure);
+    std::tie(m_display_gamma, display_gamma_has_changed) =
+        utils::get_plug_value_float(display_gamma_plug, m_display_gamma);
+    std::tie(m_display_soft_clip, display_soft_clip_has_changed) =
+        utils::get_plug_value_float(display_soft_clip_plug, m_display_soft_clip);
 
     // TODO: Detect when the camera matrix has changed.
     //
@@ -837,6 +953,12 @@ void GeometryOverride::updateDG() {
     shader_values_changed += static_cast<uint32_t>(camera_has_changed);
     shader_values_changed += static_cast<uint32_t>(focal_length_has_changed);
     shader_values_changed += static_cast<uint32_t>(display_mode_has_changed);
+    shader_values_changed += static_cast<uint32_t>(display_color_has_changed);
+    shader_values_changed += static_cast<uint32_t>(display_alpha_has_changed);
+    shader_values_changed += static_cast<uint32_t>(display_saturation_has_changed);
+    shader_values_changed += static_cast<uint32_t>(display_exposure_has_changed);
+    shader_values_changed += static_cast<uint32_t>(display_gamma_has_changed);
+    shader_values_changed += static_cast<uint32_t>(display_soft_clip_has_changed);
     shader_values_changed += static_cast<uint32_t>(card_depth_has_changed);
     shader_values_changed += static_cast<uint32_t>(card_size_x_has_changed);
     shader_values_changed += static_cast<uint32_t>(card_size_y_has_changed);

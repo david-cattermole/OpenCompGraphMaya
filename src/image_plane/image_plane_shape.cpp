@@ -77,6 +77,12 @@ const int32_t kBakeOptionAll = static_cast<int32_t>(ocg::BakeOption::kAll);
 MObject ShapeNode::m_camera_attr;
 MObject ShapeNode::m_in_stream_attr;
 MObject ShapeNode::m_display_mode_attr;
+MObject ShapeNode::m_display_color_attr;
+MObject ShapeNode::m_display_alpha_attr;
+MObject ShapeNode::m_display_saturation_attr;
+MObject ShapeNode::m_display_exposure_attr;
+MObject ShapeNode::m_display_gamma_attr;
+MObject ShapeNode::m_display_soft_clip_attr;
 MObject ShapeNode::m_card_depth_attr;
 MObject ShapeNode::m_card_size_x_attr;
 MObject ShapeNode::m_card_size_y_attr;
@@ -324,6 +330,75 @@ MStatus ShapeNode::initialize() {
     CHECK_MSTATUS(eAttr.addField("a", 5));
     CHECK_MSTATUS(eAttr.setStorable(true));
 
+    // Add 'color' attribute.
+    m_display_color_attr = nAttr.createColor(
+        "displayColor", "dspcol");
+    CHECK_MSTATUS(nAttr.setKeyable(true));
+    CHECK_MSTATUS(nAttr.setStorable(true));
+    CHECK_MSTATUS(nAttr.setReadable(true));
+    CHECK_MSTATUS(nAttr.setWritable(true));
+    CHECK_MSTATUS(nAttr.setDefault(1.0f, 1.0f, 1.0f));
+
+    // Add 'alpha' attribute.
+    float alpha_min = 0.0f;
+    float alpha_max = 1.0f;
+    float alpha_default = 1.0f;
+    m_display_alpha_attr = nAttr.create(
+        "displayAlpha", "dspalpha",
+        MFnNumericData::kFloat, alpha_default);
+    CHECK_MSTATUS(nAttr.setStorable(true));
+    CHECK_MSTATUS(nAttr.setKeyable(true));
+    CHECK_MSTATUS(nAttr.setMin(alpha_min));
+    CHECK_MSTATUS(nAttr.setMax(alpha_max));
+
+    // Add 'saturation' attribute.
+    float saturation_min = 0.0f;
+    float saturation_soft_max = 2.0f;
+    float saturation_default = 1.0f;
+    m_display_saturation_attr = nAttr.create(
+        "displaySaturation", "dspstrtn",
+        MFnNumericData::kFloat, saturation_default);
+    CHECK_MSTATUS(nAttr.setStorable(true));
+    CHECK_MSTATUS(nAttr.setKeyable(true));
+    CHECK_MSTATUS(nAttr.setMin(saturation_min));
+    CHECK_MSTATUS(nAttr.setSoftMax(saturation_soft_max));
+
+    // Add 'exposure' attribute.
+    float exposure_soft_min = -9.0f;
+    float exposure_soft_max = +9.0f;
+    float exposure_default = 0.0f;
+    m_display_exposure_attr = nAttr.create(
+        "displayExposure", "dspexpsr",
+        MFnNumericData::kFloat, exposure_default);
+    CHECK_MSTATUS(nAttr.setStorable(true));
+    CHECK_MSTATUS(nAttr.setKeyable(true));
+    CHECK_MSTATUS(nAttr.setSoftMin(exposure_soft_min));
+    CHECK_MSTATUS(nAttr.setSoftMax(exposure_soft_max));
+
+    // Add 'gamma' attribute.
+    float gamma_min = 0.0f;
+    float gamma_soft_max = +2.0f;
+    float gamma_default = 1.0f;
+    m_display_gamma_attr = nAttr.create(
+        "displayGamma", "dspgmma",
+        MFnNumericData::kFloat, gamma_default);
+    CHECK_MSTATUS(nAttr.setStorable(true));
+    CHECK_MSTATUS(nAttr.setKeyable(true));
+    CHECK_MSTATUS(nAttr.setMin(gamma_min));
+    CHECK_MSTATUS(nAttr.setSoftMax(gamma_soft_max));
+
+    // Add 'soft clip' attribute.
+    float soft_clip_min = 0.0f;
+    float soft_clip_max = 1.0f;
+    float soft_clip_default = 0.0f;
+    m_display_soft_clip_attr = nAttr.create(
+        "displaySoftClip", "dspsftclp",
+        MFnNumericData::kFloat, soft_clip_default);
+    CHECK_MSTATUS(nAttr.setStorable(true));
+    CHECK_MSTATUS(nAttr.setKeyable(true));
+    CHECK_MSTATUS(nAttr.setMin(soft_clip_min));
+    CHECK_MSTATUS(nAttr.setMax(soft_clip_max));
+
     // Geometry Type Attribute
     //
     // The type of geometry that will draw the image.
@@ -457,18 +532,30 @@ MStatus ShapeNode::initialize() {
 
     // Add Attributes
     CHECK_MSTATUS(addAttribute(m_camera_attr));
+    //
     CHECK_MSTATUS(addAttribute(m_display_mode_attr));
+    CHECK_MSTATUS(addAttribute(m_display_color_attr));
+    CHECK_MSTATUS(addAttribute(m_display_alpha_attr));
+    CHECK_MSTATUS(addAttribute(m_display_saturation_attr));
+    CHECK_MSTATUS(addAttribute(m_display_exposure_attr));
+    CHECK_MSTATUS(addAttribute(m_display_gamma_attr));
+    CHECK_MSTATUS(addAttribute(m_display_soft_clip_attr));
+    //
     CHECK_MSTATUS(addAttribute(m_card_depth_attr));
     CHECK_MSTATUS(addAttribute(m_card_size_x_attr));
     CHECK_MSTATUS(addAttribute(m_card_size_y_attr));
     CHECK_MSTATUS(addAttribute(m_card_res_x_attr));
     CHECK_MSTATUS(addAttribute(m_card_res_y_attr));
+    //
     CHECK_MSTATUS(addAttribute(m_color_space_name_attr));
     CHECK_MSTATUS(addAttribute(m_lut_edge_size_attr));
+    //
     CHECK_MSTATUS(addAttribute(m_cache_option_attr));
     CHECK_MSTATUS(addAttribute(m_cache_crop_on_format_attr));
+    //
     CHECK_MSTATUS(addAttribute(m_disk_cache_enable_attr));
     CHECK_MSTATUS(addAttribute(m_disk_cache_file_path_attr));
+    //
     CHECK_MSTATUS(addAttribute(m_time_attr));
     CHECK_MSTATUS(addAttribute(m_in_stream_attr));
     CHECK_MSTATUS(addAttribute(m_out_stream_attr));
@@ -476,6 +563,12 @@ MStatus ShapeNode::initialize() {
     // Attribute Affects
     CHECK_MSTATUS(attributeAffects(m_time_attr, m_out_stream_attr));
     CHECK_MSTATUS(attributeAffects(m_display_mode_attr, m_out_stream_attr));
+    CHECK_MSTATUS(attributeAffects(m_display_color_attr, m_out_stream_attr));
+    CHECK_MSTATUS(attributeAffects(m_display_alpha_attr, m_out_stream_attr));
+    CHECK_MSTATUS(attributeAffects(m_display_saturation_attr, m_out_stream_attr));
+    CHECK_MSTATUS(attributeAffects(m_display_exposure_attr, m_out_stream_attr));
+    CHECK_MSTATUS(attributeAffects(m_display_gamma_attr, m_out_stream_attr));
+    CHECK_MSTATUS(attributeAffects(m_display_soft_clip_attr, m_out_stream_attr));
     CHECK_MSTATUS(attributeAffects(m_color_space_name_attr, m_out_stream_attr));
     CHECK_MSTATUS(attributeAffects(m_lut_edge_size_attr, m_out_stream_attr));
     CHECK_MSTATUS(attributeAffects(m_cache_option_attr, m_out_stream_attr));

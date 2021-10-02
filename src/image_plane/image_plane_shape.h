@@ -87,18 +87,30 @@ public:
     // Attribute MObjects
     static MObject m_camera_attr;
     static MObject m_in_stream_attr;
+    //
     static MObject m_display_mode_attr;
+    static MObject m_display_color_attr;
+    static MObject m_display_alpha_attr;
+    static MObject m_display_saturation_attr;
+    static MObject m_display_exposure_attr;
+    static MObject m_display_gamma_attr;
+    static MObject m_display_soft_clip_attr;
+    //
     static MObject m_card_depth_attr;
     static MObject m_card_size_x_attr;
     static MObject m_card_size_y_attr;
     static MObject m_card_res_x_attr;
     static MObject m_card_res_y_attr;
+    //
     static MObject m_color_space_name_attr;
     static MObject m_lut_edge_size_attr;
+    //
     static MObject m_cache_option_attr;
     static MObject m_cache_crop_on_format_attr;
+    //
     static MObject m_disk_cache_enable_attr;
     static MObject m_disk_cache_file_path_attr;
+    //
     static MObject m_time_attr;
     static MObject m_out_stream_attr;
 

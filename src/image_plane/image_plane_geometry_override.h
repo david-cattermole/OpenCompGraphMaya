@@ -131,6 +131,12 @@ private:
     static MString m_shader_geometry_transform_parameter_name;
     static MString m_shader_rescale_transform_parameter_name;
     static MString m_shader_display_mode_parameter_name;
+    static MString m_shader_display_color_parameter_name;
+    static MString m_shader_display_alpha_parameter_name;
+    static MString m_shader_display_saturation_matrix_parameter_name;
+    static MString m_shader_display_exposure_parameter_name;
+    static MString m_shader_display_gamma_parameter_name;
+    static MString m_shader_display_soft_clip_parameter_name;
     static MString m_shader_image_transform_parameter_name;
     static MString m_shader_image_color_matrix_parameter_name;
     static MString m_shader_image_texture_parameter_name;
@@ -157,6 +163,12 @@ private:
     // Cached attribute values
     float m_focal_length;
     uint8_t m_display_mode;
+    MColor m_display_color;
+    float m_display_alpha;
+    float m_display_saturation;
+    float m_display_exposure;
+    float m_display_gamma;
+    float m_display_soft_clip;
     float m_card_depth;
     float m_card_size_x;
     float m_card_size_y;

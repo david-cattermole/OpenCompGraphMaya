@@ -8,15 +8,21 @@ uniform mat4 gWVPXf : WorldViewProjection;
 uniform vec4 gSolidColor : DIFFUSE = {1, 1, 1, 1};
 
 // Display mode, what type of channels to display to the user.
-//
-// RGBA = 0
-// RGB = 1
-// R = 2
-// G = 3
-// B = 4
-// A = 5
-//
+#define DISPLAY_MODE_RGBA (0)
+#define DISPLAY_MODE_RGB  (1)
+#define DISPLAY_MODE_R    (2)
+#define DISPLAY_MODE_G    (3)
+#define DISPLAY_MODE_B    (4)
+#define DISPLAY_MODE_A    (5)
 uniform int gDisplayMode = 0;
+
+// Display parameters
+uniform vec4 gDisplayColor = {1, 1, 1, 1};
+uniform float gDisplayAlpha = 1.0;
+uniform float4x4 gDisplaySaturationMatrix < string UIWidget = "None"; >;
+uniform float gDisplayExposure = 1.0;
+uniform float gDisplayGamma = 1.0;
+uniform float gDisplaySoftClip = 0.0;
 
 // Matrix used to multiply colors, to perform color (linear)
 // grading/correction.
@@ -58,7 +64,7 @@ uniform sampler3D g3dLutTextureSampler = sampler_state
     TEXTURE_WRAP_R = CLAMP_TO_EDGE;
 };
 
-// The 3D LUT texture to transform the texture colours.
+// The 3D LUT texture to preview the colour operations.
 uniform bool gColorOpsLutEnable = false;
 uniform int gColorOpsLutEdgeSize = 0;
 uniform texture3D gColorOps3dLutTexture
@@ -125,6 +131,24 @@ GLSLShader VS
 
 GLSLShader PS
 {
+    // Based on DJV's soft-clip function:
+    // https://github.com/darbyjohnston/DJV/blob/master/etc/Shaders/GL4_1/djvRender2DFragment.glsl#L98
+    //
+    // SPDX-License-Identifier: BSD-3-Clause
+    // Copyright (c) 2004-2020 Darby Johnston
+    // All rights reserved.
+    vec3 apply_soft_clip(vec3 in_color, float value)
+    {
+        float tmp = 1.0 - value;
+        if (in_color.r > tmp)
+            in_color.r = tmp + (1.0 - exp(-(in_color.r - tmp) / value)) * value;
+        if (in_color.g > tmp)
+            in_color.g = tmp + (1.0 - exp(-(in_color.g - tmp) / value)) * value;
+        if (in_color.b > tmp)
+            in_color.b = tmp + (1.0 - exp(-(in_color.b - tmp) / value)) * value;
+        return in_color;
+    }
+
     void main()
     {
         vec4 tex_color = texture2D(gImageTextureSampler, psIn.texcoord);
@@ -155,20 +179,37 @@ GLSLShader PS
                 alpha);
         }
 
+        // Manipulate the colors of the texture.
         vec4 final = gSolidColor * gImageColorMatrix * tex_color;
-        if (gDisplayMode == 0 /* RGBA */) {
+
+        final *= gDisplayColor;
+        final *= gDisplaySaturationMatrix;
+
+        // make transparent, with pre-mult.
+        final *= gDisplayAlpha;
+
+        if (gDisplayMode == DISPLAY_MODE_RGBA) {
             out_color = final;
-        } else if (gDisplayMode == 1 /* RGB */) {
+        } else if (gDisplayMode == DISPLAY_MODE_RGB) {
             out_color = vec4(final.rgb, 1.0);
-        } else if (gDisplayMode == 2 /* Red */) {
+        } else if (gDisplayMode == DISPLAY_MODE_R) {
             out_color = vec4(final.rrr, 1.0);
-        } else if (gDisplayMode == 3 /* Green */) {
+        } else if (gDisplayMode == DISPLAY_MODE_G) {
             out_color = vec4(final.ggg, 1.0);
-        } else if (gDisplayMode == 4 /* Blue */) {
+        } else if (gDisplayMode == DISPLAY_MODE_B) {
             out_color = vec4(final.bbb, 1.0);
-        } else if (gDisplayMode == 5 /* Alpha */) {
+        } else if (gDisplayMode == DISPLAY_MODE_A) {
             out_color = vec4(final.aaa, 1.0);
         }
+
+        // Expose and gamma correct the color to be displayed to the
+        // user.
+        out_color = vec4(out_color.rgb * pow(2.0, gDisplayExposure), out_color.a);
+        float gamma = 1.0 / gDisplayGamma;
+        out_color.r = pow(out_color.r, gamma);
+        out_color.g = pow(out_color.g, gamma);
+        out_color.b = pow(out_color.b, gamma);
+        out_color = vec4(apply_soft_clip(out_color.rgb, gDisplaySoftClip), out_color.a);
     }
 }
 

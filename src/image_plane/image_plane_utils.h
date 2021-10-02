@@ -24,6 +24,7 @@
 #include <maya/MObject.h>
 #include <maya/MDataBlock.h>
 #include <maya/MString.h>
+#include <maya/MColor.h>
 #include <maya/MPlug.h>
 
 // STL
@@ -66,6 +67,10 @@ get_plug_value_uint32(MPlug plug, uint32_t old_value);
 // Get floating point attribute value.
 std::tuple<float, bool>
 get_plug_value_float(MPlug plug, float old_value);
+
+// Get color attribute value.
+std::tuple<MColor, bool>
+get_plug_value_color(MPlug plug, MColor &old_value);
 
 // Get String attribute value.
 std::tuple<MString, bool>

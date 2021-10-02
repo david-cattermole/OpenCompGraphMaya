@@ -37,11 +37,12 @@ global proc AEocgImagePlaneTemplate(string $nodeName)
     editorTemplate -endNoOptimize;
     editorTemplate -addSeparator;
     editorTemplate -addControl "displayMode"; // None, Luminance, RGB, RGBA, etc.
-    editorTemplate -addControl "color"; // multiplier color for the viewer only.
-    editorTemplate -addControl "alpha"; // "opacity" or "transparency"?
-    editorTemplate -addControl "exposure"; // EVs multiplier for the viewer only.
-    editorTemplate -addControl "gamma"; // gamma correction
-    editorTemplate -addControl "softClip"; // prevent over-bright values.
+    editorTemplate -addControl "displayColor"; // multiplier color for the viewer only.
+    editorTemplate -addControl "displayAlpha"; // "opacity" or "transparency"?
+    editorTemplate -addControl "displayExposure"; // EVs multiplier for the viewer only.
+    editorTemplate -addControl "displayGamma"; // gamma correction
+    editorTemplate -addControl "displaySaturation"; // increase/decrease color.
+    editorTemplate -addControl "displaySoftClip"; // prevent over-bright values.
     editorTemplate -addSeparator;
     editorTemplate -addControl "cardDepth";
     editorTemplate -endLayout;

@@ -22,6 +22,8 @@
 
 // Maya
 #include <maya/MObject.h>
+#include <maya/MColor.h>
+#include <maya/MFloatVector.h>
 #include <maya/MDataBlock.h>
 #include <maya/MDataHandle.h>
 #include <maya/MString.h>
@@ -157,6 +159,26 @@ std::tuple<float, bool> get_plug_value_float(MPlug plug, float old_value) {
     float value = old_value;
     if (!plug.isNull()) {
         float new_value = plug.asFloat(&status);
+        CHECK_MSTATUS(status);
+        has_changed = old_value != new_value;
+        if (has_changed) {
+            value = new_value;
+        }
+    }
+    return std::make_tuple(value, has_changed);
+}
+
+// Get floating point attribute value.
+std::tuple<MColor, bool> get_plug_value_color(MPlug plug, MColor &old_value) {
+    MStatus status;
+    bool has_changed = false;
+    MColor value = old_value;
+    if (!plug.isNull()) {
+        auto data_handle = plug.asMDataHandle();
+        auto float_vector = data_handle.asFloatVector();
+        plug.destructHandle(data_handle);
+        MColor new_value(float_vector.x, float_vector.y, float_vector.z);
+
         CHECK_MSTATUS(status);
         has_changed = old_value != new_value;
         if (has_changed) {

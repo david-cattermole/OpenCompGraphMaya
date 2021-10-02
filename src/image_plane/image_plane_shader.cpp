@@ -273,6 +273,21 @@ Shader::set_int_param(
     return status;
 }
 
+// Set a 32-bit float parameter.
+MStatus
+Shader::set_float_param(
+        const MString parameter_name,
+        const float value) {
+    MStatus status = m_shader->setParameter(
+        parameter_name,
+        value);
+    if (status != MStatus::kSuccess) {
+        auto log = log::get_logger();
+        log->error("ocgImagePlane: Failed to set float parameter!");
+    }
+    return status;
+}
+
 // Set a color parameter.
 MStatus
 Shader::set_color_param(

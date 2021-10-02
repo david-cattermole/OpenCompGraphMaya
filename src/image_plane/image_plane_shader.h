@@ -75,6 +75,10 @@ public:
         const MString parameter_name,
         const int32_t value);
 
+    MStatus set_float_param(
+        const MString parameter_name,
+        const float value);
+
     MStatus set_color_param(
         const MString parameter_name,
         const float color_values[4]);
