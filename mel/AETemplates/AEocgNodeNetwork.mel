@@ -18,9 +18,6 @@
 // ---------------------------------------------------------------------
 
 
-source "AEocgImageReadTemplate";
-
-
 global proc AEocgNodeNetworkOpenCommand(string $nodeName)
 {
     select -r $nodeName;
