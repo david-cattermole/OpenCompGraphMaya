@@ -71,6 +71,91 @@ namespace ocgm_utils = open_comp_graph_maya::utils;
 namespace open_comp_graph_maya {
 namespace image_plane {
 
+MStatus uploadLut3d(
+       uint32_t lut_edge_size,
+       Shader &shader,
+       MString &texture_parameter_name,
+       ocg::internal::ImageShared &lut_3d_image,
+       MHWRender::MSamplerStateDesc &sampler_description_3d) {
+    auto log = log::get_logger();
+    MStatus status;
+
+    // 3D LUT Texture.
+    //
+    // Texture is a cube and assumed to be lut_edge_size^3
+    // (eg, 20 * 20 * 20).
+    auto pixel_width = lut_edge_size;
+    auto pixel_height = lut_edge_size;
+    auto pixel_depth = lut_edge_size;
+    auto pixel_num_channels = lut_3d_image.pixel_block->num_channels();
+    auto pixel_data_type = lut_3d_image.pixel_block->data_type();
+    auto buffer = ocg::internal::pixelblock_get_pixel_data_ptr_read_write(
+        lut_3d_image.pixel_block);
+
+    log->debug("GeometryOverride:: lut_3d_image.width: {}", lut_3d_image.pixel_block->width());
+    log->debug("GeometryOverride:: lut_3d_image.height: {}", lut_3d_image.pixel_block->height());
+    log->debug("GeometryOverride:: lut_3d_image.num_channels: {}", lut_3d_image.pixel_block->num_channels());
+    log->debug("GeometryOverride:: lut_edge_size: {}", lut_edge_size);
+
+    // Upload 3D LUT to GPU.
+    status = shader.set_texture_param_with_image_data(
+        texture_parameter_name,
+        MHWRender::kVolumeTexture,
+        pixel_width,
+        pixel_height,
+        pixel_depth,
+        pixel_num_channels,
+        pixel_data_type,
+        buffer);
+    CHECK_MSTATUS(status);
+
+    return status;
+}
+
+MStatus uploadLut1d(
+       uint32_t lut_edge_size,
+       Shader &shader,
+       MString &texture_parameter_name,
+       ocg::internal::ImageShared &lut_1d_image,
+       MHWRender::MSamplerStateDesc &sampler_description_1d) {
+    auto log = log::get_logger();
+    MStatus status;
+
+    // 1D LUT Texture.
+    auto pixel_width = lut_1d_image.pixel_block->width();
+    auto pixel_height = lut_1d_image.pixel_block->height();
+    auto pixel_depth = 1;
+    auto pixel_num_channels = lut_1d_image.pixel_block->num_channels();
+    auto pixel_data_type = lut_1d_image.pixel_block->data_type();
+    auto buffer = ocg::internal::pixelblock_get_pixel_data_ptr_read_write(
+        lut_1d_image.pixel_block);
+
+    log->debug("GeometryOverride:: lut_1d_image.width: {}", lut_1d_image.pixel_block->width());
+    log->debug("GeometryOverride:: lut_1d_image.height: {}", lut_1d_image.pixel_block->height());
+    log->debug("GeometryOverride:: lut_1d_image.num_channels: {}", lut_1d_image.pixel_block->num_channels());
+    log->debug("GeometryOverride:: lut_edge_size: {}", lut_edge_size);
+
+    // auto pixel_buffer = static_cast<float*>(buffer);
+    // for (auto i = 0; i < pixel_width; ++i) {
+    //     float v = pixel_buffer[i];
+    //     log->debug("1d lut num: {}={}", i, v);
+    // }
+
+    // Upload 3D LUT to GPU.
+    status = shader.set_texture_param_with_image_data(
+        texture_parameter_name,
+        MHWRender::kImage1D,
+        pixel_width,
+        pixel_height,
+        pixel_depth,
+        pixel_num_channels,
+        pixel_data_type,
+        buffer);
+    CHECK_MSTATUS(status);
+
+    return status;
+}
+
 // Parameter Names
 MString GeometryOverride::m_shader_color_parameter_name = "gSolidColor";
 MString GeometryOverride::m_shader_geometry_transform_parameter_name = "gGeometryTransform";
@@ -136,6 +221,400 @@ GeometryOverride::GeometryOverride(const MObject &obj)
 }
 
 GeometryOverride::~GeometryOverride() {
+}
+
+
+// Generate a 3D volume texture to be used to look up approximations
+// to colour operations.
+MStatus generateColorTransformLut(
+        bool lut_edge_size_has_changed,
+        bool color_space_name_has_changed,
+        bool from_color_space_changed,
+        uint32_t lut_edge_size,
+        rust::String &from_color_space,
+        std::string &from_color_space_str,
+        std::string &from_color_space_name,
+        MString &color_space_name,
+        Shader &shader,
+        MString &param_name_edge_size,
+        MString &param_name_enable,
+        MString &param_name_texture_sampler,
+        MString &param_name_texture)
+{
+    auto log = log::get_logger();
+    MStatus status;
+
+    if (lut_edge_size_has_changed) {
+
+        // 3D LUT Edge Size.
+        status = shader.set_int_param(
+            param_name_edge_size,
+            lut_edge_size);
+        CHECK_MSTATUS(status);
+
+        // Generate a 3D volume texture to be used to look
+        // up colour space transforms.
+        if (color_space_name_has_changed
+            || from_color_space_changed) {
+            from_color_space_name = from_color_space_str;
+
+            // Color Space Conversion values
+            auto to_color_space = color_space_name.asChar();
+            auto use_3dlut = (from_color_space != to_color_space)
+                && (lut_edge_size > 0);
+
+            log->debug("GeometryOverride:: use 3D LUT: {}", use_3dlut);
+            log->debug("GeometryOverride:: 3D LUT Edge Size: {}", lut_edge_size);
+            log->debug("GeometryOverride:: Color Space: {} to {}", from_color_space_str, to_color_space);
+
+            // Should we use the 3D LUT texture?
+            status = shader.set_bool_param(
+                param_name_enable, use_3dlut);
+            CHECK_MSTATUS(status);
+
+            if (use_3dlut) {
+                auto shared_color_transform_cache =
+                    ocgm_cache::get_shared_color_transform_cache();
+                auto lut_image = ocg::get_color_transform_3dlut(
+                    from_color_space, to_color_space,
+                    lut_edge_size, shared_color_transform_cache);
+
+                // 3D LUT Texture Sampler.
+                MHWRender::MSamplerStateDesc sampler_description;
+                sampler_description.filter = MSamplerState::TextureFilter::kMinMagMipLinear;
+                sampler_description.addressU = MSamplerState::TextureAddress::kTexClamp;
+                sampler_description.addressV = MSamplerState::TextureAddress::kTexClamp;
+                sampler_description.addressW = MSamplerState::TextureAddress::kTexClamp;
+                sampler_description.minLOD = 0;
+                sampler_description.maxLOD = 0;
+                status = shader.set_texture_sampler_param(
+                    param_name_texture_sampler,
+                    sampler_description
+                );
+                CHECK_MSTATUS(status);
+
+                uploadLut3d(
+                    lut_edge_size,
+                    shader,
+                    param_name_texture,
+                    lut_image,
+                    sampler_description);
+            }
+        }
+    }
+
+    return status;
+}
+
+// Generate a 3D volume texture to be used to look up approximations
+// to colour operations.
+MStatus generateColorOpsLut(
+        ocg::StreamData &stream_data,
+        uint32_t lut_edge_size,
+        Shader &shader,
+        MString &param_name_enable,
+        MString &param_name_edge_size,
+        MString &param_name_texture_sampler_3d,
+        MString &param_name_texture_sampler_1d,
+        MString &param_name_texture_3d,
+        MString &param_name_texture_1d) {
+    auto log = log::get_logger();
+    MStatus status;
+
+    auto color_ops_len = stream_data.color_ops_len();
+    auto use_lut = (color_ops_len > 0) && (lut_edge_size > 0);
+    log->debug("GeometryOverride:: use LUT ColorOps: {}", use_lut);
+    log->debug("GeometryOverride:: LUT ColorOps Edge Size: {}", lut_edge_size);
+    log->debug("GeometryOverride:: ColorOps Length: {}", color_ops_len);
+
+    // Should we use the 3D LUT texture?
+    status = shader.set_bool_param(
+        param_name_enable, use_lut);
+    CHECK_MSTATUS(status);
+
+    if (use_lut) {
+        // 3D LUT Edge Size.
+        status = shader.set_int_param(
+            param_name_edge_size,
+            lut_edge_size);
+        CHECK_MSTATUS(status);
+
+        auto shared_color_transform_cache =
+            ocgm_cache::get_shared_color_transform_cache();
+
+        // 3D LUT (for RGB channels)
+        auto num_channels_3d = 3;
+        auto lut_3d_image = ocg::get_color_ops_lut(
+            stream_data, lut_edge_size, num_channels_3d,
+            shared_color_transform_cache);
+
+        // 1D LUT (for Alpha channel)
+        auto num_channels_1d = 1;
+        auto lut_1d_image = ocg::get_color_ops_lut(
+            stream_data, lut_edge_size, num_channels_1d,
+            shared_color_transform_cache);
+
+        // 3D LUT Texture Sampler.
+        MHWRender::MSamplerStateDesc sampler_description_3d;
+        sampler_description_3d.filter = MSamplerState::TextureFilter::kMinMagMipLinear;
+        sampler_description_3d.addressU = MSamplerState::TextureAddress::kTexClamp;
+        sampler_description_3d.addressV = MSamplerState::TextureAddress::kTexClamp;
+        sampler_description_3d.addressW = MSamplerState::TextureAddress::kTexClamp;
+        sampler_description_3d.minLOD = 0;
+        sampler_description_3d.maxLOD = 0;
+        status = shader.set_texture_sampler_param(
+            param_name_texture_sampler_3d,
+            sampler_description_3d
+        );
+        CHECK_MSTATUS(status);
+
+        // 1D LUT Texture Sampler.
+        MHWRender::MSamplerStateDesc sampler_description_1d;
+        sampler_description_1d.filter = MSamplerState::TextureFilter::kMinMagMipLinear;
+        sampler_description_1d.addressU = MSamplerState::TextureAddress::kTexClamp;
+        sampler_description_1d.addressV = MSamplerState::TextureAddress::kTexClamp;
+        sampler_description_1d.minLOD = 0;
+        sampler_description_1d.maxLOD = 0;
+        status = shader.set_texture_sampler_param(
+            param_name_texture_sampler_1d,
+            sampler_description_1d
+        );
+        CHECK_MSTATUS(status);
+
+        uploadLut3d(
+            lut_edge_size,
+            shader,
+            param_name_texture_3d,
+            lut_3d_image,
+            sampler_description_3d);
+
+        uploadLut1d(
+            lut_edge_size,
+            shader,
+            param_name_texture_1d,
+            lut_1d_image,
+            sampler_description_1d);
+    }
+
+    return status;
+}
+
+
+// Generate a 3D volume texture to be used to look up approximations
+// to colour operations.
+MStatus updatePlaneGeometry(
+        ocg::BBox2Di &display_window,
+        ocg::BBox2Di &data_window,
+        int &display_window_width,
+        int &display_window_height,
+        int &data_window_min_x,
+        int &data_window_min_y,
+        int &data_window_max_x,
+        int &data_window_max_y,
+        Shader &shader_main,
+        Shader &shader_wire,
+        Shader &shader_border,
+        Shader &shader_display_window,
+        Shader &shader_data_window,
+        MString &param_name_rescale_transform)
+{
+    auto log = log::get_logger();
+    MStatus status;
+
+    display_window_width = display_window.max_x - display_window.min_x;
+    display_window_height = display_window.max_y - display_window.min_y;
+    data_window_min_x = data_window.min_x;
+    data_window_min_y = data_window.min_y;
+    data_window_max_x = data_window.max_x;
+    data_window_max_y = data_window.max_y;
+
+    // Move display window to the image plane.
+    auto display_width = static_cast<float>(display_window.max_x -
+                                            display_window.min_x);
+    auto display_height = static_cast<float>(display_window.max_y -
+                                             display_window.min_y);
+    auto display_half_width = display_width / 2.0f;
+    auto display_half_height = display_height / 2.0f;
+    // TODO: Create logic for "film fit" modes. Currently
+    // we're using "horizontal" (aka "width").
+    auto display_fit_scale_x = (display_width / 2.0f);
+    auto display_fit_scale_y = (display_width / 2.0f);
+    auto display_scale_x = 1.0f / display_fit_scale_x;
+    auto display_scale_y = 1.0f / display_fit_scale_y;
+    auto display_offset_x = (static_cast<float>(display_window.min_x) -
+                             display_half_width) / display_fit_scale_x;
+    auto display_offset_y = (static_cast<float>(display_window.min_y) -
+                             display_half_height) / display_fit_scale_y;
+    const float rescale_display_window_values[4][4] = {
+        // X
+        {display_scale_x,  0.0,              0.0, 0.0},
+        // Y
+        {0.0,              display_scale_y,  0.0, 0.0},
+        // Z
+        {0.0,              0.0,              1.0, 0.0},
+        // W
+        {display_offset_x, display_offset_y, 0.0, 1.0},
+    };
+    MFloatMatrix rescale_display_window_transform(
+        rescale_display_window_values);
+
+    // Move Canvas to the data window.
+    auto data_scale_x = static_cast<float>(data_window.max_x -
+                                           data_window.min_x);
+    auto data_scale_y = static_cast<float>(data_window.max_y -
+                                           data_window.min_y);
+    auto data_offset_x = static_cast<float>(data_window.min_x);
+    auto data_offset_y = static_cast<float>(data_window.min_y);
+    const float move_data_window_values[4][4] = {
+        // X
+        {data_scale_x,  0.0,           0.0, 0.0},
+        // Y
+        {0.0,           data_scale_y,  0.0, 0.0},
+        // Z
+        {0.0,           0.0,           1.0, 0.0},
+        // W
+        {data_offset_x, data_offset_y, 0.0, 1.0},
+    };
+    MFloatMatrix move_data_window_transform(move_data_window_values);
+    move_data_window_transform *= rescale_display_window_transform;
+
+    status = shader_wire.set_float_matrix4x4_param(
+        param_name_rescale_transform,
+        move_data_window_transform);
+    CHECK_MSTATUS(status);
+
+    status = shader_border.set_float_matrix4x4_param(
+        param_name_rescale_transform,
+        move_data_window_transform);
+    CHECK_MSTATUS(status);
+
+    status = shader_main.set_float_matrix4x4_param(
+        param_name_rescale_transform,
+        move_data_window_transform);
+    CHECK_MSTATUS(status);
+
+    status = shader_display_window.set_float_matrix4x4_param(
+        param_name_rescale_transform,
+        rescale_display_window_transform);
+    CHECK_MSTATUS(status);
+
+    status = shader_data_window.set_float_matrix4x4_param(
+        param_name_rescale_transform,
+        rescale_display_window_transform);
+    CHECK_MSTATUS(status);
+
+    return status;
+}
+
+MStatus GeometryOverride::updateWithStream(std::shared_ptr<ocg::Graph> &shared_graph,
+                                           ocg::StreamData &stream_data) {
+    auto log = log::get_logger();
+    MStatus status;
+
+    auto display_window = stream_data.display_window();
+    auto data_window = stream_data.data_window();
+    status = updatePlaneGeometry(
+        display_window,
+        data_window,
+        m_display_window_width,
+        m_display_window_height,
+        m_data_window_min_x,
+        m_data_window_min_y,
+        m_data_window_max_x,
+        m_data_window_max_y,
+        m_shader,
+        m_shader_wire,
+        m_shader_border,
+        m_shader_display_window,
+        m_shader_data_window,
+        m_shader_rescale_transform_parameter_name);
+    CHECK_MSTATUS(status);
+
+    // Display Mode
+    status = m_shader.set_int_param(
+        m_shader_display_mode_parameter_name,
+        m_display_mode);
+    CHECK_MSTATUS(status);
+
+    // The image color space.
+    auto from_color_space = stream_data.clone_image_spec().color_space;
+    auto from_color_space_str = std::string(from_color_space);
+    bool from_color_space_changed = m_from_color_space_name.compare(from_color_space_str) != 0;
+
+    // Size of the 3D LUT
+    bool lut_edge_size_has_changed = false;
+    MPlug lut_edge_size_plug(m_locator_node, ShapeNode::m_lut_edge_size_attr);
+    std::tie(m_lut_edge_size, lut_edge_size_has_changed) =
+        utils::get_plug_value_uint32(lut_edge_size_plug, m_lut_edge_size);
+
+    // Color Space Name
+    bool color_space_name_has_changed = false;
+    MPlug color_space_name_plug(
+        m_locator_node, ShapeNode::m_color_space_name_attr);
+    std::tie(m_color_space_name, color_space_name_has_changed) =
+        utils::get_plug_value_string(color_space_name_plug, m_color_space_name);
+
+    status = generateColorTransformLut(
+        lut_edge_size_has_changed,
+        color_space_name_has_changed,
+        from_color_space_changed,
+        m_lut_edge_size,
+        from_color_space,
+        from_color_space_str,
+        m_from_color_space_name,
+        m_color_space_name,
+        m_shader,
+        m_shader_3d_lut_edge_size_parameter_name,
+        m_shader_3d_lut_enable_parameter_name,
+        m_shader_3d_lut_texture_sampler_parameter_name,
+        m_shader_3d_lut_texture_parameter_name);
+    CHECK_MSTATUS(status);
+
+    status = generateColorOpsLut(
+        stream_data,
+        m_lut_edge_size,
+        m_shader,
+        m_shader_color_ops_lut_enable_parameter_name,
+        m_shader_color_ops_lut_edge_size_parameter_name,
+        m_shader_color_ops_3d_lut_texture_sampler_parameter_name,
+        m_shader_color_ops_1d_lut_texture_sampler_parameter_name,
+        m_shader_color_ops_3d_lut_texture_parameter_name,
+        m_shader_color_ops_1d_lut_texture_parameter_name);
+    CHECK_MSTATUS(status);
+
+    // Set the matrix parameter expected to adjust the colors
+    // of the image texture.
+    auto color_matrix = stream_data.color_matrix();
+    const float color_matrix_values[4][4] = {
+        {color_matrix.m00, color_matrix.m01, color_matrix.m02, color_matrix.m03},
+        {color_matrix.m10, color_matrix.m11, color_matrix.m12, color_matrix.m13},
+        {color_matrix.m20, color_matrix.m21, color_matrix.m22, color_matrix.m23},
+        {color_matrix.m30, color_matrix.m31, color_matrix.m32, color_matrix.m33},
+    };
+    MFloatMatrix image_color_matrix(color_matrix_values);
+    status = m_shader.set_float_matrix4x4_param(
+        m_shader_image_color_matrix_parameter_name,
+        image_color_matrix);
+    CHECK_MSTATUS(status);
+
+    // Main image texture sampler
+    MHWRender::MSamplerStateDesc sampler_description;
+    sampler_description.filter = MSamplerState::TextureFilter::kMinMagMipPoint;
+    sampler_description.addressU = MSamplerState::TextureAddress::kTexClamp;
+    sampler_description.addressV = MSamplerState::TextureAddress::kTexClamp;
+    status = m_shader.set_texture_sampler_param(
+        m_shader_image_texture_sampler_parameter_name,
+        sampler_description
+    );
+    CHECK_MSTATUS(status);
+
+    // Upload main image texture.
+    status = m_shader.set_texture_param_with_stream_data(
+        m_shader_image_texture_parameter_name,
+        std::move(stream_data));
+    CHECK_MSTATUS(status);
+
+    return status;
 }
 
 
@@ -539,368 +1018,7 @@ void GeometryOverride::updateRenderItems(const MDagPath &path,
         if (m_exec_status == ocg::ExecuteStatus::kSuccess) {
             auto shared_graph = get_shared_graph();
             auto stream_data = shared_graph->output_stream();
-
-            auto display_window = stream_data.display_window();
-            auto data_window = stream_data.data_window();
-
-            m_display_window_width = display_window.max_x - display_window.min_x;
-            m_display_window_height = display_window.max_y - display_window.min_y;
-            m_data_window_min_x = data_window.min_x;
-            m_data_window_min_y = data_window.min_y;
-            m_data_window_max_x = data_window.max_x;
-            m_data_window_max_y = data_window.max_y;
-
-            // Move display window to the image plane.
-            auto display_width = static_cast<float>(display_window.max_x -
-                                                    display_window.min_x);
-            auto display_height = static_cast<float>(display_window.max_y -
-                                                     display_window.min_y);
-            auto display_half_width = display_width / 2.0f;
-            auto display_half_height = display_height / 2.0f;
-            // TODO: Create logic for "film fit" modes. Currently
-            // we're using "horizontal" (aka "width").
-            auto display_fit_scale_x = (display_width / 2.0f);
-            auto display_fit_scale_y = (display_width / 2.0f);
-            auto display_scale_x = 1.0f / display_fit_scale_x;
-            auto display_scale_y = 1.0f / display_fit_scale_y;
-            auto display_offset_x = (static_cast<float>(display_window.min_x) -
-                                     display_half_width) / display_fit_scale_x;
-            auto display_offset_y = (static_cast<float>(display_window.min_y) -
-                                     display_half_height) / display_fit_scale_y;
-            const float rescale_display_window_values[4][4] = {
-                // X
-                {display_scale_x,  0.0,              0.0, 0.0},
-                // Y
-                {0.0,              display_scale_y,  0.0, 0.0},
-                // Z
-                {0.0,              0.0,              1.0, 0.0},
-                // W
-                {display_offset_x, display_offset_y, 0.0, 1.0},
-            };
-            MFloatMatrix rescale_display_window_transform(
-                rescale_display_window_values);
-
-            // Move Canvas to the data window.
-            auto data_scale_x = static_cast<float>(data_window.max_x -
-                                                   data_window.min_x);
-            auto data_scale_y = static_cast<float>(data_window.max_y -
-                                                   data_window.min_y);
-            auto data_offset_x = static_cast<float>(data_window.min_x);
-            auto data_offset_y = static_cast<float>(data_window.min_y);
-            const float move_data_window_values[4][4] = {
-                // X
-                {data_scale_x,  0.0,           0.0, 0.0},
-                // Y
-                {0.0,           data_scale_y,  0.0, 0.0},
-                // Z
-                {0.0,           0.0,           1.0, 0.0},
-                // W
-                {data_offset_x, data_offset_y, 0.0, 1.0},
-            };
-            MFloatMatrix move_data_window_transform(move_data_window_values);
-            move_data_window_transform *= rescale_display_window_transform;
-
-            status = m_shader_wire.set_float_matrix4x4_param(
-                m_shader_rescale_transform_parameter_name,
-                move_data_window_transform);
-            CHECK_MSTATUS(status);
-
-            status = m_shader_border.set_float_matrix4x4_param(
-                m_shader_rescale_transform_parameter_name,
-                move_data_window_transform);
-            CHECK_MSTATUS(status);
-
-            status = m_shader.set_float_matrix4x4_param(
-                m_shader_rescale_transform_parameter_name,
-                move_data_window_transform);
-            CHECK_MSTATUS(status);
-
-            status = m_shader_display_window.set_float_matrix4x4_param(
-                m_shader_rescale_transform_parameter_name,
-                rescale_display_window_transform);
-            CHECK_MSTATUS(status);
-
-            status = m_shader_data_window.set_float_matrix4x4_param(
-                m_shader_rescale_transform_parameter_name,
-                rescale_display_window_transform);
-            CHECK_MSTATUS(status);
-
-            // Display Mode
-            status = m_shader.set_int_param(
-                m_shader_display_mode_parameter_name,
-                m_display_mode);
-            CHECK_MSTATUS(status);
-
-            // The image color space.
-            auto from_color_space = stream_data.clone_image_spec().color_space;
-            auto from_color_space_str = std::string(from_color_space);
-            bool from_color_space_changed = m_from_color_space_name.compare(from_color_space_str) != 0;
-
-            // Size of the 3D LUT
-            bool lut_edge_size_has_changed = false;
-            MPlug lut_edge_size_plug(m_locator_node, ShapeNode::m_lut_edge_size_attr);
-            std::tie(m_lut_edge_size, lut_edge_size_has_changed) =
-                utils::get_plug_value_uint32(lut_edge_size_plug, m_lut_edge_size);
-
-            // Color Space Name
-            bool color_space_name_has_changed = false;
-            MPlug color_space_name_plug(
-                m_locator_node, ShapeNode::m_color_space_name_attr);
-            std::tie(m_color_space_name, color_space_name_has_changed) =
-                utils::get_plug_value_string(color_space_name_plug, m_color_space_name);
-
-            if (lut_edge_size_has_changed) {
-
-                // 3D LUT Edge Size.
-                status = m_shader.set_int_param(
-                    m_shader_3d_lut_edge_size_parameter_name,
-                    m_lut_edge_size);
-                CHECK_MSTATUS(status);
-
-                status = m_shader.set_int_param(
-                    m_shader_color_ops_lut_edge_size_parameter_name,
-                    m_lut_edge_size);
-                CHECK_MSTATUS(status);
-
-                // Generate a 3D volume texture to be used to look
-                // up colour space transforms.
-                if (color_space_name_has_changed
-                    || from_color_space_changed) {
-                    m_from_color_space_name = from_color_space_str;
-
-                    // Color Space Conversion values
-                    auto to_color_space = m_color_space_name.asChar();
-
-                    auto use_3dlut = (from_color_space != to_color_space)
-                        && (m_lut_edge_size > 0);
-                    log->debug("GeometryOverride:: use 3D LUT: {}", use_3dlut);
-                    log->debug("GeometryOverride:: 3D LUT Edge Size: {}", m_lut_edge_size);
-                    log->debug("GeometryOverride:: Color Space: {} to {}", from_color_space_str, to_color_space);
-
-                    // Should we use the 3D LUT texture?
-                    status = m_shader.set_bool_param(
-                        m_shader_3d_lut_enable_parameter_name, use_3dlut);
-                    CHECK_MSTATUS(status);
-
-                    if (use_3dlut) {
-                        auto shared_color_transform_cache = \
-                            ocgm_cache::get_shared_color_transform_cache();
-                        auto lut_image = ocg::get_color_transform_3dlut(
-                            from_color_space, to_color_space,
-                            m_lut_edge_size, shared_color_transform_cache);
-
-                        // 3D LUT Texture Sampler.
-                        MHWRender::MSamplerStateDesc sampler_description;
-                        sampler_description.filter = MSamplerState::TextureFilter::kMinMagMipLinear;
-                        sampler_description.addressU = MSamplerState::TextureAddress::kTexClamp;
-                        sampler_description.addressV = MSamplerState::TextureAddress::kTexClamp;
-                        sampler_description.addressW = MSamplerState::TextureAddress::kTexClamp;
-                        sampler_description.minLOD = 0;
-                        sampler_description.maxLOD = 0;
-                        status = m_shader.set_texture_sampler_param(
-                            m_shader_3d_lut_texture_sampler_parameter_name,
-                            sampler_description
-                        );
-                        CHECK_MSTATUS(status);
-
-                        // 3D LUT Texture.
-                        //
-                        // Texture is a cube and assumed to be lut_edge_size^3
-                        // (eg, 20 * 20 * 20).
-                        auto pixel_width = m_lut_edge_size;
-                        auto pixel_height = m_lut_edge_size;
-                        auto pixel_depth = m_lut_edge_size;
-                        auto pixel_num_channels = lut_image.pixel_block->num_channels();
-                        auto pixel_data_type = lut_image.pixel_block->data_type();
-                        auto buffer = ocg::internal::pixelblock_get_pixel_data_ptr_read_write(
-                            lut_image.pixel_block);
-
-                        log->debug("GeometryOverride:: lut_image.width: {}",
-                                  lut_image.pixel_block->width());
-                        log->debug("GeometryOverride:: lut_image.height: {}",
-                                  lut_image.pixel_block->height());
-                        log->debug("GeometryOverride:: lut_image.num_channels: {}",
-                                  lut_image.pixel_block->num_channels());
-                        log->debug("GeometryOverride:: lut_edge_size: {}",
-                                  m_lut_edge_size);
-
-                        // Upload 3D LUT to GPU.
-                        status = m_shader.set_texture_param_with_image_data(
-                            m_shader_3d_lut_texture_parameter_name,
-                            MHWRender::kVolumeTexture,
-                            pixel_width,
-                            pixel_height,
-                            pixel_depth,
-                            pixel_num_channels,
-                            pixel_data_type,
-                            buffer);
-                        CHECK_MSTATUS(status);
-
-                    }
-                }
-            }
-
-            // Generate a 3D volume texture to be used to look up
-            // approximations to colour operations.
-            {
-                auto color_ops_len = stream_data.color_ops_len();
-                auto use_lut = (color_ops_len > 0) && (m_lut_edge_size > 0);
-                log->debug("GeometryOverride:: use LUT ColorOps: {}", use_lut);
-                log->debug("GeometryOverride:: LUT ColorOps Edge Size: {}", m_lut_edge_size);
-                log->debug("GeometryOverride:: ColorOps Length: {}", color_ops_len);
-
-                // Should we use the 3D LUT texture?
-                status = m_shader.set_bool_param(
-                    m_shader_color_ops_lut_enable_parameter_name, use_lut);
-                CHECK_MSTATUS(status);
-
-                if (use_lut) {
-                    auto shared_color_transform_cache = \
-                        ocgm_cache::get_shared_color_transform_cache();
-
-                    // 3D LUT (for RGB channels)
-                    auto num_channels_3d = 3;
-                    auto lut_3d_image = ocg::get_color_ops_lut(
-                        stream_data, m_lut_edge_size, num_channels_3d,
-                        shared_color_transform_cache);
-
-                    // 1D LUT (for Alpha channel)
-                    auto num_channels_1d = 1;
-                    auto lut_1d_image = ocg::get_color_ops_lut(
-                        stream_data, m_lut_edge_size, num_channels_1d,
-                        shared_color_transform_cache);
-
-                    // 3D LUT Texture Sampler.
-                    MHWRender::MSamplerStateDesc sampler_description_3d;
-                    sampler_description_3d.filter = MSamplerState::TextureFilter::kMinMagMipLinear;
-                    sampler_description_3d.addressU = MSamplerState::TextureAddress::kTexClamp;
-                    sampler_description_3d.addressV = MSamplerState::TextureAddress::kTexClamp;
-                    sampler_description_3d.addressW = MSamplerState::TextureAddress::kTexClamp;
-                    sampler_description_3d.minLOD = 0;
-                    sampler_description_3d.maxLOD = 0;
-                    status = m_shader.set_texture_sampler_param(
-                        m_shader_color_ops_3d_lut_texture_sampler_parameter_name,
-                        sampler_description_3d
-                    );
-                    CHECK_MSTATUS(status);
-
-                    // 1D LUT Texture Sampler.
-                    MHWRender::MSamplerStateDesc sampler_description_1d;
-                    sampler_description_1d.filter = MSamplerState::TextureFilter::kMinMagMipLinear;
-                    sampler_description_1d.addressU = MSamplerState::TextureAddress::kTexClamp;
-                    sampler_description_1d.addressV = MSamplerState::TextureAddress::kTexClamp;
-                    sampler_description_1d.minLOD = 0;
-                    sampler_description_1d.maxLOD = 0;
-                    status = m_shader.set_texture_sampler_param(
-                        m_shader_color_ops_1d_lut_texture_sampler_parameter_name,
-                        sampler_description_1d
-                    );
-                    CHECK_MSTATUS(status);
-
-                    {
-                        // 3D LUT Texture.
-                        //
-                        // Texture is a cube and assumed to be lut_edge_size^3
-                        // (eg, 20 * 20 * 20).
-                        auto pixel_width = m_lut_edge_size;
-                        auto pixel_height = m_lut_edge_size;
-                        auto pixel_depth = m_lut_edge_size;
-                        auto pixel_num_channels = lut_3d_image.pixel_block->num_channels();
-                        auto pixel_data_type = lut_3d_image.pixel_block->data_type();
-                        auto buffer = ocg::internal::pixelblock_get_pixel_data_ptr_read_write(
-                            lut_3d_image.pixel_block);
-
-                        log->debug("GeometryOverride:: lut_3d_image.width: {}",
-                                  lut_3d_image.pixel_block->width());
-                        log->debug("GeometryOverride:: lut_3d_image.height: {}",
-                                  lut_3d_image.pixel_block->height());
-                        log->debug("GeometryOverride:: lut_3d_image.num_channels: {}",
-                                  lut_3d_image.pixel_block->num_channels());
-                        log->debug("GeometryOverride:: lut_edge_size: {}",
-                                  m_lut_edge_size);
-
-                        // Upload 3D LUT to GPU.
-                        status = m_shader.set_texture_param_with_image_data(
-                            m_shader_color_ops_3d_lut_texture_parameter_name,
-                            MHWRender::kVolumeTexture,
-                            pixel_width,
-                            pixel_height,
-                            pixel_depth,
-                            pixel_num_channels,
-                            pixel_data_type,
-                            buffer);
-                        CHECK_MSTATUS(status);
-                    }
-
-                    {
-                        // 1D LUT Texture.
-                        auto pixel_width = lut_1d_image.pixel_block->width();
-                        auto pixel_height = lut_1d_image.pixel_block->height();
-                        auto pixel_depth = 1;
-                        auto pixel_num_channels = lut_1d_image.pixel_block->num_channels();
-                        auto pixel_data_type = lut_1d_image.pixel_block->data_type();
-                        auto buffer = ocg::internal::pixelblock_get_pixel_data_ptr_read_write(
-                            lut_1d_image.pixel_block);
-
-                        log->debug("GeometryOverride:: lut_1d_image.width: {}",
-                                  lut_1d_image.pixel_block->width());
-                        log->debug("GeometryOverride:: lut_1d_image.height: {}",
-                                  lut_1d_image.pixel_block->height());
-                        log->debug("GeometryOverride:: lut_1d_image.num_channels: {}",
-                                  lut_1d_image.pixel_block->num_channels());
-                        log->debug("GeometryOverride:: lut_edge_size: {}",
-                                  m_lut_edge_size);
-
-                        // auto pixel_buffer = static_cast<float*>(buffer);
-                        // for (auto i = 0; i < pixel_width; ++i) {
-                        //     float v = pixel_buffer[i];
-                        //     log->debug("1d lut num: {}={}", i, v);
-                        // }
-
-                        // Upload 3D LUT to GPU.
-                        status = m_shader.set_texture_param_with_image_data(
-                            m_shader_color_ops_1d_lut_texture_parameter_name,
-                            MHWRender::kImage1D,
-                            pixel_width,
-                            pixel_height,
-                            pixel_depth,
-                            pixel_num_channels,
-                            pixel_data_type,
-                            buffer);
-                        CHECK_MSTATUS(status);
-                    }
-                }
-            }
-
-            // Set the matrix parameter expected to adjust the colors
-            // of the image texture.
-            auto color_matrix = stream_data.color_matrix();
-            const float color_matrix_values[4][4] = {
-                {color_matrix.m00, color_matrix.m01, color_matrix.m02, color_matrix.m03},
-                {color_matrix.m10, color_matrix.m11, color_matrix.m12, color_matrix.m13},
-                {color_matrix.m20, color_matrix.m21, color_matrix.m22, color_matrix.m23},
-                {color_matrix.m30, color_matrix.m31, color_matrix.m32, color_matrix.m33},
-            };
-            MFloatMatrix image_color_matrix(color_matrix_values);
-            status = m_shader.set_float_matrix4x4_param(
-                m_shader_image_color_matrix_parameter_name,
-                image_color_matrix);
-            CHECK_MSTATUS(status);
-
-            MHWRender::MSamplerStateDesc sampler_description;
-            sampler_description.filter = MSamplerState::TextureFilter::kMinMagMipPoint;
-            sampler_description.addressU = MSamplerState::TextureAddress::kTexClamp;
-            sampler_description.addressV = MSamplerState::TextureAddress::kTexClamp;
-            status = m_shader.set_texture_sampler_param(
-                m_shader_image_texture_sampler_parameter_name,
-                sampler_description
-            );
-            CHECK_MSTATUS(status);
-
-            status = m_shader.set_texture_param_with_stream_data(
-                m_shader_image_texture_parameter_name,
-                std::move(stream_data));
-            CHECK_MSTATUS(status);
+            updateWithStream(shared_graph, stream_data);
         }
         m_update_shader = false;
         m_update_shader_border = false;

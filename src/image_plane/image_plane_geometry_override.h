@@ -111,6 +111,10 @@ private:
 
     GeometryOverride(const MObject &obj);
 
+    MStatus updateWithStream(
+        std::shared_ptr<ocg::Graph> &shared_graph,
+        ocg::StreamData &stream_data);
+
     GeometryCanvas m_geometry_canvas;
     GeometryWindow m_geometry_window_display;
     GeometryWindow m_geometry_window_data;
