@@ -36,7 +36,7 @@ global proc AEocgImagePlaneTemplate(string $nodeName)
     editorTemplate -addControl "visibility";
     editorTemplate -endNoOptimize;
     editorTemplate -addSeparator;
-    editorTemplate -addControl "displayMode"; // None, Luminance, RGB, RGBA, etc.
+    editorTemplate -addControl "displayMode"; // RGB, RGBA, Red, Green, etc.
     editorTemplate -addControl "displayColor"; // multiplier color for the viewer only.
     editorTemplate -addControl "displayAlpha"; // "opacity" or "transparency"?
     editorTemplate -addControl "displayExposure"; // EVs multiplier for the viewer only.
@@ -102,13 +102,6 @@ global proc AEocgImagePlaneTemplate(string $nodeName)
 
     editorTemplate -endLayout;
 
-    // // Specifics to the viewport.
-    // editorTemplate -beginLayout "Viewport" -collapse 1;
-    // editorTemplate -addControl "viewportTextureFilterMode";
-    // editorTemplate -addControl "viewportDepthEnable";
-    // editorTemplate -addControl "viewportDepth";  // 0.0% to 100.0%
-    // editorTemplate -endLayout;
-
     editorTemplate -beginLayout "Color Space" -collapse 1;
     editorTemplate -beginNoOptimize;
     editorTemplate -addControl "colorSpaceName";
@@ -124,9 +117,6 @@ global proc AEocgImagePlaneTemplate(string $nodeName)
     editorTemplate -addControl "cacheOption";
     editorTemplate -addControl "cachePixelDataType";
     editorTemplate -addControl "cacheCropOnFormat";
-    editorTemplate -addControl "diskCacheEnable";
-    editorTemplate -addControl "diskCacheImageType";
-    editorTemplate -addControl "diskCacheDirectory";
     editorTemplate -endNoOptimize;
     editorTemplate -endLayout;
 
