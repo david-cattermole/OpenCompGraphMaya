@@ -137,6 +137,8 @@ private:
     static MString m_shader_display_exposure_parameter_name;
     static MString m_shader_display_gamma_parameter_name;
     static MString m_shader_display_soft_clip_parameter_name;
+    static MString m_shader_display_use_draw_depth_parameter_name;
+    static MString m_shader_display_draw_depth_parameter_name;
     static MString m_shader_image_transform_parameter_name;
     static MString m_shader_image_color_matrix_parameter_name;
     static MString m_shader_image_texture_parameter_name;
@@ -169,6 +171,8 @@ private:
     float m_display_exposure;
     float m_display_gamma;
     float m_display_soft_clip;
+    bool m_display_use_draw_depth;
+    float m_display_draw_depth;
     float m_card_depth;
     float m_card_size_x;
     float m_card_size_y;

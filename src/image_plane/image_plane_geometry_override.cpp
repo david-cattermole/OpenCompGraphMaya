@@ -167,6 +167,8 @@ MString GeometryOverride::m_shader_display_saturation_matrix_parameter_name = "g
 MString GeometryOverride::m_shader_display_exposure_parameter_name = "gDisplayExposure";
 MString GeometryOverride::m_shader_display_gamma_parameter_name = "gDisplayGamma";
 MString GeometryOverride::m_shader_display_soft_clip_parameter_name = "gDisplaySoftClip";
+MString GeometryOverride::m_shader_display_use_draw_depth_parameter_name = "gDisplayUseDrawDepth";
+MString GeometryOverride::m_shader_display_draw_depth_parameter_name = "gDisplayDrawDepth";
 MString GeometryOverride::m_shader_image_color_matrix_parameter_name = "gImageColorMatrix";
 MString GeometryOverride::m_shader_image_texture_parameter_name = "gImageTexture";
 MString GeometryOverride::m_shader_image_texture_sampler_parameter_name = "gImageTextureSampler";
@@ -209,6 +211,8 @@ GeometryOverride::GeometryOverride(const MObject &obj)
         , m_display_exposure(0.0f)
         , m_display_gamma(1.0f)
         , m_display_soft_clip(0.0f)
+        , m_display_use_draw_depth(false)
+        , m_display_draw_depth(100.0f)
         , m_focal_length(35.0f)
         , m_card_depth(1.0f)
         , m_card_size_x(1.0f)
@@ -519,9 +523,12 @@ MStatus updatePlaneGeometry(
 }
 
 // Luminance weights
-#define LUMINANCE_RED   (0.3086)
-#define LUMINANCE_GREEN (0.6094)
-#define LUMINANCE_BLUE  (0.0820)
+//
+// From Mozilla:
+// https://developer.mozilla.org/en-US/docs/Web/Accessibility/Understanding_Colors_and_Luminance
+#define LUMINANCE_RED   (0.2126)
+#define LUMINANCE_GREEN (0.7152)
+#define LUMINANCE_BLUE  (0.0722)
 
 MStatus GeometryOverride::updateWithStream(std::shared_ptr<ocg::Graph> &shared_graph,
                                            ocg::StreamData &stream_data) {
@@ -620,6 +627,18 @@ MStatus GeometryOverride::updateWithStream(std::shared_ptr<ocg::Graph> &shared_g
     status = m_shader.set_float_param(
         m_shader_display_soft_clip_parameter_name,
         m_display_soft_clip);
+    CHECK_MSTATUS(status);
+
+    // Display Use Draw Depth
+    status = m_shader.set_bool_param(
+        m_shader_display_use_draw_depth_parameter_name,
+        m_display_use_draw_depth);
+    CHECK_MSTATUS(status);
+
+    // Display Draw Depth
+    status = m_shader.set_float_param(
+        m_shader_display_draw_depth_parameter_name,
+        m_display_draw_depth);
     CHECK_MSTATUS(status);
 
     // The image color space.
@@ -862,6 +881,8 @@ void GeometryOverride::updateDG() {
     bool display_exposure_has_changed = false;
     bool display_gamma_has_changed = false;
     bool display_soft_clip_has_changed = false;
+    bool display_use_draw_depth_has_changed = false;
+    bool display_draw_depth_has_changed = false;
 
     MPlug display_mode_plug(
         m_locator_node, ShapeNode::m_display_mode_attr);
@@ -877,6 +898,10 @@ void GeometryOverride::updateDG() {
         m_locator_node, ShapeNode::m_display_gamma_attr);
     MPlug display_soft_clip_plug(
         m_locator_node, ShapeNode::m_display_soft_clip_attr);
+    MPlug display_use_draw_depth_plug(
+        m_locator_node, ShapeNode::m_display_use_draw_depth_attr);
+    MPlug display_draw_depth_plug(
+        m_locator_node, ShapeNode::m_display_draw_depth_attr);
 
     std::tie(m_display_mode, display_mode_has_changed) =
         utils::get_plug_value_uint32(display_mode_plug, m_display_mode);
@@ -892,6 +917,10 @@ void GeometryOverride::updateDG() {
         utils::get_plug_value_float(display_gamma_plug, m_display_gamma);
     std::tie(m_display_soft_clip, display_soft_clip_has_changed) =
         utils::get_plug_value_float(display_soft_clip_plug, m_display_soft_clip);
+    std::tie(m_display_use_draw_depth, display_use_draw_depth_has_changed) =
+        utils::get_plug_value_bool(display_use_draw_depth_plug, m_display_use_draw_depth);
+    std::tie(m_display_draw_depth, display_draw_depth_has_changed) =
+        utils::get_plug_value_float(display_draw_depth_plug, m_display_draw_depth);
 
     // TODO: Detect when the camera matrix has changed.
     //
@@ -959,6 +988,8 @@ void GeometryOverride::updateDG() {
     shader_values_changed += static_cast<uint32_t>(display_exposure_has_changed);
     shader_values_changed += static_cast<uint32_t>(display_gamma_has_changed);
     shader_values_changed += static_cast<uint32_t>(display_soft_clip_has_changed);
+    shader_values_changed += static_cast<uint32_t>(display_use_draw_depth_has_changed);
+    shader_values_changed += static_cast<uint32_t>(display_draw_depth_has_changed);
     shader_values_changed += static_cast<uint32_t>(card_depth_has_changed);
     shader_values_changed += static_cast<uint32_t>(card_size_x_has_changed);
     shader_values_changed += static_cast<uint32_t>(card_size_y_has_changed);

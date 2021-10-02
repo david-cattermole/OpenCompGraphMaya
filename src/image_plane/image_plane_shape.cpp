@@ -83,6 +83,8 @@ MObject ShapeNode::m_display_saturation_attr;
 MObject ShapeNode::m_display_exposure_attr;
 MObject ShapeNode::m_display_gamma_attr;
 MObject ShapeNode::m_display_soft_clip_attr;
+MObject ShapeNode::m_display_use_draw_depth_attr;
+MObject ShapeNode::m_display_draw_depth_attr;
 MObject ShapeNode::m_card_depth_attr;
 MObject ShapeNode::m_card_size_x_attr;
 MObject ShapeNode::m_card_size_y_attr;
@@ -399,6 +401,26 @@ MStatus ShapeNode::initialize() {
     CHECK_MSTATUS(nAttr.setMin(soft_clip_min));
     CHECK_MSTATUS(nAttr.setMax(soft_clip_max));
 
+    // Add 'Use Draw Depth' attribute
+    bool use_draw_depth_default = false;
+    m_display_use_draw_depth_attr = nAttr.create(
+        "displayUseDrawDepth", "dspusdrwdpth",
+        MFnNumericData::kBoolean, use_draw_depth_default);
+    CHECK_MSTATUS(nAttr.setStorable(true));
+    CHECK_MSTATUS(nAttr.setKeyable(false));
+
+    // Add 'depth' attribute.
+    float draw_depth_min = 0.0f;
+    float draw_depth_max = 100.0f;
+    float draw_depth_default = 100.0f;
+    m_display_draw_depth_attr = nAttr.create(
+        "displayDrawDepth", "dspdrwdpth",
+        MFnNumericData::kFloat, draw_depth_default);
+    CHECK_MSTATUS(nAttr.setStorable(true));
+    CHECK_MSTATUS(nAttr.setKeyable(true));
+    CHECK_MSTATUS(nAttr.setMin(draw_depth_min));
+    CHECK_MSTATUS(nAttr.setMax(draw_depth_max));
+
     // Geometry Type Attribute
     //
     // The type of geometry that will draw the image.
@@ -540,6 +562,8 @@ MStatus ShapeNode::initialize() {
     CHECK_MSTATUS(addAttribute(m_display_exposure_attr));
     CHECK_MSTATUS(addAttribute(m_display_gamma_attr));
     CHECK_MSTATUS(addAttribute(m_display_soft_clip_attr));
+    CHECK_MSTATUS(addAttribute(m_display_use_draw_depth_attr));
+    CHECK_MSTATUS(addAttribute(m_display_draw_depth_attr));
     //
     CHECK_MSTATUS(addAttribute(m_card_depth_attr));
     CHECK_MSTATUS(addAttribute(m_card_size_x_attr));
@@ -569,6 +593,8 @@ MStatus ShapeNode::initialize() {
     CHECK_MSTATUS(attributeAffects(m_display_exposure_attr, m_out_stream_attr));
     CHECK_MSTATUS(attributeAffects(m_display_gamma_attr, m_out_stream_attr));
     CHECK_MSTATUS(attributeAffects(m_display_soft_clip_attr, m_out_stream_attr));
+    CHECK_MSTATUS(attributeAffects(m_display_use_draw_depth_attr, m_out_stream_attr));
+    CHECK_MSTATUS(attributeAffects(m_display_draw_depth_attr, m_out_stream_attr));
     CHECK_MSTATUS(attributeAffects(m_color_space_name_attr, m_out_stream_attr));
     CHECK_MSTATUS(attributeAffects(m_lut_edge_size_attr, m_out_stream_attr));
     CHECK_MSTATUS(attributeAffects(m_cache_option_attr, m_out_stream_attr));

@@ -23,6 +23,8 @@ uniform float4x4 gDisplaySaturationMatrix < string UIWidget = "None"; >;
 uniform float gDisplayExposure = 1.0;
 uniform float gDisplayGamma = 1.0;
 uniform float gDisplaySoftClip = 0.0;
+uniform bool gDisplayUseDrawDepth = false;
+uniform float gDisplayDrawDepth = 100.0;
 
 // Matrix used to multiply colors, to perform color (linear)
 // grading/correction.
@@ -210,6 +212,15 @@ GLSLShader PS
         out_color.g = pow(out_color.g, gamma);
         out_color.b = pow(out_color.b, gamma);
         out_color = vec4(apply_soft_clip(out_color.rgb, gDisplaySoftClip), out_color.a);
+        // Override the 'draw depth', which impacts the how objects
+        // will occlude with the image plane.
+        gl_FragDepth = gl_FragCoord.z;
+        if (gDisplayUseDrawDepth == true) {
+            // This value should never got to exactly 1.0 but should
+            // instead almost reach 1.0, but never quite getting
+            // there.
+            gl_FragDepth = gDisplayDrawDepth / 100.1;
+        }
     }
 }
 

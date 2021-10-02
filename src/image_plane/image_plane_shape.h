@@ -95,6 +95,8 @@ public:
     static MObject m_display_exposure_attr;
     static MObject m_display_gamma_attr;
     static MObject m_display_soft_clip_attr;
+    static MObject m_display_use_draw_depth_attr;
+    static MObject m_display_draw_depth_attr;
     //
     static MObject m_card_depth_attr;
     static MObject m_card_size_x_attr;

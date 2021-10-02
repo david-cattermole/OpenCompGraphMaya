@@ -44,6 +44,11 @@ global proc AEocgImagePlaneTemplate(string $nodeName)
     editorTemplate -addControl "displaySaturation"; // increase/decrease color.
     editorTemplate -addControl "displaySoftClip"; // prevent over-bright values.
     editorTemplate -addSeparator;
+    editorTemplate -beginNoOptimize;
+    editorTemplate -addControl "displayUseDrawDepth";
+    editorTemplate -addControl "displayDrawDepth";
+    editorTemplate -endNoOptimize;
+    editorTemplate -addSeparator;
     editorTemplate -addControl "cardDepth";
     editorTemplate -endLayout;
 
