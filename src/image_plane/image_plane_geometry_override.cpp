@@ -75,6 +75,7 @@ namespace image_plane {
 MString GeometryOverride::m_shader_color_parameter_name = "gSolidColor";
 MString GeometryOverride::m_shader_geometry_transform_parameter_name = "gGeometryTransform";
 MString GeometryOverride::m_shader_rescale_transform_parameter_name = "gRescaleTransform";
+MString GeometryOverride::m_shader_display_mode_parameter_name = "gDisplayMode";
 MString GeometryOverride::m_shader_image_color_matrix_parameter_name = "gImageColorMatrix";
 MString GeometryOverride::m_shader_image_texture_parameter_name = "gImageTexture";
 MString GeometryOverride::m_shader_image_texture_sampler_parameter_name = "gImageTextureSampler";
@@ -110,6 +111,7 @@ GeometryOverride::GeometryOverride(const MObject &obj)
         , m_update_shader(true)
         , m_update_shader_border(true)
         , m_exec_status(ocg::ExecuteStatus::kUninitialized)
+        , m_display_mode(0)
         , m_focal_length(35.0f)
         , m_card_depth(1.0f)
         , m_card_size_x(1.0f)
@@ -287,6 +289,15 @@ void GeometryOverride::updateDG() {
         }
     }
 
+    // Display Mode
+    bool display_mode_has_changed = false;
+
+    MPlug display_mode_plug(
+        m_locator_node, ShapeNode::m_display_mode_attr);
+
+    std::tie(m_display_mode, display_mode_has_changed) =
+        utils::get_plug_value_uint32(display_mode_plug, m_display_mode);
+
     // TODO: Detect when the camera matrix has changed.
     //
     // TODO: Find the camera by following the node's 'message'
@@ -346,6 +357,7 @@ void GeometryOverride::updateDG() {
     uint32_t vertex_values_changed = 0;
     shader_values_changed += static_cast<uint32_t>(camera_has_changed);
     shader_values_changed += static_cast<uint32_t>(focal_length_has_changed);
+    shader_values_changed += static_cast<uint32_t>(display_mode_has_changed);
     shader_values_changed += static_cast<uint32_t>(card_depth_has_changed);
     shader_values_changed += static_cast<uint32_t>(card_size_x_has_changed);
     shader_values_changed += static_cast<uint32_t>(card_size_y_has_changed);
@@ -387,6 +399,8 @@ void GeometryOverride::updateDG() {
             execute_frame,
             shared_graph,
             shared_cache);
+
+        // TODO: Get and check if the color_ops have changed.
 
         // TODO: Get and check if the deformer has changed.
         vertex_values_changed += 1;
@@ -609,6 +623,12 @@ void GeometryOverride::updateRenderItems(const MDagPath &path,
             status = m_shader_data_window.set_float_matrix4x4_param(
                 m_shader_rescale_transform_parameter_name,
                 rescale_display_window_transform);
+            CHECK_MSTATUS(status);
+
+            // Display Mode
+            status = m_shader.set_int_param(
+                m_shader_display_mode_parameter_name,
+                m_display_mode);
             CHECK_MSTATUS(status);
 
             // The image color space.

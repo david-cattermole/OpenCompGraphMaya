@@ -76,6 +76,7 @@ const int32_t kBakeOptionAll = static_cast<int32_t>(ocg::BakeOption::kAll);
 // Input Attributes
 MObject ShapeNode::m_camera_attr;
 MObject ShapeNode::m_in_stream_attr;
+MObject ShapeNode::m_display_mode_attr;
 MObject ShapeNode::m_card_depth_attr;
 MObject ShapeNode::m_card_size_x_attr;
 MObject ShapeNode::m_card_size_y_attr;
@@ -307,6 +308,22 @@ MStatus ShapeNode::initialize() {
     // Camera
     m_camera_attr = mAttr.create("camera", "cam");
 
+
+    // Image Channels
+    //
+    // Allows to re-interpret the input stream channels. Allows users
+    // to use or disable the stream alpha channel.
+    //
+    m_display_mode_attr = eAttr.create(
+        "displayMode", "dspmd", 0);
+    CHECK_MSTATUS(eAttr.addField("rgba", 0));
+    CHECK_MSTATUS(eAttr.addField("rgb", 1));
+    CHECK_MSTATUS(eAttr.addField("r", 2));
+    CHECK_MSTATUS(eAttr.addField("g", 3));
+    CHECK_MSTATUS(eAttr.addField("b", 4));
+    CHECK_MSTATUS(eAttr.addField("a", 5));
+    CHECK_MSTATUS(eAttr.setStorable(true));
+
     // Geometry Type Attribute
     //
     // The type of geometry that will draw the image.
@@ -440,6 +457,7 @@ MStatus ShapeNode::initialize() {
 
     // Add Attributes
     CHECK_MSTATUS(addAttribute(m_camera_attr));
+    CHECK_MSTATUS(addAttribute(m_display_mode_attr));
     CHECK_MSTATUS(addAttribute(m_card_depth_attr));
     CHECK_MSTATUS(addAttribute(m_card_size_x_attr));
     CHECK_MSTATUS(addAttribute(m_card_size_y_attr));
@@ -457,6 +475,7 @@ MStatus ShapeNode::initialize() {
 
     // Attribute Affects
     CHECK_MSTATUS(attributeAffects(m_time_attr, m_out_stream_attr));
+    CHECK_MSTATUS(attributeAffects(m_display_mode_attr, m_out_stream_attr));
     CHECK_MSTATUS(attributeAffects(m_color_space_name_attr, m_out_stream_attr));
     CHECK_MSTATUS(attributeAffects(m_lut_edge_size_attr, m_out_stream_attr));
     CHECK_MSTATUS(attributeAffects(m_cache_option_attr, m_out_stream_attr));

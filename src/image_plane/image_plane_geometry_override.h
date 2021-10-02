@@ -126,6 +126,7 @@ private:
     static MString m_shader_color_parameter_name;
     static MString m_shader_geometry_transform_parameter_name;
     static MString m_shader_rescale_transform_parameter_name;
+    static MString m_shader_display_mode_parameter_name;
     static MString m_shader_image_transform_parameter_name;
     static MString m_shader_image_color_matrix_parameter_name;
     static MString m_shader_image_texture_parameter_name;
@@ -151,6 +152,7 @@ private:
 
     // Cached attribute values
     float m_focal_length;
+    uint8_t m_display_mode;
     float m_card_depth;
     float m_card_size_x;
     float m_card_size_y;

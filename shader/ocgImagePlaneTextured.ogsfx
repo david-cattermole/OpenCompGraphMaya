@@ -7,6 +7,17 @@ uniform mat4 gWVPXf : WorldViewProjection;
 // parameters
 uniform vec4 gSolidColor : DIFFUSE = {1, 1, 1, 1};
 
+// Display mode, what type of channels to display to the user.
+//
+// RGBA = 0
+// RGB = 1
+// R = 2
+// G = 3
+// B = 4
+// A = 5
+//
+uniform int gDisplayMode = 0;
+
 // Matrix used to multiply colors, to perform color (linear)
 // grading/correction.
 uniform float4x4 gImageColorMatrix < string UIWidget = "None"; >;
@@ -144,7 +155,20 @@ GLSLShader PS
                 alpha);
         }
 
-        out_color = gSolidColor * gImageColorMatrix * tex_color;
+        vec4 final = gSolidColor * gImageColorMatrix * tex_color;
+        if (gDisplayMode == 0 /* RGBA */) {
+            out_color = final;
+        } else if (gDisplayMode == 1 /* RGB */) {
+            out_color = vec4(final.rgb, 1.0);
+        } else if (gDisplayMode == 2 /* Red */) {
+            out_color = vec4(final.rrr, 1.0);
+        } else if (gDisplayMode == 3 /* Green */) {
+            out_color = vec4(final.ggg, 1.0);
+        } else if (gDisplayMode == 4 /* Blue */) {
+            out_color = vec4(final.bbb, 1.0);
+        } else if (gDisplayMode == 5 /* Alpha */) {
+            out_color = vec4(final.aaa, 1.0);
+        }
     }
 }
 

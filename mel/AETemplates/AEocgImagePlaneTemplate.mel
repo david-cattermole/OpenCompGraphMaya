@@ -36,7 +36,7 @@ global proc AEocgImagePlaneTemplate(string $nodeName)
     editorTemplate -addControl "visibility";
     editorTemplate -endNoOptimize;
     editorTemplate -addSeparator;
-    editorTemplate -addControl "imageMode"; // None, Luminance, RGB, RGBA, etc.
+    editorTemplate -addControl "displayMode"; // None, Luminance, RGB, RGBA, etc.
     editorTemplate -addControl "color"; // multiplier color for the viewer only.
     editorTemplate -addControl "alpha"; // "opacity" or "transparency"?
     editorTemplate -addControl "exposure"; // EVs multiplier for the viewer only.
