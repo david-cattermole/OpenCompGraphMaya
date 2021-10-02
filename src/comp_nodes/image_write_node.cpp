@@ -247,6 +247,17 @@ MStatus ImageWriteNode::initialize() {
     CHECK_MSTATUS(tAttr.setStorable(true));
     CHECK_MSTATUS(tAttr.setUsedAsFilename(false));
 
+    // Pixel Data Type
+    m_pixel_data_type_attr = eAttr.create(
+        "pixelDataType", "pxldtyp",
+        kDataTypeUnknown);
+    CHECK_MSTATUS(eAttr.addField("auto", kDataTypeUnknown));
+    CHECK_MSTATUS(eAttr.addField("uint8", kDataTypeUInt8));
+    CHECK_MSTATUS(eAttr.addField("uint16", kDataTypeUInt16));
+    CHECK_MSTATUS(eAttr.addField("half16", kDataTypeHalf16));
+    CHECK_MSTATUS(eAttr.addField("float32", kDataTypeFloat32));
+    CHECK_MSTATUS(eAttr.setStorable(true));
+
     // Crop on Write
     m_crop_on_write_attr = eAttr.create(
         "cropOnWrite", "crpnwrt",
@@ -254,17 +265,6 @@ MStatus ImageWriteNode::initialize() {
     CHECK_MSTATUS(eAttr.addField("auto", kCropOnWriteAuto));
     CHECK_MSTATUS(eAttr.addField("enable", kCropOnWriteEnable));
     CHECK_MSTATUS(eAttr.addField("disable", kCropOnWriteDisable));
-    CHECK_MSTATUS(eAttr.setStorable(true));
-
-    // Pixel Data Type
-    m_pixel_data_type_attr = eAttr.create(
-        "pixelDataType", "pxldtyp",
-        kDataTypeUnknown);
-    CHECK_MSTATUS(eAttr.addField("auto", kDataTypeUnknown));
-    CHECK_MSTATUS(eAttr.addField("float32", kDataTypeFloat32));
-    CHECK_MSTATUS(eAttr.addField("half16", kDataTypeHalf16));
-    CHECK_MSTATUS(eAttr.addField("uint8", kDataTypeUInt8));
-    CHECK_MSTATUS(eAttr.addField("uint16", kDataTypeUInt16));
     CHECK_MSTATUS(eAttr.setStorable(true));
 
     // EXR Compression mode
@@ -337,8 +337,8 @@ MStatus ImageWriteNode::initialize() {
     // Add Attributes
     CHECK_MSTATUS(addAttribute(m_enable_attr));
     CHECK_MSTATUS(addAttribute(m_file_path_attr));
-    CHECK_MSTATUS(addAttribute(m_crop_on_write_attr));
     CHECK_MSTATUS(addAttribute(m_pixel_data_type_attr));
+    CHECK_MSTATUS(addAttribute(m_crop_on_write_attr));
     CHECK_MSTATUS(addAttribute(m_exr_compression_attr));
     CHECK_MSTATUS(addAttribute(m_exr_dwa_compression_level_attr));
     CHECK_MSTATUS(addAttribute(m_png_compression_level_attr));
@@ -352,8 +352,8 @@ MStatus ImageWriteNode::initialize() {
     CHECK_MSTATUS(attributeAffects(m_enable_attr, m_out_stream_attr));
     CHECK_MSTATUS(attributeAffects(m_in_stream_attr, m_out_stream_attr));
     CHECK_MSTATUS(attributeAffects(m_file_path_attr, m_out_stream_attr));
-    CHECK_MSTATUS(attributeAffects(m_crop_on_write_attr, m_out_stream_attr));
     CHECK_MSTATUS(attributeAffects(m_pixel_data_type_attr, m_out_stream_attr));
+    CHECK_MSTATUS(attributeAffects(m_crop_on_write_attr, m_out_stream_attr));
     CHECK_MSTATUS(attributeAffects(m_exr_compression_attr, m_out_stream_attr));
     CHECK_MSTATUS(attributeAffects(m_exr_dwa_compression_level_attr, m_out_stream_attr));
     CHECK_MSTATUS(attributeAffects(m_png_compression_level_attr, m_out_stream_attr));
