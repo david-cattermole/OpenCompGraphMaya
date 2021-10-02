@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020, 2021 David Cattermole.
+ * Copyright (C) 2021 David Cattermole.
  *
  * This file is part of OpenCompGraphMaya.
  *
@@ -17,55 +17,44 @@
  * along with OpenCompGraphMaya.  If not, see <https://www.gnu.org/licenses/>.
  * ====================================================================
  *
- * Base class node for all OCG nodes.
+ * Adjust the color of an image stream.
  */
 
-#ifndef OPENCOMPGRAPHMAYA_BASE_NODE_H
-#define OPENCOMPGRAPHMAYA_BASE_NODE_H
-
-// STL
-#include <vector>
+#ifndef OPENCOMPGRAPHMAYA_IMAGE_CACHE_NODE_H
+#define OPENCOMPGRAPHMAYA_IMAGE_CACHE_NODE_H
 
 // Maya
 #include <maya/MPxNode.h>
 #include <maya/MString.h>
 #include <maya/MObject.h>
-#include <maya/MObjectArray.h>
 #include <maya/MTypeId.h>
-#include <maya/MUuid.h>
 
 // OCG
 #include "opencompgraph.h"
 
+// OCG Maya
+#include "base_node.h"
+
+// STL
+#include <vector>
+
+namespace ocg = open_comp_graph;
+
 namespace open_comp_graph_maya {
 
-class BaseNode : public MPxNode {
+class ImageCacheNode : public BaseNode {
 public:
+    ImageCacheNode();
 
-    BaseNode();
+    virtual ~ImageCacheNode();
 
-    virtual ~BaseNode();
+    virtual MStatus compute(const MPlug &plug, MDataBlock &data);
 
-    void postConstructor();
+    static void *creator();
 
-    // Attribute Creation Helpers.
-    static MStatus
-    create_enable_attribute(MObject &attr);
+    static MStatus initialize();
 
-    static MStatus
-    create_input_stream_attribute(MObject &attr);
-
-    static MStatus
-    create_input_stream_attribute(MObject &attr, const MString &suffix);
-
-    static MStatus
-    create_output_stream_attribute(MObject &attr);
-
-    // OCG Node Graph Helpers.
-    virtual MStatus computeOcgStream(
-        const MPlug &plug, MDataBlock &data,
-        MObjectArray &in_stream_attr_array,
-        MObject &out_stream_attr);
+    static MString nodeName();
 
     virtual MStatus updateOcgNodes(
         MDataBlock &data,
@@ -73,10 +62,22 @@ public:
         std::vector<ocg::Node> input_ocg_nodes,
         ocg::Node &output_ocg_node);
 
-protected:
-    MUuid m_node_uuid;
+    // Maya Node Type Id
+    static MTypeId m_id;
+
+    // Input Attributes
+    static MObject m_in_stream_attr;
+    static MObject m_disk_cache_enable_attr;
+    static MObject m_disk_cache_file_path_attr;
+    
+    // Output Attributes
+    static MObject m_out_stream_attr;
+
+private:
+    ocg::Node m_ocg_null_node;
+    ocg::Node m_ocg_read_node;
 };
 
 } // namespace open_comp_graph_maya
 
-#endif // OPENCOMPGRAPHMAYA_BASE_NODE_H
+#endif // OPENCOMPGRAPHMAYA_IMAGE_CACHE_NODE_H

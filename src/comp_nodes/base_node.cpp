@@ -159,9 +159,6 @@ void BaseNode::postConstructor() {
     CHECK_MSTATUS(status);
     status = utils::set_new_unique_node_hash_attr(fn_depend_node);
     CHECK_MSTATUS(status);
-
-    // TODO: Set the disk cache base directory value based on the
-    // current configuration values.
 };
 
 MStatus BaseNode::create_enable_attribute(MObject &attr) {

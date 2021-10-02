@@ -43,6 +43,7 @@
 #include <comp_nodes/color_grade_node.h>
 #include <comp_nodes/image_read_node.h>
 #include <comp_nodes/image_write_node.h>
+#include <comp_nodes/image_cache_node.h>
 #include <comp_nodes/image_merge_node.h>
 #include <comp_nodes/lens_distort_node.h>
 #include <comp_nodes/image_transform_node.h>
@@ -166,6 +167,13 @@ MStatus initializePlugin(MObject obj) {
                   ocgm::ImageWriteNode::m_id,
                   ocgm::ImageWriteNode::creator,
                   ocgm::ImageWriteNode::initialize,
+                  status);
+
+    REGISTER_NODE(plugin,
+                  ocgm::ImageCacheNode::nodeName(),
+                  ocgm::ImageCacheNode::m_id,
+                  ocgm::ImageCacheNode::creator,
+                  ocgm::ImageCacheNode::initialize,
                   status);
 
     REGISTER_NODE(plugin,
@@ -309,6 +317,9 @@ MStatus uninitializePlugin(MObject obj) {
 
     DEREGISTER_NODE(plugin, ocgm::ImageWriteNode::nodeName(),
                     ocgm::ImageWriteNode::m_id, status);
+
+    DEREGISTER_NODE(plugin, ocgm::ImageCacheNode::nodeName(),
+                    ocgm::ImageCacheNode::m_id, status);
 
     DEREGISTER_NODE(plugin, ocgm::ImageMergeNode::nodeName(),
                     ocgm::ImageMergeNode::m_id, status);

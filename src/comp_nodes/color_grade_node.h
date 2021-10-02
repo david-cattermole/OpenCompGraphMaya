@@ -120,8 +120,6 @@ public:
 
 private:
     ocg::Node m_ocg_grade_node;
-    ocg::Node m_ocg_read_node;
-    ocg::Node m_ocg_write_node;
 };
 
 } // namespace open_comp_graph_maya
