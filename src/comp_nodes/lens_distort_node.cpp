@@ -48,6 +48,7 @@
 #include "graph_data.h"
 #include "lens_distort_node.h"
 #include "node_utils.h"
+#include "attr_utils.h"
 
 namespace ocg = open_comp_graph;
 
@@ -242,9 +243,9 @@ MStatus LensDistortNode::initialize() {
     CHECK_MSTATUS(nAttr.setSoftMax(value_soft_max));
 
     // Create Common Attributes
-    CHECK_MSTATUS(create_enable_attribute(m_enable_attr));
-    CHECK_MSTATUS(create_input_stream_attribute(m_in_stream_attr));
-    CHECK_MSTATUS(create_output_stream_attribute(m_out_stream_attr));
+    CHECK_MSTATUS(utils::create_enable_attribute(m_enable_attr));
+    CHECK_MSTATUS(utils::create_input_stream_attribute(m_in_stream_attr));
+    CHECK_MSTATUS(utils::create_output_stream_attribute(m_out_stream_attr));
 
     // Add Attributes
     CHECK_MSTATUS(addAttribute(m_enable_attr));

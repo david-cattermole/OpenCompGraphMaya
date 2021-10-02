@@ -149,8 +149,8 @@ MStatus ImageCacheNode::initialize() {
     CHECK_MSTATUS(utils::create_node_disk_cache_attributes(
                       m_disk_cache_enable_attr,
                       m_disk_cache_file_path_attr));
-    CHECK_MSTATUS(create_input_stream_attribute(m_in_stream_attr));
-    CHECK_MSTATUS(create_output_stream_attribute(m_out_stream_attr));
+    CHECK_MSTATUS(utils::create_input_stream_attribute(m_in_stream_attr));
+    CHECK_MSTATUS(utils::create_output_stream_attribute(m_out_stream_attr));
 
     // Add Attributes
     CHECK_MSTATUS(addAttribute(m_disk_cache_enable_attr));

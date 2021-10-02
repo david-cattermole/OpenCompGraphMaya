@@ -48,6 +48,7 @@
 #include "graph_data.h"
 #include "image_merge_node.h"
 #include "node_utils.h"
+#include "attr_utils.h"
 
 namespace ocg = open_comp_graph;
 
@@ -181,10 +182,10 @@ MStatus ImageMergeNode::initialize() {
     CHECK_MSTATUS(nAttr.setSoftMax(mix_soft_max));
 
     // Create Common Attributes
-    CHECK_MSTATUS(create_enable_attribute(m_enable_attr));
-    CHECK_MSTATUS(create_input_stream_attribute(m_in_stream_a_attr, "A"));
-    CHECK_MSTATUS(create_input_stream_attribute(m_in_stream_b_attr, "B"));
-    CHECK_MSTATUS(create_output_stream_attribute(m_out_stream_attr));
+    CHECK_MSTATUS(utils::create_enable_attribute(m_enable_attr));
+    CHECK_MSTATUS(utils::create_input_stream_attribute(m_in_stream_a_attr, "A"));
+    CHECK_MSTATUS(utils::create_input_stream_attribute(m_in_stream_b_attr, "B"));
+    CHECK_MSTATUS(utils::create_output_stream_attribute(m_out_stream_attr));
 
     // Add Attributes
     CHECK_MSTATUS(addAttribute(m_enable_attr));

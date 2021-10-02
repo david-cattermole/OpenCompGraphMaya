@@ -50,7 +50,6 @@
 #include "logger.h"
 #include "graph_data.h"
 #include "image_plane_shape.h"
-#include "comp_nodes/base_node.h"
 #include "attr_utils.h"
 #include "../node_utils.h"
 
@@ -564,8 +563,8 @@ MStatus ShapeNode::initialize() {
     CHECK_MSTATUS(uAttr.setStorable(true));
 
     // Create Common Attributes
-    CHECK_MSTATUS(BaseNode::create_input_stream_attribute(m_in_stream_attr));
-    CHECK_MSTATUS(BaseNode::create_output_stream_attribute(m_out_stream_attr));
+    CHECK_MSTATUS(utils::create_input_stream_attribute(m_in_stream_attr));
+    CHECK_MSTATUS(utils::create_output_stream_attribute(m_out_stream_attr));
     CHECK_MSTATUS(utils::create_node_disk_cache_attributes(
                       m_disk_cache_enable_attr,
                       m_disk_cache_file_path_attr));

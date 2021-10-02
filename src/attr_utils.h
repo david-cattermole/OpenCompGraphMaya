@@ -30,6 +30,24 @@
 namespace open_comp_graph_maya {
 namespace utils {
 
+// Attribute Creation Helpers.
+extern
+MStatus create_enable_attribute(
+    MObject &attr);
+
+extern
+MStatus create_input_stream_attribute(
+    MObject &attr);
+
+extern
+MStatus create_input_stream_attribute(
+    MObject &attr,
+    const MString &suffix);
+
+extern
+MStatus create_output_stream_attribute(
+    MObject &attr);
+
 extern
 MStatus create_node_disk_cache_attributes(
     MObject &enable_attr,

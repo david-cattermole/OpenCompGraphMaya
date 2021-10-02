@@ -48,19 +48,6 @@ public:
 
     void postConstructor();
 
-    // Attribute Creation Helpers.
-    static MStatus
-    create_enable_attribute(MObject &attr);
-
-    static MStatus
-    create_input_stream_attribute(MObject &attr);
-
-    static MStatus
-    create_input_stream_attribute(MObject &attr, const MString &suffix);
-
-    static MStatus
-    create_output_stream_attribute(MObject &attr);
-
     // OCG Node Graph Helpers.
     virtual MStatus computeOcgStream(
         const MPlug &plug, MDataBlock &data,

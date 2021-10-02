@@ -258,8 +258,8 @@ MStatus ImageReadNode::initialize() {
     CHECK_MSTATUS(eAttr.setStorable(true));
 
     // Create Common Attributes
-    CHECK_MSTATUS(create_enable_attribute(m_enable_attr));
-    CHECK_MSTATUS(create_output_stream_attribute(m_out_stream_attr));
+    CHECK_MSTATUS(utils::create_enable_attribute(m_enable_attr));
+    CHECK_MSTATUS(utils::create_output_stream_attribute(m_out_stream_attr));
     CHECK_MSTATUS(utils::create_node_disk_cache_attributes(
                       m_disk_cache_enable_attr,
                       m_disk_cache_file_path_attr));
