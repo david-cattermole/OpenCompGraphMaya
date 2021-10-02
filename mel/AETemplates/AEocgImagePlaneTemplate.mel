@@ -75,7 +75,12 @@ global proc AEocgImagePlaneTemplate(string $nodeName)
     editorTemplate -addControl "time";
     editorTemplate -endLayout;
 
-    AEocgNodeNetworkLayout($nodeName, "", 0);
+    string $node_network_label = "";
+    int $node_network_collapse = 0;
+    AEocgNodeNetworkLayout(
+        $nodeName,
+        $node_network_label,
+        $node_network_collapse);
 
     // Goemetry
     editorTemplate -beginLayout "Geometry" -collapse 1;
