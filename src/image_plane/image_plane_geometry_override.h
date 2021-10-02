@@ -134,6 +134,12 @@ private:
     static MString m_shader_3d_lut_edge_size_parameter_name;
     static MString m_shader_3d_lut_texture_parameter_name;
     static MString m_shader_3d_lut_texture_sampler_parameter_name;
+    static MString m_shader_color_ops_lut_enable_parameter_name;
+    static MString m_shader_color_ops_lut_edge_size_parameter_name;
+    static MString m_shader_color_ops_1d_lut_texture_parameter_name;
+    static MString m_shader_color_ops_1d_lut_texture_sampler_parameter_name;
+    static MString m_shader_color_ops_3d_lut_texture_parameter_name;
+    static MString m_shader_color_ops_3d_lut_texture_sampler_parameter_name;
 
     // Internal state.
     MObject m_locator_node;

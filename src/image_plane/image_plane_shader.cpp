@@ -118,6 +118,7 @@ Shader::get_shader_manager() {
     MStatus status = MS::kSuccess;
     M3dView view = M3dView::active3dView(&status);
     if (status != MStatus::kSuccess) {
+        log->error("ocgImagePlane: Could not set active view.");
         return nullptr;
     }
     view.makeSharedContextCurrent();
@@ -357,7 +358,13 @@ Shader::set_texture_param_with_image_data(
 
     } else if (pixel_data_type == ocg::DataType::kFloat32) {
         // log->warn("ocg::DataType::kFloat32");
-        if (pixel_num_channels == 3) {
+        if (pixel_num_channels == 1) {
+            texture_description.fFormat = MHWRender::kR32_FLOAT;
+            // log->warn("MHWRender::kR32_FLOAT");
+        } else if (pixel_num_channels == 2) {
+            texture_description.fFormat = MHWRender::kR32G32_FLOAT;
+            // log->warn("MHWRender::kR32G32_FLOAT");
+        } else if (pixel_num_channels == 3) {
             texture_description.fFormat = MHWRender::kR32G32B32_FLOAT;
             // log->warn("MHWRender::kR32G32B32_FLOAT");
         } else if (pixel_num_channels == 4) {
@@ -376,7 +383,7 @@ Shader::set_texture_param_with_image_data(
     }
 
     // Using an empty texture name by-passes the MTextureManager's
-    // inbuilt caching system - or values are not remembered by
+    // inbuilt caching system - so values are not remembered by
     // Maya, we must store a cache.
     MTexture *texture = texture_manager->acquireTexture(
         /*textureName=*/ "",

@@ -47,6 +47,41 @@ uniform sampler3D g3dLutTextureSampler = sampler_state
     TEXTURE_WRAP_R = CLAMP_TO_EDGE;
 };
 
+// The 3D LUT texture to transform the texture colours.
+uniform bool gColorOpsLutEnable = false;
+uniform int gColorOpsLutEdgeSize = 0;
+uniform texture3D gColorOps3dLutTexture
+<
+    string ResourceName = "";
+    string ResourceType = "3D";
+>;
+
+uniform sampler3D gColorOps3dLutTextureSampler = sampler_state
+{
+    Texture = <gColorOps3dLutTexture>;
+    TEXTURE_MIN_FILTER = NEAREST;
+    TEXTURE_MAG_FILTER = NEAREST;
+    TEXTURE_WRAP_S = CLAMP_TO_EDGE;
+    TEXTURE_WRAP_T = CLAMP_TO_EDGE;
+    TEXTURE_WRAP_R = CLAMP_TO_EDGE;
+};
+
+uniform texture1D gColorOps1dLutTexture
+<
+    string ResourceName = "";
+    string ResourceType = "1D";
+>;
+
+uniform sampler1D gColorOps1dLutTextureSampler = sampler_state
+{
+    Texture = <gColorOps1dLutTexture>;
+    TEXTURE_MIN_FILTER = NEAREST;
+    TEXTURE_MAG_FILTER = NEAREST;
+    TEXTURE_WRAP_S = CLAMP_TO_EDGE;
+    TEXTURE_WRAP_T = CLAMP_TO_EDGE;
+    TEXTURE_WRAP_R = CLAMP_TO_EDGE;
+};
+
 // Transforms to be applied to the vertices in various ways.
 uniform float4x4 gRescaleTransform < string UIWidget = "None"; >;
 uniform float4x4 gGeometryTransform < string UIWidget = "None"; >;
@@ -82,6 +117,8 @@ GLSLShader PS
     void main()
     {
         vec4 tex_color = texture2D(gImageTextureSampler, psIn.texcoord);
+
+        // Color Space
         if (g3dLutEnable) {
             float m = float(g3dLutEdgeSize-1) / float(g3dLutEdgeSize);
             float b = 1.0 / (2.0 * float(g3dLutEdgeSize));
@@ -89,6 +126,24 @@ GLSLShader PS
                 texture3D(g3dLutTextureSampler, m * tex_color.rgb + b).rgb,
                 tex_color.a);
         }
+
+        // Color Ops
+        if (gColorOpsLutEnable) {
+            float m = float(gColorOpsLutEdgeSize-1) / float(gColorOpsLutEdgeSize);
+            float b = 1.0 / (2.0 * float(gColorOpsLutEdgeSize));
+
+            float coord_1d = m * tex_color.a + b;
+            float alpha =
+                texture1D(gColorOps1dLutTextureSampler,
+                          coord_1d).r;
+
+            vec3 coord_3d = m * tex_color.rgb + b;
+            tex_color = vec4(
+                texture3D(gColorOps3dLutTextureSampler,
+                          m * tex_color.rgb + b).rgb,
+                alpha);
+        }
+
         out_color = gSolidColor * gImageColorMatrix * tex_color;
     }
 }
